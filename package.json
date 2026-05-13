@@ -10,6 +10,7 @@
     "message:queue": "tsx scripts/message-queue.ts",
     "message:mark-sent": "tsx scripts/mark-whatsapp-sent.ts",
     "reply:check": "tsx scripts/reply-check.ts",
+    "followup:queue": "tsx scripts/followup-queue.ts",
     "lint": "tsc --noEmit",
     "build": "tsc",
     "db:generate": "prisma generate",
