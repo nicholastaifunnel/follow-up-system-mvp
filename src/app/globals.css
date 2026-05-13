@@ -118,6 +118,92 @@ table.queue tbody tr:nth-child(even) {
   display: inline-block;
 }
 
+.top-links {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+}
+
+.top-links-sep {
+  color: #888;
+  margin: 0 0.35rem;
+}
+
+.import-form {
+  margin: 0 0 1.5rem;
+  max-width: 32rem;
+}
+
+.import-form-row {
+  margin-bottom: 0.75rem;
+}
+
+.import-form-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #444;
+  margin-bottom: 0.35rem;
+}
+
+.import-preview-btn {
+  font: inherit;
+  font-size: 0.875rem;
+  padding: 0.45rem 1rem;
+  border-radius: 6px;
+  border: 1px solid #c5cad4;
+  background: #fff;
+  cursor: pointer;
+}
+
+.import-preview-btn:hover:not(:disabled) {
+  background: #f4f5f7;
+}
+
+.import-preview-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.import-error {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.875rem;
+  color: #8a1f1f;
+  background: #fdeaea;
+  border: 1px solid #f0b4b4;
+  border-radius: 6px;
+}
+
+.import-subh {
+  margin: 0.75rem 0 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #444;
+}
+
+.import-subh:first-of-type {
+  margin-top: 0;
+}
+
+.import-breakdown-list {
+  margin: 0 0 0.5rem;
+  padding-left: 1.25rem;
+  font-size: 0.8125rem;
+  color: #333;
+}
+
+.import-footnote {
+  margin: 1rem 0 0;
+  font-size: 0.8125rem;
+  color: #666;
+}
+
+.import-preview-table th,
+.import-preview-table td {
+  max-width: 10rem;
+  word-break: break-word;
+}
+
 .lead-detail .lead-header h1 {
   font-size: 1.5rem;
 }

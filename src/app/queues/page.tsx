@@ -167,9 +167,15 @@ export default async function QueuesPage() {
 
   return (
     <div className="page">
-      <a className="top-link" href="/">
-        Home
-      </a>
+      <p className="top-links">
+        <Link className="top-link" href="/">
+          Home
+        </Link>
+        <span className="top-links-sep">·</span>
+        <Link className="top-link" href="/import">
+          Import Excel
+        </Link>
+      </p>
       <h1>Queues</h1>
       <p className="sub">
         Read-only view. Data from <code>getMessageQueue</code> and{" "}
