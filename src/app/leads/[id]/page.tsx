@@ -16,7 +16,7 @@ const PREPARE_BLOCKED_HINT =
   "This lead cannot be prepared from the current status.";
 
 const MARK_SENT_HINT =
-  "Mark as Sent is available after a message is prepared.";
+  "Mark sent is available after a message is prepared.";
 
 const REPLY_FORM_HINT =
   "Reply outcome is available after the first message is sent.";
@@ -188,17 +188,20 @@ export default async function LeadDetailPage({
 
       <header className="lead-header">
         <h1>{fmtText(lead.businessName)}</h1>
-        <p className="sub">Lead detail — read-only</p>
+        <p className="sub">Lead follow-up workspace</p>
       </header>
 
-      <section className="detail-card">
-        <h2>Header</h2>
+      <section className="detail-card follow-up-summary-card">
+        <h2>Follow-up Summary</h2>
         <div className="kv-list">
-          <Row label="Area">{fmtText(lead.area)}</Row>
-          <Row label="Assigned Industry">{fmtText(lead.assignedIndustry)}</Row>
-          <Row label="Lead Level">{fmtText(lead.leadLevel)}</Row>
-          <Row label="Outreach Readiness">{fmtText(lead.outreachReadiness)}</Row>
+          <Row label="Message Status">{fmtText(lead.messageStatus)}</Row>
+          <Row label="Reply Status">{fmtText(lead.replyStatus)}</Row>
+          <Row label="Contact Status">{fmtText(lead.contactStatus)}</Row>
           <Row label="Lead Temperature">{fmtText(lead.leadTemperature)}</Row>
+          <Row label="Next Action">{fmtText(lead.nextAction)}</Row>
+          <Row label="Handoff Required">{fmtBool(lead.handoffRequired)}</Row>
+          <Row label="Next Check At">{fmtDate(lead.nextCheckAt)}</Row>
+          <Row label="Next Follow-up At">{fmtDate(lead.nextFollowUpAt)}</Row>
         </div>
       </section>
 
@@ -238,8 +241,70 @@ export default async function LeadDetailPage({
         </div>
       </section>
 
+      <section className="detail-card message-workspace-card">
+        <h2>Message Workspace</h2>
+        <div className="message-workspace-toolbar">
+          <div className="message-actions message-workspace-actions-primary">
+            <PrepareMessageButton
+              leadId={id}
+              canPrepare={canPrepare}
+              reason={PREPARE_BLOCKED_HINT}
+            />
+            {prepared.length > 0 ? (
+              <CopyMessageButton text={lead.preparedMessage ?? ""} />
+            ) : null}
+          </div>
+          <div className="message-wa-row">
+            <div className="message-wa-actions">
+              <OpenWhatsAppButton
+                phone={lead.phone}
+                internationalPhone={lead.internationalPhone}
+                preparedMessage={lead.preparedMessage}
+              />
+              <MarkAsSentButton
+                leadId={id}
+                canMarkSent={canMarkSent}
+                reason={MARK_SENT_HINT}
+              />
+            </div>
+            {prepared.length > 0 ? (
+              <p className="message-wa-tip">
+                After sending in WhatsApp, come back and click Mark sent.
+              </p>
+            ) : null}
+          </div>
+        </div>
+        {prepared.length === 0 ? (
+          <p className="empty">No prepared message yet</p>
+        ) : (
+          <div className="message-box">
+            <pre>{lead.preparedMessage}</pre>
+          </div>
+        )}
+      </section>
+
       <section className="detail-card">
-        <h2>Status</h2>
+        <h2>Reply outcome</h2>
+        <ReplyOutcomeForm
+          leadId={id}
+          canRecordReply={canRecordReply}
+          reason={REPLY_FORM_HINT}
+        />
+      </section>
+
+      <section className="detail-card">
+        <h2>Profile</h2>
+        <div className="kv-list">
+          <Row label="Area">{fmtText(lead.area)}</Row>
+          <Row label="Assigned Industry">{fmtText(lead.assignedIndustry)}</Row>
+          <Row label="Lead Level">{fmtText(lead.leadLevel)}</Row>
+          <Row label="Outreach Readiness">{fmtText(lead.outreachReadiness)}</Row>
+          <Row label="Lead Temperature">{fmtText(lead.leadTemperature)}</Row>
+        </div>
+      </section>
+
+      <section className="detail-card">
+        <h2>Status details</h2>
         <div className="kv-list">
           <Row label="Message Status">{fmtText(lead.messageStatus)}</Row>
           <Row label="Reply Status">{fmtText(lead.replyStatus)}</Row>
@@ -264,50 +329,6 @@ export default async function LeadDetailPage({
           <Row label="Google rating">{fmtNum(lead.googleRating)}</Row>
           <Row label="Review count">{fmtNum(lead.reviewCount)}</Row>
         </div>
-      </section>
-
-      <section className="detail-card">
-        <h2>Message</h2>
-        <div className="message-actions">
-          <PrepareMessageButton
-            leadId={id}
-            canPrepare={canPrepare}
-            reason={PREPARE_BLOCKED_HINT}
-          />
-          {prepared.length > 0 ? (
-            <CopyMessageButton text={lead.preparedMessage ?? ""} />
-          ) : null}
-          <OpenWhatsAppButton
-            phone={lead.phone}
-            internationalPhone={lead.internationalPhone}
-            preparedMessage={lead.preparedMessage}
-          />
-          <MarkAsSentButton
-            leadId={id}
-            canMarkSent={canMarkSent}
-            reason={MARK_SENT_HINT}
-          />
-        </div>
-        <p className="open-whatsapp-note">
-          Open WhatsApp only prepares the chat. After sending, come back and click
-          Mark as Sent.
-        </p>
-        {prepared.length === 0 ? (
-          <p className="empty">No prepared message yet</p>
-        ) : (
-          <div className="message-box">
-            <pre>{lead.preparedMessage}</pre>
-          </div>
-        )}
-      </section>
-
-      <section className="detail-card">
-        <h2>Reply outcome</h2>
-        <ReplyOutcomeForm
-          leadId={id}
-          canRecordReply={canRecordReply}
-          reason={REPLY_FORM_HINT}
-        />
       </section>
     </div>
   );

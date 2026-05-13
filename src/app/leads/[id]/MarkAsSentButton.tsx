@@ -43,7 +43,7 @@ export function MarkAsSentButton({ leadId, canMarkSent, reason }: Props) {
         onClick={onClick}
         disabled={isPending}
       >
-        {isPending ? "Marking..." : "Mark as Sent"}
+        {isPending ? "Marking..." : "Mark sent"}
       </button>
       {error ? <p className="mark-sent-error">{error}</p> : null}
       {success ? <p className="mark-sent-success">Marked as sent.</p> : null}

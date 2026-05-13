@@ -7,8 +7,8 @@ type Props = {
 };
 
 export function CopyMessageButton({ text }: Props) {
-  const [label, setLabel] = useState<"Copy Message" | "Copied!" | "Copy failed">(
-    "Copy Message",
+  const [label, setLabel] = useState<"Copy draft" | "Copied!" | "Copy failed">(
+    "Copy draft",
   );
 
   const onClick = useCallback(async () => {
@@ -16,12 +16,12 @@ export function CopyMessageButton({ text }: Props) {
       await navigator.clipboard.writeText(text);
       setLabel("Copied!");
       window.setTimeout(() => {
-        setLabel("Copy Message");
+        setLabel("Copy draft");
       }, 2000);
     } catch {
       setLabel("Copy failed");
       window.setTimeout(() => {
-        setLabel("Copy Message");
+        setLabel("Copy draft");
       }, 2000);
     }
   }, [text]);
@@ -31,7 +31,7 @@ export function CopyMessageButton({ text }: Props) {
       type="button"
       className="copy-message-btn"
       onClick={onClick}
-      disabled={label !== "Copy Message"}
+      disabled={label !== "Copy draft"}
     >
       {label}
     </button>

@@ -39,7 +39,7 @@ export function OpenWhatsAppButton({
   if (!prepared) {
     return (
       <span className="open-whatsapp-hint">
-        Prepare a message before opening WhatsApp.
+        Prepare a draft first.
       </span>
     );
   }
@@ -47,7 +47,7 @@ export function OpenWhatsAppButton({
   if (!digits) {
     return (
       <span className="open-whatsapp-hint">
-        WhatsApp is unavailable because this lead has no phone number.
+        No usable phone for WhatsApp.
       </span>
     );
   }
@@ -59,9 +59,9 @@ export function OpenWhatsAppButton({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="open-whatsapp-btn"
+      className="open-whatsapp-btn open-whatsapp-btn-primary"
     >
-      Open WhatsApp
+      Open WhatsApp with draft
     </a>
   );
 }

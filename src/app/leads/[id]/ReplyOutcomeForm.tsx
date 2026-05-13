@@ -112,7 +112,7 @@ export function ReplyOutcomeForm({ leadId, canRecordReply, reason }: Props) {
 
       <div className="reply-form-actions">
         <button type="submit" className="reply-form-submit" disabled={isPending}>
-          {isPending ? "Saving..." : "Save outcome"}
+          {isPending ? "Saving..." : "Save reply"}
         </button>
       </div>
 
