@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getFollowUpQueue } from "@/getFollowUpQueue";
 import type {
   FollowUpQueueGroup,
@@ -58,6 +59,7 @@ function MessageQueueTable({ leads }: { leads: MessageQueueLeadRow[] }) {
             <th>Next Follow-up</th>
             <th>Next Action</th>
             <th>Campaign</th>
+            <th>View</th>
           </tr>
         </thead>
         <tbody>
@@ -75,6 +77,9 @@ function MessageQueueTable({ leads }: { leads: MessageQueueLeadRow[] }) {
               <td>{fmtDate(row.nextFollowUpAt)}</td>
               <td>—</td>
               <td>{fmtText(row.campaignName)}</td>
+              <td>
+                <Link href={`/leads/${row.id}`}>View</Link>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -101,6 +106,7 @@ function FollowUpQueueTable({ leads }: { leads: FollowUpQueueLeadRow[] }) {
             <th>Next Follow-up</th>
             <th>Next Action</th>
             <th>Campaign</th>
+            <th>View</th>
           </tr>
         </thead>
         <tbody>
@@ -118,6 +124,9 @@ function FollowUpQueueTable({ leads }: { leads: FollowUpQueueLeadRow[] }) {
               <td>{fmtDate(row.nextFollowUpAt)}</td>
               <td>{fmtText(row.nextAction)}</td>
               <td>{fmtText(row.campaignName)}</td>
+              <td>
+                <Link href={`/leads/${row.id}`}>View</Link>
+              </td>
             </tr>
           ))}
         </tbody>
