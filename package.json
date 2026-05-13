@@ -7,6 +7,7 @@
     "import:leads": "tsx scripts/import-leads.ts",
     "seed:templates": "tsx scripts/seed-message-templates.ts",
     "message:prepare": "tsx scripts/prepare-lead-message.ts",
+    "message:queue": "tsx scripts/message-queue.ts",
     "lint": "tsc --noEmit",
     "build": "tsc",
     "db:generate": "prisma generate",
