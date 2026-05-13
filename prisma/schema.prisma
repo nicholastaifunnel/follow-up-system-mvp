@@ -1,0 +1,159 @@
+// Follow-up System MVP — Prisma data layer (SQLite).
+// WhatsApp Auto-Reply Ready fields only; no API, webhooks, AI, or outbound automation.
+// Excel/Google "Category" is stored as googleCategory — not CRM industry (use assignedIndustry for filtering/templates).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model MessageTemplate {
+  id           String   @id @default(cuid())
+  name         String
+  industry     String?
+  leadLevel    String?
+  messageStage String
+  language     String   @default("en")
+  body         String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  leads                 Lead[]
+  campaignsAsDefaultFor Campaign[] @relation("CampaignDefaultTemplate")
+}
+
+model Campaign {
+  id                            String   @id @default(cuid())
+  name                          String
+  sourceKeyword                 String?
+  area                          String?
+  defaultIndustry               String?
+  defaultFirstMessageTemplateId String?
+  defaultFollowUpDays           Int      @default(3)
+  defaultReplyCheckHours        Int      @default(24)
+  createdAt                     DateTime @default(now())
+  updatedAt                     DateTime @updatedAt
+
+  defaultFirstMessageTemplate MessageTemplate? @relation("CampaignDefaultTemplate", fields: [defaultFirstMessageTemplateId], references: [id])
+  leads                       Lead[]
+  importBatches               ImportBatch[]
+}
+
+model ImportBatch {
+  id                String   @id @default(cuid())
+  campaignId        String?
+  filename          String
+  totalRows         Int      @default(0)
+  insertedCount     Int      @default(0)
+  updatedCount      Int      @default(0)
+  duplicateCount    Int      @default(0)
+  skippedCount      Int      @default(0)
+  missingPhoneCount Int      @default(0)
+  missingWebsiteCount Int    @default(0)
+  missingSocialCount Int     @default(0)
+  createdAt         DateTime @default(now())
+
+  campaign Campaign? @relation(fields: [campaignId], references: [id])
+  leads    Lead[]
+}
+
+model Lead {
+  id String @id @default(cuid())
+
+  campaignId     String?
+  importBatchId  String?
+  businessName   String
+  googleCategory String?
+  area           String?
+  address        String?
+  phone          String?
+  internationalPhone String?
+  website        String?
+  socialPlatform String?
+  socialLink     String?
+  googleRating   Float?
+  reviewCount    Int?
+  googleMapsLink String?
+  placeId        String?
+  sourceKeyword  String?
+  sourceLeadStatus String?
+  rawRowJson     String?
+
+  suggestedIndustry         String?
+  manualIndustry            String?
+  assignedIndustry          String?
+  leadLevel                 String?
+  leadLevelReason           String?
+  outreachReadiness         String?
+  outreachReadinessReason   String?
+  priority                  String @default("Normal")
+
+  messageStatus      String    @default("Not Prepared")
+  messageTemplateId  String?
+  preparedMessage    String?
+  preparedAt         DateTime?
+  firstMessageSentAt DateTime?
+  followUp1SentAt    DateTime?
+  followUp2SentAt    DateTime?
+  lastMessageSentAt  DateTime?
+  lastOutboundMessage   String?
+  lastOutboundMessageAt DateTime?
+
+  replyStatus          String?
+  replyOutcome         String?
+  replyNotes           String?
+  lastInboundMessage   String?
+  lastInboundMessageAt DateTime?
+  nextCheckAt          DateTime?
+  lastCheckedAt        DateTime?
+  checkCount           Int      @default(0)
+  nextFollowUpAt       DateTime?
+  nextAction           String?
+
+  contactStatus    String @default("Not Contacted")
+  leadTemperature  String @default("Cold")
+  manualNotes      String?
+
+  isArchived     Boolean   @default(false)
+  archivedAt     DateTime?
+  archivedReason String?
+
+  whatsappProvider  String?
+  whatsappThreadId  String?
+  whatsappPhoneId   String?
+  botStatus         String  @default("Not Connected")
+  botStage          String?
+  handoffRequired   Boolean @default(false)
+  handoffReason     String?
+  conversationSummary String?
+
+  firstImportedAt DateTime?
+  lastImportedAt  DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  campaign       Campaign?       @relation(fields: [campaignId], references: [id])
+  importBatch    ImportBatch?    @relation(fields: [importBatchId], references: [id])
+  messageTemplate MessageTemplate? @relation(fields: [messageTemplateId], references: [id])
+
+  @@unique([placeId])
+  @@index([businessName])
+  @@index([phone])
+  @@index([internationalPhone])
+  @@index([assignedIndustry])
+  @@index([leadLevel])
+  @@index([outreachReadiness])
+  @@index([messageStatus])
+  @@index([replyStatus])
+  @@index([contactStatus])
+  @@index([nextCheckAt])
+  @@index([nextFollowUpAt])
+  @@index([isArchived])
+  @@index([campaignId])
+  @@index([importBatchId])
+}
