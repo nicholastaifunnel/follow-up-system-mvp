@@ -1,7 +1,35 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { CopyMessageButton } from "./CopyMessageButton";
+import { PrepareMessageButton } from "./PrepareMessageButton";
 import { prisma } from "@/lib/prisma";
+import {
+  MESSAGE_STATUS_NOT_PREPARED,
+  MESSAGE_STATUS_PREPARED,
+} from "@/statusConstants";
+
+const PREPARE_BLOCKED_HINT =
+  "This lead cannot be prepared from the current status.";
+
+function computeCanPrepare(lead: {
+  isArchived: boolean;
+  messageStatus: string;
+  replyStatus: string | null;
+  handoffRequired: boolean;
+}): boolean {
+  if (lead.isArchived) return false;
+  if (lead.replyStatus === "Replied" || lead.replyStatus === "Stopped") {
+    return false;
+  }
+  if (lead.handoffRequired) return false;
+  if (
+    lead.messageStatus !== MESSAGE_STATUS_NOT_PREPARED &&
+    lead.messageStatus !== MESSAGE_STATUS_PREPARED
+  ) {
+    return false;
+  }
+  return true;
+}
 
 export const dynamic = "force-dynamic";
 
@@ -63,6 +91,7 @@ export default async function LeadDetailPage({
       socialPlatform: true,
       socialLink: true,
       googleMapsLink: true,
+      isArchived: true,
       messageStatus: true,
       replyStatus: true,
       replyOutcome: true,
@@ -105,6 +134,13 @@ export default async function LeadDetailPage({
     lead.sourceKeyword ?? lead.campaign?.sourceKeyword ?? null;
 
   const prepared = (lead.preparedMessage ?? "").trim();
+
+  const canPrepare = computeCanPrepare({
+    isArchived: lead.isArchived,
+    messageStatus: lead.messageStatus,
+    replyStatus: lead.replyStatus,
+    handoffRequired: lead.handoffRequired,
+  });
 
   return (
     <div className="page lead-detail">
@@ -192,17 +228,22 @@ export default async function LeadDetailPage({
 
       <section className="detail-card">
         <h2>Message</h2>
+        <div className="message-actions">
+          <PrepareMessageButton
+            leadId={id}
+            canPrepare={canPrepare}
+            reason={PREPARE_BLOCKED_HINT}
+          />
+          {prepared.length > 0 ? (
+            <CopyMessageButton text={lead.preparedMessage ?? ""} />
+          ) : null}
+        </div>
         {prepared.length === 0 ? (
           <p className="empty">No prepared message yet</p>
         ) : (
-          <>
-            <div className="message-actions">
-              <CopyMessageButton text={lead.preparedMessage ?? ""} />
-            </div>
-            <div className="message-box">
-              <pre>{lead.preparedMessage}</pre>
-            </div>
-          </>
+          <div className="message-box">
+            <pre>{lead.preparedMessage}</pre>
+          </div>
         )}
       </section>
     </div>
