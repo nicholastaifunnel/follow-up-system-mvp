@@ -11,6 +11,10 @@
     "message:mark-sent": "tsx scripts/mark-whatsapp-sent.ts",
     "reply:check": "tsx scripts/reply-check.ts",
     "followup:queue": "tsx scripts/followup-queue.ts",
+    "dev": "next dev",
+    "start": "next start",
+    "build:web": "next build",
+    "build:cli": "tsc",
     "lint": "tsc --noEmit",
     "build": "tsc",
     "db:generate": "prisma generate",
@@ -19,10 +23,15 @@
   },
   "dependencies": {
     "@prisma/client": "^6.8.2",
+    "next": "^16.2.6",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/node": "^22.15.21",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "prisma": "^6.8.2",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3"
