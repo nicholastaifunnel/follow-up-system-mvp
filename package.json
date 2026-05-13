@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
+    "import:preview": "tsx scripts/preview-excel-import.ts",
     "lint": "tsc --noEmit",
     "build": "tsc",
     "db:generate": "prisma generate",
@@ -10,10 +11,13 @@
     "db:migrate": "prisma migrate dev"
   },
   "dependencies": {
-    "@prisma/client": "^6.8.2"
+    "@prisma/client": "^6.8.2",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@types/node": "^22.15.21",
     "prisma": "^6.8.2",
+    "tsx": "^4.19.4",
     "typescript": "^5.8.3"
   }
 }
