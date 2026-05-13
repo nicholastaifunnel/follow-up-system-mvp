@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "scripts": {
     "import:preview": "tsx scripts/preview-excel-import.ts",
+    "import:leads": "tsx scripts/import-leads.ts",
     "lint": "tsc --noEmit",
     "build": "tsc",
     "db:generate": "prisma generate",

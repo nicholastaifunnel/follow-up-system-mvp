@@ -99,6 +99,19 @@ export type PreviewResult = {
   previewRows: ParsedLeadRow[];
 };
 
+/** One data row: parsed fields + original row JSON for DB `rawRowJson` (not for console). */
+export type ExcelImportRow = {
+  parsed: ParsedLeadRow;
+  rawRowJson: string;
+};
+
+export type ExcelImportParseResult = {
+  filePath: string;
+  sheetName: string;
+  campaign: CampaignPreviewInfo;
+  rows: ExcelImportRow[];
+};
+
 export class ExcelPreviewError extends Error {
   constructor(message: string) {
     super(message);
@@ -137,11 +150,11 @@ function truthyHasWebsite(raw: string): boolean {
   return s === "yes" || s === "y" || s === "true" || s === "1";
 }
 
-function hasNonEmptyPhone(phone: string, internationalPhone: string): boolean {
+export function hasNonEmptyPhone(phone: string, internationalPhone: string): boolean {
   return Boolean(phone.trim() || internationalPhone.trim());
 }
 
-function hasWebsite(website: string, hasWebsiteRaw: string): boolean {
+export function hasWebsite(website: string, hasWebsiteRaw: string): boolean {
   return Boolean(website.trim()) || truthyHasWebsite(hasWebsiteRaw);
 }
 
@@ -266,6 +279,17 @@ function isSuitableLead(raw: string): boolean {
   return s === "yes" || s === "y" || s === "true" || s === "1";
 }
 
+function buildRawRowJson(headerRow: unknown[], row: unknown[]): string {
+  const obj: Record<string, string> = {};
+  headerRow.forEach((h, i) => {
+    const key = normalizeHeader(h);
+    if (!key) return;
+    const val = row[i];
+    obj[key] = val === undefined || val === null ? "" : String(val);
+  });
+  return JSON.stringify(obj);
+}
+
 function parseRow(
   row: unknown[],
   headerIndex: Map<string, number>,
@@ -351,56 +375,16 @@ function ensureXlsxPath(filePath: string): void {
   }
 }
 
-/**
- * Reads first worksheet only. Does not connect to Prisma or any database.
- */
-export function previewExcelImport(filePath: string): PreviewResult {
-  ensureXlsxPath(filePath);
-
-  let workbook: XLSX.WorkBook;
-  try {
-    workbook = XLSX.readFile(filePath, { cellDates: true });
-  } catch {
-    throw new ExcelPreviewError("Could not read file as Excel workbook.");
-  }
-
-  const sheetName = workbook.SheetNames[0];
-  if (!sheetName) {
-    throw new ExcelPreviewError("File has no worksheets.");
-  }
-
-  const sheet = workbook.Sheets[sheetName];
-  if (!sheet) {
-    throw new ExcelPreviewError("First worksheet is missing or unreadable.");
-  }
-
-  const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
-    header: 1,
-    defval: "",
-    raw: false,
-  }) as unknown[][];
-
-  if (!rows.length) {
-    throw new ExcelPreviewError("File is empty (no rows).");
-  }
-
-  const headerRow = rows[0] ?? [];
-  const headerIndex = buildHeaderIndex(headerRow);
-  if (!headerIndex.has("business name")) {
-    throw new ExcelPreviewError(
-      'Missing required column: "Business Name" (header row must include this exact name).',
-    );
-  }
-
-  const dataRows = rows.slice(1).filter((r) => Array.isArray(r) && r.some((c) => String(c).trim() !== ""));
-  if (!dataRows.length) {
-    throw new ExcelPreviewError("No data rows found (only headers or blank rows).");
-  }
-
-  const parsed: ParsedLeadRow[] = dataRows.map((r) =>
-    parseRow(Array.isArray(r) ? r : [], headerIndex),
-  );
-
+function aggregatePreviewStats(
+  parsed: ParsedLeadRow[],
+  filePath: string,
+): {
+  campaign: CampaignPreviewInfo;
+  summary: PreviewSummary;
+  industryCounts: Record<IndustryBucket, number>;
+  leadLevelCounts: Record<string, number>;
+  outreachReadinessCounts: Record<string, number>;
+} {
   const sourceKeywords = parsed.map((p) => p.sourceKeyword);
   const areas = parsed.map((p) => p.area);
   const campaign: CampaignPreviewInfo = {
@@ -461,13 +445,101 @@ export function previewExcelImport(filePath: string): PreviewResult {
   };
 
   return {
-    filePath,
-    sheetName,
     campaign,
     summary,
     industryCounts,
     leadLevelCounts,
     outreachReadinessCounts: outreachCounts,
+  };
+}
+
+/**
+ * Reads first worksheet only. Returns all data rows + `rawRowJson` per row.
+ * Does not connect to Prisma or any database.
+ */
+export function parseExcelForImport(filePath: string): ExcelImportParseResult {
+  ensureXlsxPath(filePath);
+
+  let workbook: XLSX.WorkBook;
+  try {
+    workbook = XLSX.readFile(filePath, { cellDates: true });
+  } catch {
+    throw new ExcelPreviewError("Could not read file as Excel workbook.");
+  }
+
+  const sheetName = workbook.SheetNames[0];
+  if (!sheetName) {
+    throw new ExcelPreviewError("File has no worksheets.");
+  }
+
+  const sheet = workbook.Sheets[sheetName];
+  if (!sheet) {
+    throw new ExcelPreviewError("First worksheet is missing or unreadable.");
+  }
+
+  const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
+    header: 1,
+    defval: "",
+    raw: false,
+  }) as unknown[][];
+
+  if (!rows.length) {
+    throw new ExcelPreviewError("File is empty (no rows).");
+  }
+
+  const headerRow = rows[0] ?? [];
+  const headerIndex = buildHeaderIndex(headerRow);
+  if (!headerIndex.has("business name")) {
+    throw new ExcelPreviewError(
+      'Missing required column: "Business Name" (header row must include this exact name).',
+    );
+  }
+
+  const dataRows = rows.slice(1).filter((r) => Array.isArray(r) && r.some((c) => String(c).trim() !== ""));
+  if (!dataRows.length) {
+    throw new ExcelPreviewError("No data rows found (only headers or blank rows).");
+  }
+
+  const rowObjs: ExcelImportRow[] = dataRows.map((r) => {
+    const arr = Array.isArray(r) ? r : [];
+    return {
+      parsed: parseRow(arr, headerIndex),
+      rawRowJson: buildRawRowJson(headerRow, arr),
+    };
+  });
+
+  const parsed = rowObjs.map((x) => x.parsed);
+  const { campaign } = aggregatePreviewStats(parsed, filePath);
+
+  return {
+    filePath,
+    sheetName,
+    campaign,
+    rows: rowObjs,
+  };
+}
+
+/**
+ * Reads first worksheet only. Does not connect to Prisma or any database.
+ */
+export function previewExcelImport(filePath: string): PreviewResult {
+  const { filePath: fp, sheetName, campaign, rows } = parseExcelForImport(filePath);
+  const parsed = rows.map((r) => r.parsed);
+  const {
+    summary,
+    industryCounts,
+    leadLevelCounts,
+    outreachReadinessCounts,
+  } = aggregatePreviewStats(parsed, fp);
+
+  return {
+    filePath: fp,
+    sheetName,
+    campaign,
+    summary,
+    industryCounts,
+    leadLevelCounts,
+    outreachReadinessCounts,
     previewRows: parsed.slice(0, 20),
   };
 }
