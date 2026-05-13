@@ -17,12 +17,15 @@ function fmtText(v: string | null | undefined): string {
 
 export default function ImportExcelPage() {
   const formRef = useRef<HTMLFormElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isPreviewPending, startPreviewTransition] = useTransition();
   const [isImportPending, startImportTransition] = useTransition();
   const [previewResult, setPreviewResult] =
     useState<PreviewExcelFileActionResult | null>(null);
   const [importOutcome, setImportOutcome] =
     useState<ConfirmImportExcelFileActionResult | null>(null);
+
+  const importSucceeded = Boolean(importOutcome?.ok);
 
   function onPreviewSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -43,6 +46,14 @@ export default function ImportExcelPage() {
     startImportTransition(() => {
       void confirmImportExcelFileAction(fd).then(setImportOutcome);
     });
+  }
+
+  function onImportAnotherFile() {
+    setPreviewResult(null);
+    setImportOutcome(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   }
 
   const busy = isPreviewPending || isImportPending;
@@ -67,6 +78,8 @@ export default function ImportExcelPage() {
       <form
         ref={formRef}
         className="import-form"
+        method="post"
+        encType="multipart/form-data"
         onSubmit={onPreviewSubmit}
         id="import-excel-form"
       >
@@ -75,6 +88,7 @@ export default function ImportExcelPage() {
             Excel file (.xlsx)
           </label>
           <input
+            ref={fileInputRef}
             id="excel-file"
             name="file"
             type="file"
@@ -92,29 +106,25 @@ export default function ImportExcelPage() {
               type="button"
               className="import-confirm-btn"
               onClick={onConfirmImport}
-              disabled={busy}
+              disabled={busy || importSucceeded}
             >
-              {isImportPending ? "Importing..." : "Confirm Import"}
+              {isImportPending
+                ? "Importing..."
+                : importSucceeded
+                  ? "Imported"
+                  : "Confirm Import"}
             </button>
           ) : null}
         </div>
       </form>
 
-      {previewResult && !previewResult.ok ? (
-        <p className="import-error" role="alert">
-          {previewResult.error}
-        </p>
-      ) : null}
-
-      {importOutcome && !importOutcome.ok ? (
-        <p className="import-error" role="alert">
-          {importOutcome.error}
-        </p>
-      ) : null}
-
       {importOutcome?.ok ? (
-        <section className="detail-card import-result-card">
-          <h2>Import complete</h2>
+        <section
+          className="import-success-card"
+          role="status"
+          aria-live="polite"
+        >
+          <h2 className="import-success-title">Import completed</h2>
           <div className="kv-list">
             <div className="kv-row">
               <span className="kv-label">Campaign name</span>
@@ -135,7 +145,7 @@ export default function ImportExcelPage() {
               <span className="kv-value">{importOutcome.data.updatedCount}</span>
             </div>
             <div className="kv-row">
-              <span className="kv-label">Duplicate count</span>
+              <span className="kv-label">Duplicates</span>
               <span className="kv-value">{importOutcome.data.duplicateCount}</span>
             </div>
             <div className="kv-row">
@@ -152,29 +162,32 @@ export default function ImportExcelPage() {
                 {importOutcome.data.missingWebsiteCount}
               </span>
             </div>
-            <div className="kv-row">
-              <span className="kv-label">Suitable leads (from preview)</span>
-              <span className="kv-value">
-                {previewResult?.ok
-                  ? previewResult.data.summary.suitableLeadCount
-                  : "—"}
-              </span>
-            </div>
-            <div className="kv-row">
-              <span className="kv-label">High priority leads (from preview)</span>
-              <span className="kv-value">
-                {previewResult?.ok
-                  ? previewResult.data.summary.highPriorityCount
-                  : "—"}
-              </span>
-            </div>
           </div>
-          <p className="import-result-links">
-            <Link className="top-link" href="/queues">
+          <div className="import-success-actions">
+            <Link className="import-success-primary-link" href="/queues">
               View Queues
             </Link>
-          </p>
+            <button
+              type="button"
+              className="import-success-secondary-btn"
+              onClick={onImportAnotherFile}
+            >
+              Import Another File
+            </button>
+          </div>
         </section>
+      ) : null}
+
+      {previewResult && !previewResult.ok ? (
+        <p className="import-error" role="alert">
+          {previewResult.error}
+        </p>
+      ) : null}
+
+      {importOutcome && !importOutcome.ok ? (
+        <p className="import-error" role="alert">
+          {importOutcome.error}
+        </p>
       ) : null}
 
       {previewResult?.ok ? (
@@ -322,10 +335,17 @@ export default function ImportExcelPage() {
             </div>
           </section>
 
-          <p className="import-footnote">
-            Preview does not write to the database. Click Confirm Import to import
-            leads using the file still selected above.
-          </p>
+          {!importSucceeded ? (
+            <p className="import-footnote">
+              Preview does not write to the database. Click Confirm Import to import
+              leads using the file still selected above.
+            </p>
+          ) : (
+            <p className="import-footnote">
+              Import finished — the green summary is above. Use Import Another File
+              there to clear this preview and choose a new spreadsheet.
+            </p>
+          )}
         </div>
       ) : null}
     </div>

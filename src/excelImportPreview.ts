@@ -375,6 +375,10 @@ function ensureXlsxPath(filePath: string): void {
   }
 }
 
+function ensureXlsxFileName(fileName: string): void {
+  ensureXlsxPath(path.join("upload", path.basename(fileName)));
+}
+
 function aggregatePreviewStats(
   parsed: ParsedLeadRow[],
   filePath: string,
@@ -454,19 +458,14 @@ function aggregatePreviewStats(
 }
 
 /**
- * Reads first worksheet only. Returns all data rows + `rawRowJson` per row.
- * Does not connect to Prisma or any database.
+ * Shared sheet/header/row parsing after a workbook has been loaded (file or buffer).
+ * `filePathLabel` is used for campaign naming and `ExcelImportParseResult.filePath`
+ * (basename is used where a filename is needed).
  */
-export function parseExcelForImport(filePath: string): ExcelImportParseResult {
-  ensureXlsxPath(filePath);
-
-  let workbook: XLSX.WorkBook;
-  try {
-    workbook = XLSX.readFile(filePath, { cellDates: true });
-  } catch {
-    throw new ExcelPreviewError("Could not read file as Excel workbook.");
-  }
-
+export function parseExcelWorkbookForImport(
+  workbook: XLSX.WorkBook,
+  filePathLabel: string,
+): ExcelImportParseResult {
   const sheetName = workbook.SheetNames[0];
   if (!sheetName) {
     throw new ExcelPreviewError("File has no worksheets.");
@@ -509,10 +508,10 @@ export function parseExcelForImport(filePath: string): ExcelImportParseResult {
   });
 
   const parsed = rowObjs.map((x) => x.parsed);
-  const { campaign } = aggregatePreviewStats(parsed, filePath);
+  const { campaign } = aggregatePreviewStats(parsed, filePathLabel);
 
   return {
-    filePath,
+    filePath: filePathLabel,
     sheetName,
     campaign,
     rows: rowObjs,
@@ -520,10 +519,54 @@ export function parseExcelForImport(filePath: string): ExcelImportParseResult {
 }
 
 /**
- * Reads first worksheet only. Does not connect to Prisma or any database.
+ * Reads first worksheet only. Returns all data rows + `rawRowJson` per row.
+ * Does not connect to Prisma or any database.
  */
-export function previewExcelImport(filePath: string): PreviewResult {
-  const { filePath: fp, sheetName, campaign, rows } = parseExcelForImport(filePath);
+export function parseExcelForImport(filePath: string): ExcelImportParseResult {
+  ensureXlsxPath(filePath);
+
+  let workbook: XLSX.WorkBook;
+  try {
+    workbook = XLSX.readFile(filePath, { cellDates: true });
+  } catch (e: unknown) {
+    if (process.env.NODE_ENV === "development") {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error("[excelImportPreview] XLSX.readFile failed:", msg);
+    }
+    throw new ExcelPreviewError("Could not read file as Excel workbook.");
+  }
+
+  return parseExcelWorkbookForImport(workbook, filePath);
+}
+
+/**
+ * Same rules as {@link parseExcelForImport}, but reads from an in-memory buffer (for web uploads).
+ */
+export function parseExcelBufferForImport(
+  buffer: Buffer,
+  originalFileName: string,
+): ExcelImportParseResult {
+  ensureXlsxFileName(originalFileName);
+
+  let workbook: XLSX.WorkBook;
+  try {
+    workbook = XLSX.read(buffer, { type: "buffer", cellDates: true });
+  } catch (e: unknown) {
+    if (process.env.NODE_ENV === "development") {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error("[excelImportPreview] XLSX.read(buffer) failed:", msg);
+    }
+    throw new ExcelPreviewError("Could not read file as Excel workbook.");
+  }
+
+  const label = path.basename(originalFileName);
+  return parseExcelWorkbookForImport(workbook, label);
+}
+
+function buildPreviewResultFromParse(
+  parse: ExcelImportParseResult,
+): PreviewResult {
+  const { filePath: fp, sheetName, campaign, rows } = parse;
   const parsed = rows.map((r) => r.parsed);
   const {
     summary,
@@ -542,4 +585,21 @@ export function previewExcelImport(filePath: string): PreviewResult {
     outreachReadinessCounts,
     previewRows: parsed.slice(0, 20),
   };
+}
+
+/**
+ * Reads first worksheet only. Does not connect to Prisma or any database.
+ */
+export function previewExcelImport(filePath: string): PreviewResult {
+  return buildPreviewResultFromParse(parseExcelForImport(filePath));
+}
+
+/** Same output as {@link previewExcelImport}, for in-memory uploads (no temp file). */
+export function previewExcelImportFromBuffer(
+  buffer: Buffer,
+  originalFileName: string,
+): PreviewResult {
+  return buildPreviewResultFromParse(
+    parseExcelBufferForImport(buffer, originalFileName),
+  );
 }

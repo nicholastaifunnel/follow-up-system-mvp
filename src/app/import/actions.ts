@@ -1,14 +1,10 @@
 "use server";
 
-import { randomBytes } from "node:crypto";
-import * as fs from "node:fs";
-import * as os from "node:os";
-import * as path from "node:path";
-import { importLeadsFromExcel } from "../../importLeadsFromExcel";
+import { importLeadsFromExcelBuffer } from "../../importLeadsFromExcel";
 import { prisma } from "../../lib/prisma";
 import {
   ExcelPreviewError,
-  previewExcelImport,
+  previewExcelImportFromBuffer,
   type CampaignPreviewInfo,
   type IndustryBucket,
   type ParsedLeadRow,
@@ -89,17 +85,10 @@ export async function previewExcelFileAction(
 
   const { file } = validated;
 
-  let tmpPath: string | null = null;
-
   try {
     const buf = Buffer.from(await file.arrayBuffer());
-    tmpPath = path.join(
-      os.tmpdir(),
-      `excel-preview-${Date.now()}-${randomBytes(8).toString("hex")}.xlsx`,
-    );
-    fs.writeFileSync(tmpPath, buf);
 
-    const result = previewExcelImport(tmpPath);
+    const result = previewExcelImportFromBuffer(buf, file.name);
 
     const rowsWithoutWebsite =
       result.summary.totalRows - result.summary.rowsWithWebsite;
@@ -127,14 +116,6 @@ export async function previewExcelFileAction(
       ok: false,
       error: "Could not preview this file. Check the file and try again.",
     };
-  } finally {
-    if (tmpPath) {
-      try {
-        fs.unlinkSync(tmpPath);
-      } catch {
-        /* ignore */
-      }
-    }
   }
 }
 
@@ -148,17 +129,10 @@ export async function confirmImportExcelFileAction(
 
   const { file } = validated;
 
-  let tmpPath: string | null = null;
-
   try {
     const buf = Buffer.from(await file.arrayBuffer());
-    tmpPath = path.join(
-      os.tmpdir(),
-      `excel-import-${Date.now()}-${randomBytes(8).toString("hex")}.xlsx`,
-    );
-    fs.writeFileSync(tmpPath, buf);
 
-    const r = await importLeadsFromExcel(prisma, tmpPath);
+    const r = await importLeadsFromExcelBuffer(prisma, buf, file.name);
 
     return {
       ok: true,
@@ -182,13 +156,5 @@ export async function confirmImportExcelFileAction(
       error:
         "Import failed. Check the file and try again. If the problem continues, verify your database connection.",
     };
-  } finally {
-    if (tmpPath) {
-      try {
-        fs.unlinkSync(tmpPath);
-      } catch {
-        /* ignore */
-      }
-    }
   }
 }

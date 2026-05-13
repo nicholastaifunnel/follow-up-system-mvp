@@ -192,12 +192,63 @@ table.queue tbody tr:nth-child(even) {
   cursor: not-allowed;
 }
 
-.import-result-card {
-  margin-bottom: 1.25rem;
+.import-success-card {
+  margin: 0 0 1.25rem;
+  padding: 1rem 1.1rem;
+  background: #e8f5e9;
+  border: 1px solid #66bb6a;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(46, 125, 50, 0.12);
 }
 
-.import-result-links {
-  margin: 0.75rem 0 0;
+.import-success-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1b5e20;
+}
+
+.import-success-card .kv-row {
+  border-bottom-color: #c8e6c9;
+}
+
+.import-success-actions {
+  margin: 1rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.import-success-primary-link {
+  display: inline-block;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  padding: 0.45rem 0.9rem;
+  border-radius: 6px;
+  background: #2e7d32;
+  color: #fff !important;
+  text-decoration: none !important;
+}
+
+.import-success-primary-link:hover {
+  background: #1b5e20;
+  text-decoration: none !important;
+}
+
+.import-success-secondary-btn {
+  font: inherit;
+  font-size: 0.875rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 6px;
+  border: 1px solid #388e3c;
+  background: #fff;
+  color: #2e7d32;
+  cursor: pointer;
+}
+
+.import-success-secondary-btn:hover {
+  background: #f1f8f4;
 }
 
 .import-error {
@@ -334,6 +385,38 @@ table.queue tbody tr:nth-child(even) {
 .copy-message-btn:disabled {
   cursor: default;
   opacity: 0.85;
+}
+
+.open-whatsapp-btn {
+  font: inherit;
+  font-size: 0.875rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #25d366;
+  border-radius: 6px;
+  background: #e7f8ec;
+  color: #128c7e;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.open-whatsapp-btn:hover {
+  background: #d4f0dd;
+}
+
+.open-whatsapp-hint {
+  font-size: 0.8125rem;
+  color: #5c5c5c;
+  max-width: 18rem;
+  line-height: 1.35;
+}
+
+.open-whatsapp-note {
+  margin: 0 0 0.65rem;
+  font-size: 0.75rem;
+  color: #666;
+  line-height: 1.35;
+  max-width: 36rem;
 }
 
 .prepare-message-wrap {

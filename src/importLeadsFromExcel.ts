@@ -3,9 +3,11 @@ import type { Lead, Prisma, PrismaClient } from "@prisma/client";
 import {
   type CampaignPreviewInfo,
   type ExcelImportRow,
+  type ExcelImportParseResult,
   type ParsedLeadRow,
   hasNonEmptyPhone,
   hasWebsite,
+  parseExcelBufferForImport,
   parseExcelForImport,
 } from "./excelImportPreview";
 
@@ -301,8 +303,35 @@ export async function importLeadsFromExcel(
   filePath: string,
 ): Promise<ImportLeadsResult> {
   const parsedWorkbook = parseExcelForImport(filePath);
+  return importLeadsFromParsedWorkbook(
+    db,
+    parsedWorkbook,
+    path.basename(filePath),
+  );
+}
+
+/**
+ * Same as {@link importLeadsFromExcel} but reads from a buffer (web upload; avoids temp-file read issues).
+ */
+export async function importLeadsFromExcelBuffer(
+  db: PrismaClient,
+  buffer: Buffer,
+  originalFileName: string,
+): Promise<ImportLeadsResult> {
+  const parsedWorkbook = parseExcelBufferForImport(buffer, originalFileName);
+  return importLeadsFromParsedWorkbook(
+    db,
+    parsedWorkbook,
+    path.basename(originalFileName),
+  );
+}
+
+async function importLeadsFromParsedWorkbook(
+  db: PrismaClient,
+  parsedWorkbook: ExcelImportParseResult,
+  filename: string,
+): Promise<ImportLeadsResult> {
   const { rows, campaign: previewCampaign } = parsedWorkbook;
-  const filename = path.basename(filePath);
   const now = new Date();
 
   const nonSkippedForDominant = rows

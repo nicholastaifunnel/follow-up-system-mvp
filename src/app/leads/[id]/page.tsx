@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { CopyMessageButton } from "./CopyMessageButton";
 import { MarkAsSentButton } from "./MarkAsSentButton";
+import { OpenWhatsAppButton } from "./OpenWhatsAppButton";
 import { PrepareMessageButton } from "./PrepareMessageButton";
 import { ReplyOutcomeForm } from "./ReplyOutcomeForm";
 import { prisma } from "@/lib/prisma";
@@ -276,12 +277,21 @@ export default async function LeadDetailPage({
           {prepared.length > 0 ? (
             <CopyMessageButton text={lead.preparedMessage ?? ""} />
           ) : null}
+          <OpenWhatsAppButton
+            phone={lead.phone}
+            internationalPhone={lead.internationalPhone}
+            preparedMessage={lead.preparedMessage}
+          />
           <MarkAsSentButton
             leadId={id}
             canMarkSent={canMarkSent}
             reason={MARK_SENT_HINT}
           />
         </div>
+        <p className="open-whatsapp-note">
+          Open WhatsApp only prepares the chat. After sending, come back and click
+          Mark as Sent.
+        </p>
         {prepared.length === 0 ? (
           <p className="empty">No prepared message yet</p>
         ) : (
