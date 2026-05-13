@@ -1,11 +1,47 @@
 import type { Lead, MessageTemplate, PrismaClient } from "@prisma/client";
-import { MESSAGE_STATUS_PREPARED } from "./statusConstants";
+import {
+  MESSAGE_STATUS_NOT_PREPARED,
+  MESSAGE_STATUS_PREPARED,
+} from "./statusConstants";
 
 export type PrepareLeadMessageInput = {
   leadId: string;
   messageStage?: string;
   language?: string;
+  /**
+   * When true, skips the messageStatus guard only (still blocks archived /
+   * Replied / Stopped / handoff). For manual recovery; not for routine CLI use.
+   */
+  force?: boolean;
 };
+
+function assertCanPrepareLead(lead: Lead, input: PrepareLeadMessageInput): void {
+  if (lead.isArchived) {
+    throw new Error("Lead cannot be prepared: lead is archived");
+  }
+
+  const status = lead.messageStatus ?? "(null)";
+  if (!input.force) {
+    if (
+      lead.messageStatus !== MESSAGE_STATUS_NOT_PREPARED &&
+      lead.messageStatus !== MESSAGE_STATUS_PREPARED
+    ) {
+      throw new Error(
+        `Lead cannot be prepared from current message status: ${status}`,
+      );
+    }
+  }
+
+  if (lead.replyStatus === "Replied" || lead.replyStatus === "Stopped") {
+    throw new Error(
+      `Lead cannot be prepared from current reply status: ${lead.replyStatus}`,
+    );
+  }
+
+  if (lead.handoffRequired) {
+    throw new Error("Lead cannot be prepared: handoff is required");
+  }
+}
 
 export type PrepareLeadMessageResult = {
   leadId: string;
@@ -97,6 +133,8 @@ export async function prepareLeadMessage(
   if (!lead) {
     throw new Error(`Lead not found: ${input.leadId}`);
   }
+
+  assertCanPrepareLead(lead, input);
 
   const assignedIndustry = normNullable(lead.assignedIndustry);
   const leadLevel = normNullable(lead.leadLevel);

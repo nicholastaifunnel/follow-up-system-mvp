@@ -85,10 +85,13 @@ function buildUpdateData(
     case "no-reply":
       return {
         replyStatus: "No Reply Yet",
+        replyOutcome: null,
+        handoffRequired: false,
+        handoffReason: null,
+        nextAction: null,
         lastCheckedAt: now,
         checkCount: { increment: 1 },
         nextCheckAt: addHours(now, 24),
-        contactStatus: "Contacted",
       };
 
     case "asked-price":
@@ -99,6 +102,8 @@ function buildUpdateData(
         handoffRequired: true,
         handoffReason: "Asked price",
         nextAction: "Send price/package",
+        nextCheckAt: null,
+        nextFollowUpAt: null,
         ...inbound,
       };
 
@@ -110,6 +115,8 @@ function buildUpdateData(
         handoffRequired: true,
         handoffReason: "Interested lead",
         nextAction: "Follow up personally",
+        nextCheckAt: null,
+        nextFollowUpAt: null,
         ...inbound,
       };
 
@@ -125,7 +132,10 @@ function buildUpdateData(
         replyOutcome: "Follow Up Later",
         contactStatus: "Follow Up",
         leadTemperature: "Warm",
+        handoffRequired: false,
+        handoffReason: null,
         nextAction: "Follow up later",
+        nextCheckAt: null,
         nextFollowUpAt: nextFollow,
         ...inbound,
       };
@@ -137,6 +147,12 @@ function buildUpdateData(
         replyOutcome: "Not Interested",
         messageStatus: "Stopped",
         contactStatus: "Not Interested",
+        leadTemperature: "Cold",
+        handoffRequired: false,
+        handoffReason: null,
+        nextAction: null,
+        nextCheckAt: null,
+        nextFollowUpAt: null,
         isArchived: true,
         archivedAt: now,
         archivedReason: "Not interested",
@@ -149,6 +165,12 @@ function buildUpdateData(
         replyOutcome: "Wrong Contact",
         messageStatus: "Stopped",
         contactStatus: "Wrong Contact",
+        leadTemperature: "Cold",
+        handoffRequired: false,
+        handoffReason: null,
+        nextAction: null,
+        nextCheckAt: null,
+        nextFollowUpAt: null,
         isArchived: true,
         archivedAt: now,
         archivedReason: "Wrong contact",
@@ -163,6 +185,8 @@ function buildUpdateData(
         handoffRequired: true,
         handoffReason: "Need more info",
         nextAction: "Reply with more information",
+        nextCheckAt: null,
+        nextFollowUpAt: null,
         ...inbound,
       };
   }
