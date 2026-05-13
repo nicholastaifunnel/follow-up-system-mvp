@@ -16,6 +16,7 @@ export function PrepareMessageButton({ leadId, canPrepare, reason }: Props) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [language, setLanguage] = useState<"en" | "zh">("en");
 
   if (!canPrepare) {
     return (
@@ -29,7 +30,7 @@ export function PrepareMessageButton({ leadId, canPrepare, reason }: Props) {
     setError(null);
     setSuccess(false);
     startTransition(() => {
-      void prepareLeadMessageAction(leadId).then((result) => {
+      void prepareLeadMessageAction(leadId, language).then((result) => {
         if (result.ok) {
           setSuccess(true);
           router.refresh();
@@ -42,6 +43,16 @@ export function PrepareMessageButton({ leadId, canPrepare, reason }: Props) {
 
   return (
     <div className="prepare-message-wrap">
+      <select
+        id={`prepare-language-${leadId}`}
+        aria-label="Message language"
+        value={language}
+        onChange={(e) => setLanguage(e.target.value === "zh" ? "zh" : "en")}
+        disabled={isPending}
+      >
+        <option value="en">English</option>
+        <option value="zh">中文</option>
+      </select>
       <button
         type="button"
         className="prepare-message-btn"

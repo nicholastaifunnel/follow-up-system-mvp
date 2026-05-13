@@ -6,6 +6,7 @@
     "import:preview": "tsx scripts/preview-excel-import.ts",
     "import:leads": "tsx scripts/import-leads.ts",
     "seed:templates": "tsx scripts/seed-message-templates.ts",
+    "templates:sync": "tsx scripts/sync-message-templates.ts",
     "message:prepare": "tsx scripts/prepare-lead-message.ts",
     "message:queue": "tsx scripts/message-queue.ts",
     "message:mark-sent": "tsx scripts/mark-whatsapp-sent.ts",

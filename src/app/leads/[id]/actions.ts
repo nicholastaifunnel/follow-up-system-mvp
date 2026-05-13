@@ -21,9 +21,15 @@ export type PrepareLeadMessageActionResult =
 
 export async function prepareLeadMessageAction(
   leadId: string,
+  language: string = "en",
 ): Promise<PrepareLeadMessageActionResult> {
+  const normalizedLanguage = language === "zh" ? "zh" : "en";
+
   try {
-    await prepareLeadMessage(prisma, { leadId });
+    await prepareLeadMessage(prisma, {
+      leadId,
+      language: normalizedLanguage,
+    });
     revalidatePath(`/leads/${leadId}`);
     return { ok: true };
   } catch (e) {
