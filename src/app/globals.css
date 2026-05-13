@@ -309,3 +309,80 @@ table.queue tbody tr:nth-child(even) {
   font-size: 0.8125rem;
   color: #1b5e20;
 }
+
+.reply-outcome-blocked {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #555;
+  max-width: 36rem;
+}
+
+.reply-outcome-form {
+  max-width: 28rem;
+}
+
+.reply-form-row {
+  margin-bottom: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.reply-form-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #444;
+}
+
+.reply-form-select,
+.reply-form-input,
+.reply-form-textarea {
+  font: inherit;
+  font-size: 0.875rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #c5cad6;
+  border-radius: 6px;
+  max-width: 100%;
+  width: 100%;
+}
+
+.reply-form-textarea {
+  resize: vertical;
+  min-height: 5rem;
+}
+
+.reply-form-actions {
+  margin-top: 0.5rem;
+}
+
+.reply-form-submit {
+  font: inherit;
+  font-size: 0.875rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid #5c4a9e;
+  border-radius: 6px;
+  background: #ede7f6;
+  color: #4527a0;
+  cursor: pointer;
+}
+
+.reply-form-submit:hover:not(:disabled) {
+  background: #e1d5f5;
+}
+
+.reply-form-submit:disabled {
+  cursor: wait;
+  opacity: 0.85;
+}
+
+.reply-form-error {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  color: #a32020;
+}
+
+.reply-form-saved {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  color: #1b5e20;
+}

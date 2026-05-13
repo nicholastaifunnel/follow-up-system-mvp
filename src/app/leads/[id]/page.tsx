@@ -3,8 +3,10 @@ import type { ReactNode } from "react";
 import { CopyMessageButton } from "./CopyMessageButton";
 import { MarkAsSentButton } from "./MarkAsSentButton";
 import { PrepareMessageButton } from "./PrepareMessageButton";
+import { ReplyOutcomeForm } from "./ReplyOutcomeForm";
 import { prisma } from "@/lib/prisma";
 import {
+  MESSAGE_STATUS_FIRST_SENT,
   MESSAGE_STATUS_NOT_PREPARED,
   MESSAGE_STATUS_PREPARED,
 } from "@/statusConstants";
@@ -14,6 +16,17 @@ const PREPARE_BLOCKED_HINT =
 
 const MARK_SENT_HINT =
   "Mark as Sent is available after a message is prepared.";
+
+const REPLY_FORM_HINT =
+  "Reply outcome is available after the first message is sent.";
+
+function computeCanRecordReply(lead: {
+  isArchived: boolean;
+  messageStatus: string;
+}): boolean {
+  if (lead.isArchived) return false;
+  return lead.messageStatus === MESSAGE_STATUS_FIRST_SENT;
+}
 
 function computeCanMarkSent(lead: {
   isArchived: boolean;
@@ -163,6 +176,11 @@ export default async function LeadDetailPage({
     preparedTrimLength: prepared.length,
   });
 
+  const canRecordReply = computeCanRecordReply({
+    isArchived: lead.isArchived,
+    messageStatus: lead.messageStatus,
+  });
+
   return (
     <div className="page lead-detail">
       <BackToQueues />
@@ -271,6 +289,15 @@ export default async function LeadDetailPage({
             <pre>{lead.preparedMessage}</pre>
           </div>
         )}
+      </section>
+
+      <section className="detail-card">
+        <h2>Reply outcome</h2>
+        <ReplyOutcomeForm
+          leadId={id}
+          canRecordReply={canRecordReply}
+          reason={REPLY_FORM_HINT}
+        />
       </section>
     </div>
   );
