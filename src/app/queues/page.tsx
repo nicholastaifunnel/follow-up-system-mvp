@@ -12,8 +12,20 @@ import type {
   MessageQueueResult,
 } from "@/getMessageQueue";
 import { prisma } from "@/lib/prisma";
+import { QueueLimitSelector } from "./QueueLimitSelector";
+import { QueueSection } from "./QueueSection";
 
 export const dynamic = "force-dynamic";
+
+function resolveQueueDisplayLimit(
+  raw: string | string[] | undefined,
+): 10 | 20 | 50 {
+  const v = Array.isArray(raw) ? raw[0] : raw;
+  if (v === undefined || v === "") return 10;
+  const n = Number.parseInt(String(v), 10);
+  if (n === 20 || n === 50) return n;
+  return 10;
+}
 
 function fmtText(v: string | null | undefined): string {
   if (v === null || v === undefined || v === "") return "—";
@@ -135,34 +147,17 @@ function FollowUpQueueTable({ leads }: { leads: FollowUpQueueLeadRow[] }) {
   );
 }
 
-function QueueGroupBlock({
-  title,
-  group,
-  variant,
+export default async function QueuesPage({
+  searchParams,
 }: {
-  title: string;
-  group: MessageQueueGroup | FollowUpQueueGroup;
-  variant: "message" | "followup";
+  searchParams: Promise<{ limit?: string | string[] }>;
 }) {
-  return (
-    <div className="group">
-      <h3>{title}</h3>
-      <p className="meta">Count: {group.count}</p>
-      {group.leads.length === 0 ? (
-        <p className="empty">No leads</p>
-      ) : variant === "message" ? (
-        <MessageQueueTable leads={(group as MessageQueueGroup).leads} />
-      ) : (
-        <FollowUpQueueTable leads={(group as FollowUpQueueGroup).leads} />
-      )}
-    </div>
-  );
-}
+  const sp = await searchParams;
+  const limit = resolveQueueDisplayLimit(sp.limit);
 
-export default async function QueuesPage() {
   const [messageQueue, followUpQueue] = await Promise.all([
-    getMessageQueue(prisma),
-    getFollowUpQueue(prisma),
+    getMessageQueue(prisma, { limit }),
+    getFollowUpQueue(prisma, { limit }),
   ]);
 
   return (
@@ -182,28 +177,54 @@ export default async function QueuesPage() {
         <code>getFollowUpQueue</code> — no writes.
       </p>
 
+      <QueueLimitSelector currentLimit={limit} />
+
       <div className="section">
         <h2>Message Queue</h2>
-        {MESSAGE_SECTIONS.map(({ key, title }) => (
-          <QueueGroupBlock
-            key={key}
-            title={title}
-            group={messageQueue[key]}
-            variant="message"
-          />
-        ))}
+        {MESSAGE_SECTIONS.map(({ key, title }) => {
+          const group = messageQueue[key];
+          return (
+            <div className="group" key={key}>
+              <QueueSection
+                key={`msg-${String(key)}-${limit}`}
+                title={title}
+                totalCount={group.count}
+                shownCount={group.leads.length}
+                defaultExpanded={group.count > 0}
+              >
+                {group.leads.length === 0 ? (
+                  <p className="empty">No leads</p>
+                ) : (
+                  <MessageQueueTable leads={group.leads} />
+                )}
+              </QueueSection>
+            </div>
+          );
+        })}
       </div>
 
       <div className="section">
         <h2>Follow-up Queue</h2>
-        {FOLLOWUP_SECTIONS.map(({ key, title }) => (
-          <QueueGroupBlock
-            key={key}
-            title={title}
-            group={followUpQueue[key]}
-            variant="followup"
-          />
-        ))}
+        {FOLLOWUP_SECTIONS.map(({ key, title }) => {
+          const group = followUpQueue[key];
+          return (
+            <div className="group" key={key}>
+              <QueueSection
+                key={`fu-${String(key)}-${limit}`}
+                title={title}
+                totalCount={group.count}
+                shownCount={group.leads.length}
+                defaultExpanded={group.count > 0}
+              >
+                {group.leads.length === 0 ? (
+                  <p className="empty">No leads</p>
+                ) : (
+                  <FollowUpQueueTable leads={group.leads} />
+                )}
+              </QueueSection>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

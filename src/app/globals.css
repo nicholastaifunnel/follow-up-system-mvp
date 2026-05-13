@@ -76,6 +76,91 @@ a:hover {
   color: #555;
 }
 
+.queue-limit-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin: 0 0 1.25rem;
+  font-size: 0.8125rem;
+  color: #444;
+}
+
+.queue-limit-label {
+  font-weight: 500;
+  color: #333;
+}
+
+.queue-limit-pill {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid #c8ced8;
+  border-radius: 4px;
+  background: #fff;
+  color: #0b57d0;
+  text-decoration: none;
+  line-height: 1.25;
+}
+
+.queue-limit-pill:hover {
+  border-color: #0b57d0;
+  text-decoration: none;
+}
+
+.queue-limit-pill-active {
+  border-color: #0b57d0;
+  background: #e8f0fe;
+  font-weight: 600;
+  color: #0842a0;
+}
+
+.queue-section-toggle {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  width: 100%;
+  margin: 0 0 0.35rem;
+  padding: 0.15rem 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+}
+
+.queue-section-toggle:hover .queue-section-heading {
+  text-decoration: underline;
+}
+
+.queue-section-chevron {
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  color: #666;
+  width: 0.9rem;
+}
+
+.queue-section-heading {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.queue-section-count {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #555;
+}
+
+.queue-section-meta {
+  margin: 0 0 0.75rem;
+  font-size: 0.8125rem;
+  color: #555;
+}
+
+.queue-section-body {
+  margin-top: 0.25rem;
+}
+
 .empty {
   margin: 0;
   font-size: 0.875rem;
