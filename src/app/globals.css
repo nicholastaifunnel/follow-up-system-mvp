@@ -145,6 +145,13 @@ table.queue tbody tr:nth-child(even) {
   margin-bottom: 0.35rem;
 }
 
+.import-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
 .import-preview-btn {
   font: inherit;
   font-size: 0.875rem;
@@ -162,6 +169,35 @@ table.queue tbody tr:nth-child(even) {
 .import-preview-btn:disabled {
   opacity: 0.65;
   cursor: not-allowed;
+}
+
+.import-confirm-btn {
+  font: inherit;
+  font-size: 0.875rem;
+  padding: 0.45rem 1rem;
+  border-radius: 6px;
+  border: 1px solid #0b57d0;
+  background: #0b57d0;
+  color: #fff;
+  cursor: pointer;
+}
+
+.import-confirm-btn:hover:not(:disabled) {
+  background: #0948ad;
+  border-color: #0948ad;
+}
+
+.import-confirm-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.import-result-card {
+  margin-bottom: 1.25rem;
+}
+
+.import-result-links {
+  margin: 0.75rem 0 0;
 }
 
 .import-error {
