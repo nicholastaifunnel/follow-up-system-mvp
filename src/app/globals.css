@@ -184,3 +184,32 @@ table.queue tbody tr:nth-child(even) {
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+.message-actions {
+  margin-bottom: 0.65rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.copy-message-btn {
+  font: inherit;
+  font-size: 0.875rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #c5cad6;
+  border-radius: 6px;
+  background: #fff;
+  color: #1a1a1a;
+  cursor: pointer;
+  max-width: 100%;
+}
+
+.copy-message-btn:hover:not(:disabled) {
+  background: #f0f2f6;
+}
+
+.copy-message-btn:disabled {
+  cursor: default;
+  opacity: 0.85;
+}

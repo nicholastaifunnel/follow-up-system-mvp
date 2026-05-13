@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { CopyMessageButton } from "./CopyMessageButton";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -194,9 +195,14 @@ export default async function LeadDetailPage({
         {prepared.length === 0 ? (
           <p className="empty">No prepared message yet</p>
         ) : (
-          <div className="message-box">
-            <pre>{lead.preparedMessage}</pre>
-          </div>
+          <>
+            <div className="message-actions">
+              <CopyMessageButton text={lead.preparedMessage ?? ""} />
+            </div>
+            <div className="message-box">
+              <pre>{lead.preparedMessage}</pre>
+            </div>
+          </>
         )}
       </section>
     </div>
