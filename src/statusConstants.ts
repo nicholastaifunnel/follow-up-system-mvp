@@ -1,5 +1,7 @@
 /** Default Lead.messageStatus when no draft exists yet. */
 export const MESSAGE_STATUS_NOT_PREPARED = "Not Prepared";
+/** After template render + save to Lead.preparedMessage. */
+export const MESSAGE_STATUS_PREPARED = "Prepared";
 
 /** Product copy / DB values for manual first WhatsApp send ("Mark as Sent"). */
 export const MESSAGE_STATUS_FIRST_SENT = "First Message Sent";
