@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { CopyMessageButton } from "./CopyMessageButton";
+import { MarkAsSentButton } from "./MarkAsSentButton";
 import { PrepareMessageButton } from "./PrepareMessageButton";
 import { prisma } from "@/lib/prisma";
 import {
@@ -10,6 +11,20 @@ import {
 
 const PREPARE_BLOCKED_HINT =
   "This lead cannot be prepared from the current status.";
+
+const MARK_SENT_HINT =
+  "Mark as Sent is available after a message is prepared.";
+
+function computeCanMarkSent(lead: {
+  isArchived: boolean;
+  messageStatus: string;
+  preparedTrimLength: number;
+}): boolean {
+  if (lead.isArchived) return false;
+  if (lead.messageStatus !== MESSAGE_STATUS_PREPARED) return false;
+  if (lead.preparedTrimLength === 0) return false;
+  return true;
+}
 
 function computeCanPrepare(lead: {
   isArchived: boolean;
@@ -142,6 +157,12 @@ export default async function LeadDetailPage({
     handoffRequired: lead.handoffRequired,
   });
 
+  const canMarkSent = computeCanMarkSent({
+    isArchived: lead.isArchived,
+    messageStatus: lead.messageStatus,
+    preparedTrimLength: prepared.length,
+  });
+
   return (
     <div className="page lead-detail">
       <BackToQueues />
@@ -237,6 +258,11 @@ export default async function LeadDetailPage({
           {prepared.length > 0 ? (
             <CopyMessageButton text={lead.preparedMessage ?? ""} />
           ) : null}
+          <MarkAsSentButton
+            leadId={id}
+            canMarkSent={canMarkSent}
+            reason={MARK_SENT_HINT}
+          />
         </div>
         {prepared.length === 0 ? (
           <p className="empty">No prepared message yet</p>

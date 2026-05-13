@@ -261,3 +261,51 @@ table.queue tbody tr:nth-child(even) {
   font-size: 0.8125rem;
   color: #1b5e20;
 }
+
+.mark-sent-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.mark-sent-btn {
+  font: inherit;
+  font-size: 0.875rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #2e7d32;
+  border-radius: 6px;
+  background: #e8f5e9;
+  color: #1b5e20;
+  cursor: pointer;
+  max-width: 100%;
+}
+
+.mark-sent-btn:hover:not(:disabled) {
+  background: #c8e6c9;
+}
+
+.mark-sent-btn:disabled {
+  cursor: wait;
+  opacity: 0.85;
+}
+
+.mark-sent-blocked {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #555;
+  max-width: 36rem;
+}
+
+.mark-sent-error {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #a32020;
+  max-width: 36rem;
+}
+
+.mark-sent-success {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #1b5e20;
+}
