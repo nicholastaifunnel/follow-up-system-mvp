@@ -425,6 +425,7 @@ async function importLeadsFromParsedWorkbook(
         importBatchId: batch.id,
       };
     },
+    { maxWait: 10000, timeout: 30000 },
   );
 
   return {

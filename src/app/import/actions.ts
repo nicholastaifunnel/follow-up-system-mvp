@@ -1,5 +1,6 @@
 "use server";
 
+import { Prisma } from "@prisma/client";
 import { importLeadsFromExcelBuffer } from "../../importLeadsFromExcel";
 import { prisma } from "../../lib/prisma";
 import {
@@ -74,6 +75,67 @@ export type ConfirmImportExcelSuccessData = {
 export type ConfirmImportExcelFileActionResult =
   | { ok: true; data: ConfirmImportExcelSuccessData }
   | { ok: false; error: string };
+
+/** Avoid echoing connection strings if a driver ever puts them in `message`. */
+function redactConnectionHints(text: string): string {
+  return text.replace(/postgres(ql)?:\/\/[^\s'"<>]+/gi, "[redacted]");
+}
+
+function logConfirmImportFailure(error: unknown): void {
+  const name =
+    error instanceof Error ? error.name : typeof error === "object" && error !== null
+      ? "NonErrorThrown"
+      : typeof error;
+  const rawMessage =
+    error instanceof Error
+      ? error.message
+      : typeof error === "string"
+        ? error
+        : (() => {
+            try {
+              return JSON.stringify(error);
+            } catch {
+              return String(error);
+            }
+          })();
+  const message = redactConnectionHints(rawMessage);
+
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    console.error(
+      "[confirmImportExcelFileAction]",
+      JSON.stringify({
+        action: "confirmImportExcelFileAction",
+        errorName: name,
+        errorMessage: message,
+        prismaCode: error.code,
+        prismaMeta: error.meta ?? null,
+      }),
+    );
+    return;
+  }
+
+  if (error instanceof Prisma.PrismaClientInitializationError) {
+    console.error(
+      "[confirmImportExcelFileAction]",
+      JSON.stringify({
+        action: "confirmImportExcelFileAction",
+        errorName: name,
+        errorMessage: message,
+        prismaCode: error.errorCode,
+      }),
+    );
+    return;
+  }
+
+  console.error(
+    "[confirmImportExcelFileAction]",
+    JSON.stringify({
+      action: "confirmImportExcelFileAction",
+      errorName: name,
+      errorMessage: message,
+    }),
+  );
+}
 
 export async function previewExcelFileAction(
   formData: FormData,
@@ -151,6 +213,7 @@ export async function confirmImportExcelFileAction(
     if (e instanceof ExcelPreviewError) {
       return { ok: false, error: e.message };
     }
+    logConfirmImportFailure(e);
     return {
       ok: false,
       error:
