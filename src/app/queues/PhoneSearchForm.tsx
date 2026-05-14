@@ -1,14 +1,26 @@
 "use client";
 
 import Link from "next/link";
+import { queuesPath } from "@/queuesUrl";
 
 type Props = {
   currentLimit: 10 | 20 | 50;
   initialPhone: string;
+  currentAngle: string;
+  reviewMax?: number;
 };
 
-export function PhoneSearchForm({ currentLimit, initialPhone }: Props) {
-  const clearHref = `/queues?limit=${currentLimit}`;
+export function PhoneSearchForm({
+  currentLimit,
+  initialPhone,
+  currentAngle,
+  reviewMax,
+}: Props) {
+  const clearHref = queuesPath({
+    limit: currentLimit,
+    angle: currentAngle,
+    ...(reviewMax !== undefined ? { reviewMax } : {}),
+  });
   const hasPhoneQuery = initialPhone.trim().length > 0;
 
   return (
@@ -22,6 +34,10 @@ export function PhoneSearchForm({ currentLimit, initialPhone }: Props) {
         aria-label="Search leads by phone"
       >
         <input type="hidden" name="limit" value={currentLimit} />
+        <input type="hidden" name="angle" value={currentAngle} />
+        {reviewMax !== undefined ? (
+          <input type="hidden" name="reviewMax" value={String(reviewMax)} />
+        ) : null}
         <input
           type="search"
           name="phone"

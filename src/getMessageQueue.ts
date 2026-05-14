@@ -1,4 +1,5 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
+import { mergeQueueListWhere } from "./queueListFilter";
 import {
   MESSAGE_STATUS_FIRST_SENT,
   MESSAGE_STATUS_NOT_PREPARED,
@@ -25,6 +26,7 @@ export type MessageQueueLeadRow = {
   area: string | null;
   nextCheckAt: Date | null;
   nextFollowUpAt: Date | null;
+  nextAction: string | null;
   campaignName: string | null;
 };
 
@@ -44,6 +46,8 @@ export type MessageQueueResult = {
 export type GetMessageQueueOptions = {
   /** Per-group row cap (default 10). */
   limit?: number;
+  /** Optional AND filter for queue list views (angle / review cap). */
+  listExtraWhere?: Prisma.LeadWhereInput;
 };
 
 const leadSelect = {
@@ -63,6 +67,7 @@ const leadSelect = {
   area: true,
   nextCheckAt: true,
   nextFollowUpAt: true,
+  nextAction: true,
   campaign: { select: { name: true } },
 } satisfies Prisma.LeadSelect;
 
@@ -86,6 +91,7 @@ function toRow(lead: LeadQueueRecord): MessageQueueLeadRow {
     area: lead.area,
     nextCheckAt: lead.nextCheckAt,
     nextFollowUpAt: lead.nextFollowUpAt,
+    nextAction: lead.nextAction,
     campaignName: lead.campaign?.name ?? null,
   };
 }
@@ -94,11 +100,13 @@ async function loadGroup(
   db: PrismaClient,
   where: Prisma.LeadWhereInput,
   limit: number,
+  listExtraWhere?: Prisma.LeadWhereInput,
 ): Promise<MessageQueueGroup> {
+  const merged = mergeQueueListWhere(where, listExtraWhere);
   const [count, rows] = await Promise.all([
-    db.lead.count({ where }),
+    db.lead.count({ where: merged }),
     db.lead.findMany({
-      where,
+      where: merged,
       select: leadSelect,
       orderBy: [{ updatedAt: "desc" }],
       take: limit,
@@ -125,6 +133,7 @@ export async function getMessageQueue(
     : 10;
 
   const archivedFalse: Prisma.LeadWhereInput = { isArchived: false };
+  const extra = options?.listExtraWhere;
 
   const [
     notPrepared,
@@ -133,27 +142,52 @@ export async function getMessageQueue(
     waitingReply,
     needHuman,
   ] = await Promise.all([
-    loadGroup(db, {
-      ...archivedFalse,
-      messageStatus: MESSAGE_STATUS_NOT_PREPARED,
-      outreachReadiness: OUTREACH_READY,
-    }, limit),
-    loadGroup(db, {
-      ...archivedFalse,
-      messageStatus: MESSAGE_STATUS_PREPARED,
-    }, limit),
-    loadGroup(db, {
-      ...archivedFalse,
-      messageStatus: MESSAGE_STATUS_FIRST_SENT,
-    }, limit),
-    loadGroup(db, {
-      ...archivedFalse,
-      replyStatus: REPLY_STATUS_WAITING,
-    }, limit),
-    loadGroup(db, {
-      ...archivedFalse,
-      handoffRequired: true,
-    }, limit),
+    loadGroup(
+      db,
+      {
+        ...archivedFalse,
+        messageStatus: MESSAGE_STATUS_NOT_PREPARED,
+        outreachReadiness: OUTREACH_READY,
+      },
+      limit,
+      extra,
+    ),
+    loadGroup(
+      db,
+      {
+        ...archivedFalse,
+        messageStatus: MESSAGE_STATUS_PREPARED,
+      },
+      limit,
+      extra,
+    ),
+    loadGroup(
+      db,
+      {
+        ...archivedFalse,
+        messageStatus: MESSAGE_STATUS_FIRST_SENT,
+      },
+      limit,
+      extra,
+    ),
+    loadGroup(
+      db,
+      {
+        ...archivedFalse,
+        replyStatus: REPLY_STATUS_WAITING,
+      },
+      limit,
+      extra,
+    ),
+    loadGroup(
+      db,
+      {
+        ...archivedFalse,
+        handoffRequired: true,
+      },
+      limit,
+      extra,
+    ),
   ]);
 
   return {

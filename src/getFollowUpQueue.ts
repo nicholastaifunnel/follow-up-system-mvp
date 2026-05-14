@@ -1,4 +1,5 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
+import { mergeQueueListWhere } from "./queueListFilter";
 import { REPLY_STATUS_WAITING } from "./statusConstants";
 
 const REPLY_STATUS_NO_REPLY_YET = "No Reply Yet";
@@ -43,6 +44,7 @@ export type FollowUpQueueResult = {
 export type GetFollowUpQueueOptions = {
   /** Per-group row cap (default 10, max 500). */
   limit?: number;
+  listExtraWhere?: Prisma.LeadWhereInput;
 };
 
 const leadSelect = {
@@ -110,11 +112,13 @@ async function loadGroup(
   where: Prisma.LeadWhereInput,
   limit: number,
   orderBy: Prisma.LeadOrderByWithRelationInput[],
+  listExtraWhere?: Prisma.LeadWhereInput,
 ): Promise<FollowUpQueueGroup> {
+  const merged = mergeQueueListWhere(where, listExtraWhere);
   const [count, rows] = await Promise.all([
-    db.lead.count({ where }),
+    db.lead.count({ where: merged }),
     db.lead.findMany({
-      where,
+      where: merged,
       select: leadSelect,
       orderBy,
       take: limit,
@@ -145,6 +149,7 @@ export async function getFollowUpQueue(
   const dayEnd = endOfLocalDay(now);
 
   const archivedFalse: Prisma.LeadWhereInput = { isArchived: false };
+  const extra = options?.listExtraWhere;
 
   const [
     dueToday,
@@ -164,6 +169,7 @@ export async function getFollowUpQueue(
       },
       limit,
       [{ nextFollowUpAt: "asc" }],
+      extra,
     ),
     loadGroup(
       db,
@@ -176,6 +182,7 @@ export async function getFollowUpQueue(
       },
       limit,
       [{ nextFollowUpAt: "asc" }],
+      extra,
     ),
     loadGroup(
       db,
@@ -186,6 +193,7 @@ export async function getFollowUpQueue(
       },
       limit,
       [{ nextCheckAt: "asc" }],
+      extra,
     ),
     loadGroup(
       db,
@@ -195,6 +203,7 @@ export async function getFollowUpQueue(
       },
       limit,
       [{ updatedAt: "desc" }],
+      extra,
     ),
     loadGroup(
       db,
@@ -204,6 +213,7 @@ export async function getFollowUpQueue(
       },
       limit,
       [{ updatedAt: "desc" }],
+      extra,
     ),
   ]);
 

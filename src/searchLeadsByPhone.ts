@@ -1,4 +1,5 @@
-import type { PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
+import { mergeQueueListWhere } from "./queueListFilter";
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 50;
@@ -37,7 +38,7 @@ export type PhoneSearchLeadRow = {
 export async function searchLeadsByPhone(
   prisma: PrismaClient,
   input: string,
-  options?: { limit?: number },
+  options?: { limit?: number; listExtraWhere?: Prisma.LeadWhereInput },
 ): Promise<PhoneSearchLeadRow[]> {
   const trimmed = input.trim();
   const digits = normalizePhoneDigits(trimmed);
@@ -67,7 +68,7 @@ export async function searchLeadsByPhone(
   }
 
   const rows = await prisma.lead.findMany({
-    where: { OR: orClauses },
+    where: mergeQueueListWhere({ OR: orClauses }, options?.listExtraWhere),
     select: {
       id: true,
       businessName: true,

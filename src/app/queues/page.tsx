@@ -9,6 +9,12 @@ import type {
   MessageQueueLeadRow,
   MessageQueueResult,
 } from "@/getMessageQueue";
+import {
+  parseQueueAngleParam,
+  parseReviewMaxParam,
+  queueListExtraWhere,
+  type QueueAngleParam,
+} from "@/queueListFilter";
 import { prisma } from "@/lib/prisma";
 import {
   normalizePhoneDigits,
@@ -18,6 +24,7 @@ import {
 import { PhoneSearchForm } from "./PhoneSearchForm";
 import { QueueLimitSelector } from "./QueueLimitSelector";
 import { QueueSection } from "./QueueSection";
+import { QueuesFilterBar } from "./QueuesFilterBar";
 
 export const dynamic = "force-dynamic";
 
@@ -52,7 +59,6 @@ function fmtDate(d: Date | null): string {
 type QueueAngleProps = {
   leadLevel: string | null;
   reviewCount: number | null;
-  /** When false, omit the “Reviews: n” subline (e.g. phone search uses a dedicated column). */
   showReviewsSubline?: boolean;
 };
 
@@ -85,7 +91,7 @@ function LeadAngleCell({
   );
 }
 
-function PhoneReviewsCell({
+function QueueReviewsCell({
   reviewCount,
   googleRating,
 }: {
@@ -99,7 +105,7 @@ function PhoneReviewsCell({
   }
 
   return (
-    <div className="queue-phone-reviews-cell">
+    <div className="queue-reviews-cell">
       {reviewCount != null ? (
         <div className="queue-angle-reviews">Reviews: {reviewCount}</div>
       ) : (
@@ -112,21 +118,23 @@ function PhoneReviewsCell({
   );
 }
 
-function PhoneWebsiteStatusCell({ website }: { website: string | null }) {
-  const has = Boolean((website ?? "").trim());
+function PhoneLines({
+  phone,
+  internationalPhone,
+}: {
+  phone: string | null;
+  internationalPhone: string | null;
+}) {
   return (
-    <div className="queue-phone-site-cell">
-      <span className={has ? "queue-site-yes" : "queue-site-no"}>
-        {has ? "Has site" : "No site"}
-      </span>
-      {has ? (
-        <div className="queue-site-url queue-muted" title={website ?? ""}>
-          {(website ?? "").trim().length > 40
-            ? `${(website ?? "").trim().slice(0, 37)}…`
-            : (website ?? "").trim()}
-        </div>
+    <>
+      {fmtText(phone)}
+      {internationalPhone ? (
+        <>
+          <br />
+          <span className="phone-search-intl">{fmtText(internationalPhone)}</span>
+        </>
       ) : null}
-    </div>
+    </>
   );
 }
 
@@ -148,45 +156,50 @@ const FOLLOWUP_SECTIONS: { key: keyof FollowUpQueueResult; title: string }[] = [
 
 function MessageQueueTable({ leads }: { leads: MessageQueueLeadRow[] }) {
   return (
-    <div className="table-wrap">
-      <table className="queue">
+    <div className="table-wrap queue-work-table-wrap">
+      <table className="queue queue-work-table">
         <thead>
           <tr>
-            <th>Business Name</th>
+            <th>Business</th>
+            <th>Phone</th>
             <th>Area</th>
-            <th>Industry</th>
-            <th>Lead Level</th>
-            <th>Message Status</th>
-            <th>Reply Status</th>
-            <th>Contact Status</th>
-            <th>Lead Temperature</th>
-            <th>Next Check</th>
-            <th>Next Follow-up</th>
+            <th>Lead Angle</th>
+            <th>Reviews</th>
+            <th>Message status</th>
+            <th>Reply status</th>
+            <th className="queue-th-wrap">
+              Next
+              <br />
+              follow-up
+            </th>
             <th>Next Action</th>
-            <th>Campaign</th>
-            <th>View</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
           {leads.map((row) => (
             <tr key={row.id}>
-              <td>{fmtText(row.businessName)}</td>
+              <td className="queue-td-clip">{fmtText(row.businessName)}</td>
+              <td className="queue-td-phone">
+                <PhoneLines phone={row.phone} internationalPhone={row.internationalPhone} />
+              </td>
               <td>{fmtText(row.area)}</td>
-              <td>{fmtText(row.assignedIndustry)}</td>
               <td>
                 <LeadAngleCell
                   leadLevel={row.leadLevel}
                   reviewCount={row.reviewCount}
                 />
               </td>
+              <td>
+                <QueueReviewsCell
+                  reviewCount={row.reviewCount}
+                  googleRating={row.googleRating}
+                />
+              </td>
               <td>{fmtText(row.messageStatus)}</td>
               <td>{fmtText(row.replyStatus)}</td>
-              <td>{fmtText(row.contactStatus)}</td>
-              <td>—</td>
-              <td>{fmtDate(row.nextCheckAt)}</td>
               <td>{fmtDate(row.nextFollowUpAt)}</td>
-              <td>—</td>
-              <td>{fmtText(row.campaignName)}</td>
+              <td className="queue-td-clip">{fmtText(row.nextAction)}</td>
               <td>
                 <Link href={`/leads/${row.id}`}>View</Link>
               </td>
@@ -200,34 +213,32 @@ function MessageQueueTable({ leads }: { leads: MessageQueueLeadRow[] }) {
 
 function PhoneSearchResultsTable({ leads }: { leads: PhoneSearchLeadRow[] }) {
   return (
-    <div className="table-wrap phone-search-results">
-      <table className="queue">
+    <div className="table-wrap phone-search-results queue-work-table-wrap">
+      <table className="queue queue-work-table">
         <thead>
           <tr>
             <th>Business</th>
             <th>Phone</th>
             <th>Area</th>
-            <th>Lead Level</th>
+            <th>Lead Angle</th>
             <th>Reviews</th>
-            <th>Website</th>
-            <th>Message Status</th>
-            <th>Reply Status</th>
+            <th>Message status</th>
+            <th>Reply status</th>
+            <th className="queue-th-wrap">
+              Next
+              <br />
+              follow-up
+            </th>
             <th>Next Action</th>
-            <th>View</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
           {leads.map((row) => (
             <tr key={row.id}>
-              <td>{fmtText(row.businessName)}</td>
-              <td>
-                {fmtText(row.phone)}
-                {row.internationalPhone ? (
-                  <>
-                    <br />
-                    <span className="phone-search-intl">{fmtText(row.internationalPhone)}</span>
-                  </>
-                ) : null}
+              <td className="queue-td-clip">{fmtText(row.businessName)}</td>
+              <td className="queue-td-phone">
+                <PhoneLines phone={row.phone} internationalPhone={row.internationalPhone} />
               </td>
               <td>{fmtText(row.area)}</td>
               <td>
@@ -238,17 +249,15 @@ function PhoneSearchResultsTable({ leads }: { leads: PhoneSearchLeadRow[] }) {
                 />
               </td>
               <td>
-                <PhoneReviewsCell
+                <QueueReviewsCell
                   reviewCount={row.reviewCount}
                   googleRating={row.googleRating}
                 />
               </td>
-              <td>
-                <PhoneWebsiteStatusCell website={row.website} />
-              </td>
               <td>{fmtText(row.messageStatus)}</td>
               <td>{fmtText(row.replyStatus)}</td>
-              <td>{fmtText(row.nextAction)}</td>
+              <td>{fmtDate(row.nextFollowUpAt)}</td>
+              <td className="queue-td-clip">{fmtText(row.nextAction)}</td>
               <td>
                 <Link href={`/leads/${row.id}`}>View</Link>
               </td>
@@ -262,45 +271,50 @@ function PhoneSearchResultsTable({ leads }: { leads: PhoneSearchLeadRow[] }) {
 
 function FollowUpQueueTable({ leads }: { leads: FollowUpQueueLeadRow[] }) {
   return (
-    <div className="table-wrap">
-      <table className="queue">
+    <div className="table-wrap queue-work-table-wrap">
+      <table className="queue queue-work-table">
         <thead>
           <tr>
-            <th>Business Name</th>
+            <th>Business</th>
+            <th>Phone</th>
             <th>Area</th>
-            <th>Industry</th>
-            <th>Lead Level</th>
-            <th>Message Status</th>
-            <th>Reply Status</th>
-            <th>Contact Status</th>
-            <th>Lead Temperature</th>
-            <th>Next Check</th>
-            <th>Next Follow-up</th>
+            <th>Lead Angle</th>
+            <th>Reviews</th>
+            <th>Message status</th>
+            <th>Reply status</th>
+            <th className="queue-th-wrap">
+              Next
+              <br />
+              follow-up
+            </th>
             <th>Next Action</th>
-            <th>Campaign</th>
-            <th>View</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
           {leads.map((row) => (
             <tr key={row.id}>
-              <td>{fmtText(row.businessName)}</td>
+              <td className="queue-td-clip">{fmtText(row.businessName)}</td>
+              <td className="queue-td-phone">
+                <PhoneLines phone={row.phone} internationalPhone={row.internationalPhone} />
+              </td>
               <td>{fmtText(row.area)}</td>
-              <td>{fmtText(row.assignedIndustry)}</td>
               <td>
                 <LeadAngleCell
                   leadLevel={row.leadLevel}
                   reviewCount={row.reviewCount}
                 />
               </td>
+              <td>
+                <QueueReviewsCell
+                  reviewCount={row.reviewCount}
+                  googleRating={row.googleRating}
+                />
+              </td>
               <td>{fmtText(row.messageStatus)}</td>
               <td>{fmtText(row.replyStatus)}</td>
-              <td>{fmtText(row.contactStatus)}</td>
-              <td>{fmtText(row.leadTemperature)}</td>
-              <td>{fmtDate(row.nextCheckAt)}</td>
               <td>{fmtDate(row.nextFollowUpAt)}</td>
-              <td>{fmtText(row.nextAction)}</td>
-              <td>{fmtText(row.campaignName)}</td>
+              <td className="queue-td-clip">{fmtText(row.nextAction)}</td>
               <td>
                 <Link href={`/leads/${row.id}`}>View</Link>
               </td>
@@ -315,7 +329,12 @@ function FollowUpQueueTable({ leads }: { leads: FollowUpQueueLeadRow[] }) {
 export default async function QueuesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ limit?: string | string[]; phone?: string | string[] }>;
+  searchParams: Promise<{
+    limit?: string | string[];
+    phone?: string | string[];
+    angle?: string | string[];
+    reviewMax?: string | string[];
+  }>;
 }) {
   const sp = await searchParams;
   const limit = resolveQueueDisplayLimit(sp.limit);
@@ -324,16 +343,20 @@ export default async function QueuesPage({
   const hasPhoneQuery = phoneQuery.length > 0;
   const phoneSearchOk = hasPhoneQuery && phoneDigits.length >= 4;
 
+  const angle: QueueAngleParam = parseQueueAngleParam(sp.angle);
+  const reviewMax = parseReviewMaxParam(sp.reviewMax);
+  const listExtraWhere = queueListExtraWhere(angle, reviewMax);
+
   const [messageQueue, followUpQueue, phoneSearchRows] = await Promise.all([
-    getMessageQueue(prisma, { limit }),
-    getFollowUpQueue(prisma, { limit }),
+    getMessageQueue(prisma, { limit, listExtraWhere }),
+    getFollowUpQueue(prisma, { limit, listExtraWhere }),
     phoneSearchOk
-      ? searchLeadsByPhone(prisma, phoneQuery, { limit: 20 })
+      ? searchLeadsByPhone(prisma, phoneQuery, { limit, listExtraWhere })
       : Promise.resolve([] as PhoneSearchLeadRow[]),
   ]);
 
   return (
-    <div className="page">
+    <div className="page queues-work-page">
       <p className="top-links">
         <Link className="top-link" href="/">
           Home
@@ -349,13 +372,23 @@ export default async function QueuesPage({
       </p>
       <h1>Queues</h1>
       <p className="sub">
-        Read-only view. Data from <code>getMessageQueue</code> and{" "}
-        <code>getFollowUpQueue</code> — no writes.
+        Work list: filter by URL params <code>angle</code>, <code>reviewMax</code>,{" "}
+        <code>phone</code>, <code>limit</code>. Read-only — no writes.
       </p>
 
       <div className="queues-toolbar">
-        <PhoneSearchForm currentLimit={limit} initialPhone={phoneQuery} />
-        <QueueLimitSelector currentLimit={limit} currentPhone={phoneQuery} />
+        <PhoneSearchForm
+          currentLimit={limit}
+          initialPhone={phoneQuery}
+          currentAngle={angle}
+          reviewMax={reviewMax}
+        />
+        <QueueLimitSelector
+          currentLimit={limit}
+          currentPhone={phoneQuery}
+          currentAngle={angle}
+          reviewMax={reviewMax}
+        />
       </div>
 
       {hasPhoneQuery ? (
@@ -364,21 +397,22 @@ export default async function QueuesPage({
           {!phoneSearchOk ? (
             <p className="empty">Enter at least 4 digits to search.</p>
           ) : phoneSearchRows.length === 0 ? (
-            <p className="empty">No leads found for this phone.</p>
+            <p className="empty">No leads found for this phone (with current filters).</p>
           ) : (
             <PhoneSearchResultsTable leads={phoneSearchRows} />
           )}
         </div>
       ) : null}
 
-      <div className="section">
+      <div className="section message-queue-work-section">
+        <QueuesFilterBar limit={limit} phone={phoneQuery} angle={angle} reviewMax={reviewMax} />
         <h2>Message Queue</h2>
         {MESSAGE_SECTIONS.map(({ key, title }) => {
           const group = messageQueue[key];
           return (
             <div className="group" key={key}>
               <QueueSection
-                key={`msg-${String(key)}-${limit}`}
+                key={`msg-${String(key)}-${limit}-${angle}-${reviewMax ?? "x"}`}
                 title={title}
                 totalCount={group.count}
                 shownCount={group.leads.length}
@@ -402,7 +436,7 @@ export default async function QueuesPage({
           return (
             <div className="group" key={key}>
               <QueueSection
-                key={`fu-${String(key)}-${limit}`}
+                key={`fu-${String(key)}-${limit}-${angle}-${reviewMax ?? "x"}`}
                 title={title}
                 totalCount={group.count}
                 shownCount={group.leads.length}
