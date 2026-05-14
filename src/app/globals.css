@@ -439,6 +439,79 @@ table.queue tbody tr:nth-child(even) {
   background: var(--card-muted);
 }
 
+.queue-angle-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 7rem;
+}
+
+.queue-angle-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.queue-angle-level-text {
+  font-weight: 500;
+}
+
+.queue-angle-reviews {
+  font-size: 0.75rem;
+  color: var(--muted-2, var(--muted-3));
+}
+
+.queue-badge {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 0.12rem 0.4rem;
+  border-radius: 999px;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.queue-badge--no-website {
+  background: rgba(139, 92, 246, 0.18);
+  color: #5b21b6;
+  border: 1px solid rgba(91, 33, 182, 0.25);
+}
+
+.queue-badge--low-review {
+  background: rgba(234, 88, 12, 0.16);
+  color: #9a3412;
+  border: 1px solid rgba(154, 52, 18, 0.22);
+}
+
+.queue-muted {
+  font-size: 0.75rem;
+  color: var(--muted-3);
+}
+
+.queue-phone-reviews-cell,
+.queue-phone-site-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  max-width: 14rem;
+}
+
+.queue-site-url {
+  word-break: break-all;
+}
+
+.queue-site-yes {
+  font-weight: 600;
+  color: var(--text-heading);
+}
+
+.queue-site-no {
+  font-weight: 600;
+  color: var(--muted-2, var(--muted-3));
+}
+
 .top-link {
   font-size: 0.875rem;
   margin-bottom: 1rem;

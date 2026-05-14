@@ -8,6 +8,9 @@ export type FollowUpQueueLeadRow = {
   businessName: string;
   assignedIndustry: string | null;
   leadLevel: string | null;
+  website: string | null;
+  reviewCount: number | null;
+  googleRating: number | null;
   replyStatus: string | null;
   replyOutcome: string | null;
   contactStatus: string;
@@ -47,6 +50,9 @@ const leadSelect = {
   businessName: true,
   assignedIndustry: true,
   leadLevel: true,
+  website: true,
+  reviewCount: true,
+  googleRating: true,
   replyStatus: true,
   replyOutcome: true,
   contactStatus: true,
@@ -79,6 +85,9 @@ function toRow(lead: LeadFollowRecord): FollowUpQueueLeadRow {
     businessName: lead.businessName,
     assignedIndustry: lead.assignedIndustry,
     leadLevel: lead.leadLevel,
+    website: lead.website,
+    reviewCount: lead.reviewCount,
+    googleRating: lead.googleRating,
     replyStatus: lead.replyStatus,
     replyOutcome: lead.replyOutcome,
     contactStatus: lead.contactStatus,

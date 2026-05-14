@@ -16,6 +16,9 @@ export type PhoneSearchLeadRow = {
   area: string | null;
   assignedIndustry: string | null;
   leadLevel: string | null;
+  website: string | null;
+  reviewCount: number | null;
+  googleRating: number | null;
   messageStatus: string;
   replyStatus: string | null;
   replyOutcome: string | null;
@@ -73,6 +76,9 @@ export async function searchLeadsByPhone(
       area: true,
       assignedIndustry: true,
       leadLevel: true,
+      website: true,
+      reviewCount: true,
+      googleRating: true,
       messageStatus: true,
       replyStatus: true,
       replyOutcome: true,

@@ -73,6 +73,18 @@ const FIRST_MESSAGE_TARGETS = [
     leadLevel: "No Website",
   },
   {
+    nameEn: "First Message — No Website Fallback (EN)",
+    nameZh: "First Message — No Website Fallback (ZH)",
+    industry: null,
+    leadLevel: "No Website",
+  },
+  {
+    nameEn: "First Message — Low Review Fallback (EN)",
+    nameZh: "First Message — Low Review Fallback (ZH)",
+    industry: null,
+    leadLevel: "Low Review",
+  },
+  {
     nameEn: "First Message — Fallback (EN)",
     nameZh: "First Message — Fallback (ZH)",
     industry: null,
