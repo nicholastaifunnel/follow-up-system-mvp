@@ -172,10 +172,50 @@ a:hover {
 }
 
 input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
-select,
 textarea {
   background-color: var(--input-bg);
   color: var(--input-text);
+}
+
+/* Site-wide native selects: match theme (fixes dark default UA chrome) */
+select {
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.35;
+  color: var(--text);
+  background-color: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.65rem;
+  min-height: 2.25rem;
+  cursor: pointer;
+}
+
+select:focus {
+  outline: none;
+}
+
+select:focus-visible {
+  outline: 2px solid rgba(11, 87, 208, 0.32);
+  outline-offset: 1px;
+  border-color: rgba(11, 87, 208, 0.38);
+}
+
+html[data-theme="dark"] select {
+  color-scheme: dark;
+  color: var(--text);
+  background-color: var(--input-bg);
+  border-color: var(--border);
+}
+
+html[data-theme="dark"] select option {
+  background-color: var(--card);
+  color: var(--text);
+}
+
+html[data-theme="dark"] select:focus-visible {
+  outline-color: rgba(147, 197, 253, 0.38);
+  border-color: rgba(147, 197, 253, 0.42);
 }
 
 .page {
