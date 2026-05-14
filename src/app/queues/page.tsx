@@ -4,6 +4,10 @@ import type {
   FollowUpQueueLeadRow,
   FollowUpQueueResult,
 } from "@/getFollowUpQueue";
+import {
+  getFilteredMessageLeads,
+  type FilteredMessageLeadRow,
+} from "@/getFilteredMessageLeads";
 import { getMessageQueue } from "@/getMessageQueue";
 import type {
   MessageQueueLeadRow,
@@ -16,6 +20,7 @@ import {
   type QueueAngleParam,
 } from "@/queueListFilter";
 import { prisma } from "@/lib/prisma";
+import { queuesPath } from "@/queuesUrl";
 import {
   normalizePhoneDigits,
   searchLeadsByPhone,
@@ -269,6 +274,64 @@ function PhoneSearchResultsTable({ leads }: { leads: PhoneSearchLeadRow[] }) {
   );
 }
 
+function fmtReviewShort(
+  reviewCount: number | null,
+  googleRating: number | null,
+): string {
+  if (reviewCount == null) return "—";
+  if (googleRating != null && !Number.isNaN(googleRating)) {
+    const r = googleRating;
+    const line = Number.isInteger(r) ? String(r) : r.toFixed(1);
+    return `${reviewCount} (${line})`;
+  }
+  return String(reviewCount);
+}
+
+function FilteredMessageLeadsTable({
+  leads,
+}: {
+  leads: FilteredMessageLeadRow[];
+}) {
+  return (
+    <div className="table-wrap queue-work-table-wrap">
+      <table className="queue queue-work-table">
+        <thead>
+          <tr>
+            <th>Business</th>
+            <th>Phone</th>
+            <th>Website</th>
+            <th>Reviews</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {leads.map((row) => (
+            <tr key={row.id}>
+              <td className="queue-td-clip">{fmtText(row.businessName)}</td>
+              <td className="queue-td-phone">
+                <PhoneLines
+                  phone={row.phone}
+                  internationalPhone={row.internationalPhone}
+                />
+              </td>
+              <td className="queue-td-clip">{fmtText(row.website)}</td>
+              <td>{fmtReviewShort(row.reviewCount, row.googleRating)}</td>
+              <td className="queue-td-clip">
+                {fmtText(row.messageStatus)}
+                {row.replyStatus ? ` · ${row.replyStatus}` : ""}
+              </td>
+              <td>
+                <Link href={`/leads/${row.id}`}>View</Link>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function FollowUpQueueTable({ leads }: { leads: FollowUpQueueLeadRow[] }) {
   return (
     <div className="table-wrap queue-work-table-wrap">
@@ -347,13 +410,34 @@ export default async function QueuesPage({
   const reviewMax = parseReviewMaxParam(sp.reviewMax);
   const listExtraWhere = queueListExtraWhere(angle, reviewMax);
 
-  const [messageQueue, followUpQueue, phoneSearchRows] = await Promise.all([
-    getMessageQueue(prisma, { limit, listExtraWhere }),
-    getFollowUpQueue(prisma, { limit }),
-    phoneSearchOk
-      ? searchLeadsByPhone(prisma, phoneQuery, { limit, listExtraWhere })
-      : Promise.resolve([] as PhoneSearchLeadRow[]),
-  ]);
+  const isFilteredMode =
+    angle !== "all" ||
+    reviewMax !== undefined ||
+    (hasPhoneQuery && phoneSearchOk);
+
+  let filteredLeads: FilteredMessageLeadRow[] | null = null;
+  let messageQueue: MessageQueueResult | null = null;
+  let followUpQueue: FollowUpQueueResult | null = null;
+  let phoneSearchRows: PhoneSearchLeadRow[] = [];
+
+  if (isFilteredMode) {
+    filteredLeads = await getFilteredMessageLeads(prisma, {
+      limit,
+      listExtraWhere,
+      phoneQuery: phoneSearchOk ? phoneQuery : undefined,
+    });
+  } else {
+    const [mq, fq, ps] = await Promise.all([
+      getMessageQueue(prisma, { limit, listExtraWhere }),
+      getFollowUpQueue(prisma, { limit }),
+      phoneSearchOk
+        ? searchLeadsByPhone(prisma, phoneQuery, { limit, listExtraWhere })
+        : Promise.resolve([] as PhoneSearchLeadRow[]),
+    ]);
+    messageQueue = mq;
+    followUpQueue = fq;
+    phoneSearchRows = ps;
+  }
 
   return (
     <div className="page queues-work-page">
@@ -372,9 +456,9 @@ export default async function QueuesPage({
       </p>
       <h1>Queues</h1>
       <p className="sub">
-        Work list: filters only apply to Message Queue. Follow-up Queue always shows
-        all follow-up leads. Phone search uses the same filters to match Message Queue
-        leads. Read-only — no writes.
+        {isFilteredMode
+          ? "Filtered Message Queue: one compact list of queue-eligible leads. Follow-up Queue is hidden until you clear filters. Read-only — no writes."
+          : "Work list: filters only apply to Message Queue. Follow-up Queue always shows all follow-up leads. Phone search uses the same filters to match Message Queue leads. Read-only — no writes."}
       </p>
 
       <div className="queues-toolbar">
@@ -392,81 +476,120 @@ export default async function QueuesPage({
         />
       </div>
 
-      {hasPhoneQuery ? (
-        <div className="section phone-search-results-section">
-          <h2>Phone Search Results</h2>
-          <p className="sub phone-search-results-note">
-            Same filters as Message Queue (angle / max reviews). Follow-up Queue is
-            unchanged.
+      {hasPhoneQuery && !phoneSearchOk ? (
+        <p className="empty">Enter at least 4 digits to search.</p>
+      ) : null}
+
+      {isFilteredMode && filteredLeads ? (
+        <div className="section message-queue-work-section">
+          <p className="phone-search-clear-wrap">
+            <Link className="top-link" href={queuesPath({ limit })} prefetch={false}>
+              Clear filters — full Queues
+            </Link>
           </p>
-          {!phoneSearchOk ? (
-            <p className="empty">Enter at least 4 digits to search.</p>
-          ) : phoneSearchRows.length === 0 ? (
-            <p className="empty">No leads found for this phone (with current filters).</p>
+          <QueuesFilterBar
+            limit={limit}
+            phone={phoneQuery}
+            angle={angle}
+            reviewMax={reviewMax}
+          />
+          <h2>Filtered Message Leads</h2>
+          <p className="sub">
+            Showing up to {limit} leads matching Message Queue rules, angle / reviews /
+            phone filters (single query).
+          </p>
+          {filteredLeads.length === 0 ? (
+            <p className="empty">No leads match these filters.</p>
           ) : (
-            <PhoneSearchResultsTable leads={phoneSearchRows} />
+            <FilteredMessageLeadsTable leads={filteredLeads} />
           )}
         </div>
       ) : null}
 
-      <div className="section message-queue-work-section">
-        <QueuesFilterBar limit={limit} phone={phoneQuery} angle={angle} reviewMax={reviewMax} />
-        <h2>Message Queue</h2>
-        {MESSAGE_SECTIONS.map(({ key, title }) => {
-          const group = messageQueue[key];
-          return (
-            <div className="group" key={key}>
-              <QueueSection
-                key={`msg-${String(key)}-${limit}-${angle}-${reviewMax ?? "x"}`}
-                title={title}
-                totalCount={group.count}
-                shownCount={group.leads.length}
-                defaultExpanded={group.count > 0}
-              >
-                {group.leads.length === 0 ? (
-                  <p className="empty">No leads</p>
-                ) : (
-                  <MessageQueueTable leads={group.leads} />
-                )}
-              </QueueSection>
+      {!isFilteredMode && messageQueue && followUpQueue ? (
+        <>
+          {hasPhoneQuery && phoneSearchOk ? (
+            <div className="section phone-search-results-section">
+              <h2>Phone Search Results</h2>
+              <p className="sub phone-search-results-note">
+                Same filters as Message Queue (angle / max reviews). Follow-up Queue is
+                unchanged.
+              </p>
+              {phoneSearchRows.length === 0 ? (
+                <p className="empty">
+                  No leads found for this phone (with current filters).
+                </p>
+              ) : (
+                <PhoneSearchResultsTable leads={phoneSearchRows} />
+              )}
             </div>
-          );
-        })}
-      </div>
+          ) : null}
 
-      <div className="section">
-        <h2>Follow-up Queue</h2>
-        {FOLLOWUP_SECTIONS.map(({ key, title }) => {
-          const group = followUpQueue[key];
-          return (
-            <div className="group" key={key}>
-              <QueueSection
-                key={`fu-${String(key)}-${limit}`}
-                title={title}
-                totalCount={group.count}
-                shownCount={group.leads.length}
-                defaultExpanded={group.count > 0}
-              >
-                {group.leads.length === 0 ? (
-                  <p className="empty">No leads</p>
-                ) : (
-                  <FollowUpQueueTable leads={group.leads} />
-                )}
-              </QueueSection>
-            </div>
-          );
-        })}
-      </div>
+          <div className="section message-queue-work-section">
+            <QueuesFilterBar
+              limit={limit}
+              phone={phoneQuery}
+              angle={angle}
+              reviewMax={reviewMax}
+            />
+            <h2>Message Queue</h2>
+            {MESSAGE_SECTIONS.map(({ key, title }) => {
+              const group = messageQueue[key];
+              return (
+                <div className="group" key={key}>
+                  <QueueSection
+                    key={`msg-${String(key)}-${limit}-${angle}-${reviewMax ?? "x"}`}
+                    title={title}
+                    totalCount={group.count}
+                    shownCount={group.leads.length}
+                    defaultExpanded={group.count > 0}
+                  >
+                    {group.leads.length === 0 ? (
+                      <p className="empty">No leads</p>
+                    ) : (
+                      <MessageQueueTable leads={group.leads} />
+                    )}
+                  </QueueSection>
+                </div>
+              );
+            })}
+          </div>
 
-      <div className="section skipped-leads-cta-section">
-        <h2>Skipped Leads</h2>
-        <p className="sub">
-          Skipped leads are hidden from Message Queue and Follow-up Queue.
-        </p>
-        <Link className="import-preview-btn" href={`/skipped-leads?limit=${limit}`}>
-          Open Skipped Leads
-        </Link>
-      </div>
+          <div className="section">
+            <h2>Follow-up Queue</h2>
+            {FOLLOWUP_SECTIONS.map(({ key, title }) => {
+              const group = followUpQueue[key];
+              return (
+                <div className="group" key={key}>
+                  <QueueSection
+                    key={`fu-${String(key)}-${limit}`}
+                    title={title}
+                    totalCount={group.count}
+                    shownCount={group.leads.length}
+                    defaultExpanded={group.count > 0}
+                  >
+                    {group.leads.length === 0 ? (
+                      <p className="empty">No leads</p>
+                    ) : (
+                      <FollowUpQueueTable leads={group.leads} />
+                    )}
+                  </QueueSection>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="section skipped-leads-cta-section">
+            <h2>Skipped Leads</h2>
+            <p className="sub">
+              Skipped leads are hidden from Message Queue and Follow-up Queue.
+            </p>
+            <Link className="import-preview-btn" href={`/skipped-leads?limit=${limit}`}>
+              Open Skipped Leads
+            </Link>
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }
