@@ -7,13 +7,12 @@ import { queuesPath } from "@/queuesUrl";
 const ANGLE_OPTIONS: { value: QueueAngleParam; label: string }[] = [
   { value: "all", label: "All leads" },
   { value: "no-website", label: "No Website" },
-  { value: "low-review", label: "Low Review" },
   { value: "has-website", label: "Has Website" },
   { value: "has-phone", label: "Has Phone" },
   { value: "no-phone", label: "No Phone" },
 ];
 
-const REVIEW_MAX_OPTIONS = [5, 10, 20] as const;
+const REVIEW_MAX_OPTIONS = [50, 100] as const;
 
 type Props = {
   limit: 10 | 20 | 50;
@@ -30,7 +29,11 @@ export function QueuesFilterBar({ limit, phone, angle, reviewMax }: Props) {
   };
 
   return (
-    <div className="queues-filter-bar" role="navigation" aria-label="Queue filters">
+    <div
+      className="queues-filter-bar"
+      role="navigation"
+      aria-label="Message Queue filters"
+    >
       <div className="queues-filter-row">
         <span className="queues-filter-label">Angle</span>
         <div className="queues-filter-pills">
@@ -57,7 +60,7 @@ export function QueuesFilterBar({ limit, phone, angle, reviewMax }: Props) {
         </div>
       </div>
       <div className="queues-filter-row">
-        <span className="queues-filter-label">Max reviews</span>
+        <span className="queues-filter-label">Reviews</span>
         <div className="queues-filter-pills">
           <Link
             href={queuesPath({ ...base, angle })}

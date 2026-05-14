@@ -31,7 +31,7 @@ export function parseQueueAngleParam(
   return "all";
 }
 
-/** Preset caps for the work list; omit URL param for “any”. */
+/** Preset caps for Message Queue list; omit URL param for “any”. */
 export function parseReviewMaxParam(
   raw: string | string[] | undefined,
 ): number | undefined {
@@ -39,7 +39,7 @@ export function parseReviewMaxParam(
   if (v === undefined || v === "") return undefined;
   const n = Number.parseInt(String(v), 10);
   if (!Number.isFinite(n)) return undefined;
-  if (n === 5 || n === 10 || n === 20) return n;
+  if (n === 50 || n === 100) return n;
   return undefined;
 }
 

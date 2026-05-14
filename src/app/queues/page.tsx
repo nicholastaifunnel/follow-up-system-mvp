@@ -349,7 +349,7 @@ export default async function QueuesPage({
 
   const [messageQueue, followUpQueue, phoneSearchRows] = await Promise.all([
     getMessageQueue(prisma, { limit, listExtraWhere }),
-    getFollowUpQueue(prisma, { limit, listExtraWhere }),
+    getFollowUpQueue(prisma, { limit }),
     phoneSearchOk
       ? searchLeadsByPhone(prisma, phoneQuery, { limit, listExtraWhere })
       : Promise.resolve([] as PhoneSearchLeadRow[]),
@@ -372,8 +372,9 @@ export default async function QueuesPage({
       </p>
       <h1>Queues</h1>
       <p className="sub">
-        Work list: filter by URL params <code>angle</code>, <code>reviewMax</code>,{" "}
-        <code>phone</code>, <code>limit</code>. Read-only — no writes.
+        Work list: filters only apply to Message Queue. Follow-up Queue always shows
+        all follow-up leads. Phone search uses the same filters to match Message Queue
+        leads. Read-only — no writes.
       </p>
 
       <div className="queues-toolbar">
@@ -394,6 +395,10 @@ export default async function QueuesPage({
       {hasPhoneQuery ? (
         <div className="section phone-search-results-section">
           <h2>Phone Search Results</h2>
+          <p className="sub phone-search-results-note">
+            Same filters as Message Queue (angle / max reviews). Follow-up Queue is
+            unchanged.
+          </p>
           {!phoneSearchOk ? (
             <p className="empty">Enter at least 4 digits to search.</p>
           ) : phoneSearchRows.length === 0 ? (
@@ -436,7 +441,7 @@ export default async function QueuesPage({
           return (
             <div className="group" key={key}>
               <QueueSection
-                key={`fu-${String(key)}-${limit}-${angle}-${reviewMax ?? "x"}`}
+                key={`fu-${String(key)}-${limit}`}
                 title={title}
                 totalCount={group.count}
                 shownCount={group.leads.length}
