@@ -81,10 +81,25 @@ function fmtNum(v: number | null | undefined): string {
   return String(v);
 }
 
-function BackToQueues() {
+function BackToQueues({ leadId }: { leadId?: string }) {
   return (
-    <p className="top-link">
-      <Link href="/queues">← Back to queues</Link>
+    <p className="top-links">
+      <Link className="top-link" href="/queues">
+        ← Back to queues
+      </Link>
+      {leadId ? (
+        <>
+          <span className="top-links-sep">·</span>
+          <a
+            className="top-link"
+            href={`/leads/${leadId}/reply-assistant`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Reply Assistant
+          </a>
+        </>
+      ) : null}
     </p>
   );
 }
@@ -149,7 +164,6 @@ export default async function LeadDetailPage({
     return (
       <div className="page lead-detail">
         <BackToQueues />
-        <h1>Lead not found</h1>
         <p className="sub">
           No lead exists with id <code>{id}</code>.
         </p>
@@ -184,7 +198,7 @@ export default async function LeadDetailPage({
 
   return (
     <div className="page lead-detail">
-      <BackToQueues />
+      <BackToQueues leadId={id} />
 
       <header className="lead-header">
         <h1>{fmtText(lead.businessName)}</h1>

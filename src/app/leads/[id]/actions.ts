@@ -31,6 +31,7 @@ export async function prepareLeadMessageAction(
       language: normalizedLanguage,
     });
     revalidatePath(`/leads/${leadId}`);
+    revalidatePath(`/leads/${leadId}/reply-assistant`);
     return { ok: true };
   } catch (e) {
     const message =
@@ -83,6 +84,8 @@ export async function markLeadAsSentAction(
   try {
     await markWhatsAppFirstMessageSent(prisma, { leadId });
     revalidatePath(`/leads/${leadId}`);
+    revalidatePath(`/leads/${leadId}/reply-assistant`);
+    revalidatePath("/queues");
     return { ok: true };
   } catch (e) {
     const message =
@@ -164,6 +167,8 @@ export async function recordReplyOutcomeAction(
   try {
     await recordReplyOutcome(prisma, payload);
     revalidatePath(`/leads/${leadId}`);
+    revalidatePath(`/leads/${leadId}/reply-assistant`);
+    revalidatePath("/queues");
     return { ok: true };
   } catch (e) {
     const message =

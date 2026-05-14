@@ -813,3 +813,28 @@ table.queue tbody tr:nth-child(even) {
   font-size: 0.8125rem;
   color: #1b5e20;
 }
+
+.reply-assistant-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.reply-assistant-suggested {
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: #222;
+  padding: 0.35rem 0 0;
+  max-width: 42rem;
+}
+
+.reply-assistant-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: center;
+}
+
+.reply-assistant-form .reply-form-actions {
+  margin-top: 0.35rem;
+}
