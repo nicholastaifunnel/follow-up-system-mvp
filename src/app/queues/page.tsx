@@ -1,17 +1,21 @@
 import Link from "next/link";
 import { getFollowUpQueue } from "@/getFollowUpQueue";
 import type {
-  FollowUpQueueGroup,
   FollowUpQueueLeadRow,
   FollowUpQueueResult,
 } from "@/getFollowUpQueue";
 import { getMessageQueue } from "@/getMessageQueue";
 import type {
-  MessageQueueGroup,
   MessageQueueLeadRow,
   MessageQueueResult,
 } from "@/getMessageQueue";
 import { prisma } from "@/lib/prisma";
+import {
+  normalizePhoneDigits,
+  searchLeadsByPhone,
+  type PhoneSearchLeadRow,
+} from "@/searchLeadsByPhone";
+import { PhoneSearchForm } from "./PhoneSearchForm";
 import { QueueLimitSelector } from "./QueueLimitSelector";
 import { QueueSection } from "./QueueSection";
 
@@ -25,6 +29,14 @@ function resolveQueueDisplayLimit(
   const n = Number.parseInt(String(v), 10);
   if (n === 20 || n === 50) return n;
   return 10;
+}
+
+function resolvePhoneQuery(
+  raw: string | string[] | undefined,
+): string {
+  const v = Array.isArray(raw) ? raw[0] : raw;
+  if (v === undefined || v === "") return "";
+  return String(v).trim();
 }
 
 function fmtText(v: string | null | undefined): string {
@@ -100,6 +112,49 @@ function MessageQueueTable({ leads }: { leads: MessageQueueLeadRow[] }) {
   );
 }
 
+function PhoneSearchResultsTable({ leads }: { leads: PhoneSearchLeadRow[] }) {
+  return (
+    <div className="table-wrap phone-search-results">
+      <table className="queue">
+        <thead>
+          <tr>
+            <th>Business</th>
+            <th>Phone</th>
+            <th>Area</th>
+            <th>Message Status</th>
+            <th>Reply Status</th>
+            <th>Next Action</th>
+            <th>View</th>
+          </tr>
+        </thead>
+        <tbody>
+          {leads.map((row) => (
+            <tr key={row.id}>
+              <td>{fmtText(row.businessName)}</td>
+              <td>
+                {fmtText(row.phone)}
+                {row.internationalPhone ? (
+                  <>
+                    <br />
+                    <span className="phone-search-intl">{fmtText(row.internationalPhone)}</span>
+                  </>
+                ) : null}
+              </td>
+              <td>{fmtText(row.area)}</td>
+              <td>{fmtText(row.messageStatus)}</td>
+              <td>{fmtText(row.replyStatus)}</td>
+              <td>{fmtText(row.nextAction)}</td>
+              <td>
+                <Link href={`/leads/${row.id}`}>View</Link>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function FollowUpQueueTable({ leads }: { leads: FollowUpQueueLeadRow[] }) {
   return (
     <div className="table-wrap">
@@ -150,14 +205,21 @@ function FollowUpQueueTable({ leads }: { leads: FollowUpQueueLeadRow[] }) {
 export default async function QueuesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ limit?: string | string[] }>;
+  searchParams: Promise<{ limit?: string | string[]; phone?: string | string[] }>;
 }) {
   const sp = await searchParams;
   const limit = resolveQueueDisplayLimit(sp.limit);
+  const phoneQuery = resolvePhoneQuery(sp.phone);
+  const phoneDigits = normalizePhoneDigits(phoneQuery);
+  const hasPhoneQuery = phoneQuery.length > 0;
+  const phoneSearchOk = hasPhoneQuery && phoneDigits.length >= 4;
 
-  const [messageQueue, followUpQueue] = await Promise.all([
+  const [messageQueue, followUpQueue, phoneSearchRows] = await Promise.all([
     getMessageQueue(prisma, { limit }),
     getFollowUpQueue(prisma, { limit }),
+    phoneSearchOk
+      ? searchLeadsByPhone(prisma, phoneQuery, { limit: 20 })
+      : Promise.resolve([] as PhoneSearchLeadRow[]),
   ]);
 
   return (
@@ -177,7 +239,23 @@ export default async function QueuesPage({
         <code>getFollowUpQueue</code> — no writes.
       </p>
 
-      <QueueLimitSelector currentLimit={limit} />
+      <div className="queues-toolbar">
+        <PhoneSearchForm currentLimit={limit} initialPhone={phoneQuery} />
+        <QueueLimitSelector currentLimit={limit} currentPhone={phoneQuery} />
+      </div>
+
+      {hasPhoneQuery ? (
+        <div className="section phone-search-results-section">
+          <h2>Phone Search Results</h2>
+          {!phoneSearchOk ? (
+            <p className="empty">Enter at least 4 digits to search.</p>
+          ) : phoneSearchRows.length === 0 ? (
+            <p className="empty">No leads found for this phone.</p>
+          ) : (
+            <PhoneSearchResultsTable leads={phoneSearchRows} />
+          )}
+        </div>
+      ) : null}
 
       <div className="section">
         <h2>Message Queue</h2>

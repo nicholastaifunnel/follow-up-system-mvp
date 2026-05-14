@@ -76,14 +76,103 @@ a:hover {
   color: #555;
 }
 
+.queues-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem 1.5rem;
+  margin: 0 0 1.25rem;
+}
+
+.phone-search-card {
+  flex: 1 1 16rem;
+  min-width: 12rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e2e5eb;
+  border-radius: 6px;
+  background: #fafbfc;
+}
+
+.phone-search-heading {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #222;
+}
+
+.phone-search-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.phone-search-input {
+  flex: 1 1 10rem;
+  min-width: 8rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #c8ced8;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 0.875rem;
+}
+
+.phone-search-btn {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid #0b57d0;
+  border-radius: 4px;
+  background: #0b57d0;
+  color: #fff;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.phone-search-btn:hover {
+  background: #0842a0;
+  border-color: #0842a0;
+}
+
+.phone-search-clear-wrap {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+}
+
+.phone-search-clear {
+  color: #0b57d0;
+  text-decoration: none;
+}
+
+.phone-search-clear:hover {
+  text-decoration: underline;
+}
+
+.phone-search-results {
+  margin-top: 0.35rem;
+}
+
+.phone-search-results-section h2 {
+  margin-top: 0;
+}
+
+.phone-search-intl {
+  font-size: 0.75rem;
+  color: #555;
+}
+
 .queue-limit-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem 0.75rem;
-  margin: 0 0 1.25rem;
+  margin: 0;
   font-size: 0.8125rem;
   color: #444;
+}
+
+.queues-toolbar .queue-limit-bar {
+  flex: 0 1 auto;
 }
 
 .queue-limit-label {
