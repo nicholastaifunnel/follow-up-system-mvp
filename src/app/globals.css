@@ -1632,10 +1632,9 @@ html[data-theme="dark"] .prepare-message-btn:hover:not(:disabled) {
 }
 
 .theme-toggle {
-  position: fixed;
-  top: 0.65rem;
-  right: 0.65rem;
-  z-index: 100;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0.35rem 0.65rem;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -1646,6 +1645,7 @@ html[data-theme="dark"] .prepare-message-btn:hover:not(:disabled) {
   font-weight: 500;
   cursor: pointer;
   box-shadow: 0 1px 3px var(--shadow);
+  text-decoration: none;
 }
 
 .theme-toggle:hover {
@@ -1654,4 +1654,14 @@ html[data-theme="dark"] .prepare-message-btn:hover:not(:disabled) {
 
 .theme-toggle-label {
   white-space: nowrap;
+}
+
+.app-top-bar {
+  position: fixed;
+  top: 0.65rem;
+  right: 0.65rem;
+  z-index: 100;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
 }
