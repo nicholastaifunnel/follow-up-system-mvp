@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { getSkippedLeads } from "@/getSkippedLeads";
-import { prisma } from "@/lib/prisma";
+import type { SkippedLeadRow } from "@/getSkippedLeads";
 import { skipReasonLabel } from "@/skipLeadReasons";
 import { QueueSection } from "./QueueSection";
 import { RestoreLeadButton } from "../leads/[id]/RestoreLeadButton";
@@ -88,9 +87,13 @@ function PhoneLines({
   );
 }
 
-export async function SkippedLeadsSection({ limit }: { limit: number }) {
-  const { count, leads } = await getSkippedLeads(prisma, { limit });
-
+export function SkippedLeadsSection({
+  count,
+  leads,
+}: {
+  count: number;
+  leads: SkippedLeadRow[];
+}) {
   return (
     <div className="section skipped-leads-section">
       <QueueSection

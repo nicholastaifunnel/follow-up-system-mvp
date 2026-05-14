@@ -25,7 +25,6 @@ import { PhoneSearchForm } from "./PhoneSearchForm";
 import { QueueLimitSelector } from "./QueueLimitSelector";
 import { QueueSection } from "./QueueSection";
 import { QueuesFilterBar } from "./QueuesFilterBar";
-import { SkippedLeadsSection } from "./SkippedLeadsSection";
 
 export const dynamic = "force-dynamic";
 
@@ -459,7 +458,15 @@ export default async function QueuesPage({
         })}
       </div>
 
-      <SkippedLeadsSection limit={limit} />
+      <div className="section skipped-leads-cta-section">
+        <h2>Skipped Leads</h2>
+        <p className="sub">
+          Skipped leads are hidden from Message Queue and Follow-up Queue.
+        </p>
+        <Link className="import-preview-btn" href={`/skipped-leads?limit=${limit}`}>
+          Open Skipped Leads
+        </Link>
+      </div>
     </div>
   );
 }
