@@ -63,8 +63,10 @@ export default async function ReplyAssistantPage({
         </Link>
       </p>
       <header className="lead-header">
-        <h1>Reply Assistant</h1>
-        <p className="sub">{lead.businessName}</p>
+        <h1>SOP Reply Assistant</h1>
+        <p className="sub">
+          {lead.businessName} — fixed templates, no AI
+        </p>
       </header>
 
       <ReplyAssistantClient
