@@ -14,6 +14,7 @@ import {
   MESSAGE_STATUS_FIRST_SENT,
   MESSAGE_STATUS_PREPARED,
 } from "../../../statusConstants";
+import { isSkipReasonValue } from "../../../skipLeadReasons";
 
 export type PrepareLeadMessageActionResult =
   | { ok: true }
@@ -25,6 +26,18 @@ export async function prepareLeadMessageAction(
 ): Promise<PrepareLeadMessageActionResult> {
   const normalizedLanguage = language === "zh" ? "zh" : "en";
 
+  const snap = await prisma.lead.findUnique({
+    where: { id: leadId },
+    select: { skippedAt: true },
+  });
+  if (snap?.skippedAt) {
+    return {
+      ok: false,
+      error:
+        "This lead is skipped from the Message Queue. Restore it on the Queues page before preparing.",
+    };
+  }
+
   try {
     await prepareLeadMessage(prisma, {
       leadId,
@@ -32,6 +45,7 @@ export async function prepareLeadMessageAction(
     });
     revalidatePath(`/leads/${leadId}`);
     revalidatePath(`/leads/${leadId}/reply-assistant`);
+    revalidatePath("/queues");
     return { ok: true };
   } catch (e) {
     const message =
@@ -53,6 +67,7 @@ export async function markLeadAsSentAction(
       messageStatus: true,
       preparedMessage: true,
       isArchived: true,
+      skippedAt: true,
     },
   });
 
@@ -64,6 +79,13 @@ export async function markLeadAsSentAction(
     return {
       ok: false,
       error: "Archived leads cannot be marked as sent.",
+    };
+  }
+
+  if (snapshot.skippedAt) {
+    return {
+      ok: false,
+      error: "Skipped leads cannot be marked as sent. Restore from Queues first.",
     };
   }
 
@@ -175,6 +197,87 @@ export async function recordReplyOutcomeAction(
       e instanceof Error
         ? e.message
         : "Could not save reply outcome. Please try again.";
+    return { ok: false, error: message };
+  }
+}
+
+export type SkipLeadActionResult = { ok: true } | { ok: false; error: string };
+
+export async function skipLeadForDetailAction(input: {
+  leadId: string;
+  reason: string;
+}): Promise<SkipLeadActionResult> {
+  const { leadId, reason } = input;
+  if (!isSkipReasonValue(reason)) {
+    return { ok: false, error: "Invalid skip reason." };
+  }
+
+  const lead = await prisma.lead.findUnique({
+    where: { id: leadId },
+    select: { isArchived: true, skippedAt: true },
+  });
+
+  if (!lead) {
+    return { ok: false, error: `Lead not found: ${leadId}` };
+  }
+  if (lead.isArchived) {
+    return { ok: false, error: "Archived leads cannot be skipped." };
+  }
+  if (lead.skippedAt) {
+    return { ok: false, error: "This lead is already skipped." };
+  }
+
+  try {
+    await prisma.lead.update({
+      where: { id: leadId },
+      data: {
+        skippedAt: new Date(),
+        skipReason: reason,
+      },
+    });
+    revalidatePath(`/leads/${leadId}`);
+    revalidatePath(`/leads/${leadId}/reply-assistant`);
+    revalidatePath("/queues");
+    return { ok: true };
+  } catch (e) {
+    const message =
+      e instanceof Error ? e.message : "Could not skip lead. Please try again.";
+    return { ok: false, error: message };
+  }
+}
+
+export type RestoreLeadActionResult = { ok: true } | { ok: false; error: string };
+
+export async function restoreLeadAction(
+  leadId: string,
+): Promise<RestoreLeadActionResult> {
+  const lead = await prisma.lead.findUnique({
+    where: { id: leadId },
+    select: { skippedAt: true },
+  });
+
+  if (!lead) {
+    return { ok: false, error: `Lead not found: ${leadId}` };
+  }
+  if (!lead.skippedAt) {
+    return { ok: false, error: "This lead is not skipped." };
+  }
+
+  try {
+    await prisma.lead.update({
+      where: { id: leadId },
+      data: {
+        skippedAt: null,
+        skipReason: null,
+      },
+    });
+    revalidatePath(`/leads/${leadId}`);
+    revalidatePath(`/leads/${leadId}/reply-assistant`);
+    revalidatePath("/queues");
+    return { ok: true };
+  } catch (e) {
+    const message =
+      e instanceof Error ? e.message : "Could not restore lead. Please try again.";
     return { ok: false, error: message };
   }
 }

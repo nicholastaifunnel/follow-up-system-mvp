@@ -1110,6 +1110,122 @@ html[data-theme="dark"] .import-page .import-form input[type="file"]::file-selec
   opacity: 0.85;
 }
 
+html[data-theme="dark"] .prepare-message-btn {
+  background: rgba(51, 65, 85, 0.55);
+  color: #e2e8f0;
+  border-color: rgba(100, 116, 139, 0.45);
+}
+
+html[data-theme="dark"] .prepare-message-btn:hover:not(:disabled) {
+  background: rgba(71, 85, 105, 0.72);
+  border-color: rgba(148, 163, 184, 0.5);
+  color: #f8fafc;
+}
+
+.skip-lead-card,
+.skipped-lead-banner {
+  border-color: var(--border-light);
+}
+
+.skipped-lead-banner {
+  background: var(--surface-muted, var(--card-muted));
+}
+
+.skip-lead-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.skip-lead-heading {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+}
+
+.skip-lead-hint {
+  margin: 0 0 0.35rem;
+  font-size: 0.8125rem;
+  color: var(--muted-3);
+  max-width: 40rem;
+  line-height: 1.4;
+}
+
+.skip-lead-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.skip-lead-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.skip-lead-select {
+  font: inherit;
+  font-size: 0.875rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-light);
+  background: var(--card, var(--surface));
+  color: var(--text);
+}
+
+.skip-lead-submit {
+  font: inherit;
+  font-size: 0.875rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-light);
+  background: var(--card-muted);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.skip-lead-submit:hover:not(:disabled) {
+  background: var(--surface-muted);
+}
+
+.skip-lead-error {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--danger);
+}
+
+.restore-lead-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.restore-lead-btn {
+  font: inherit;
+  font-size: 0.875rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-light);
+  background: var(--card-muted);
+  color: var(--text-heading, var(--text));
+  cursor: pointer;
+}
+
+.restore-lead-btn:hover:not(:disabled) {
+  background: var(--surface-muted);
+}
+
+.skipped-actions-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: flex-start;
+}
+
+.skipped-leads-section .queue-section {
+  margin-top: 0.5rem;
+}
+
 .prepare-blocked {
   margin: 0;
   font-size: 0.875rem;

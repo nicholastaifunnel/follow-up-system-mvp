@@ -5,7 +5,10 @@ import { MarkAsSentButton } from "./MarkAsSentButton";
 import { OpenWhatsAppButton } from "./OpenWhatsAppButton";
 import { PrepareMessageButton } from "./PrepareMessageButton";
 import { ReplyOutcomeForm } from "./ReplyOutcomeForm";
+import { RestoreLeadButton } from "./RestoreLeadButton";
+import { SkipLeadPanel } from "./SkipLeadPanel";
 import { prisma } from "@/lib/prisma";
+import { skipReasonLabel } from "@/skipLeadReasons";
 import {
   MESSAGE_STATUS_FIRST_SENT,
   MESSAGE_STATUS_NOT_PREPARED,
@@ -14,6 +17,9 @@ import {
 
 const PREPARE_BLOCKED_HINT =
   "This lead cannot be prepared from the current status.";
+
+const PREPARE_SKIPPED_HINT =
+  "Skipped from Message Queue. Use Restore below to return this lead to the Message Queue.";
 
 const MARK_SENT_HINT =
   "Mark sent is available after a message is prepared.";
@@ -31,10 +37,12 @@ function computeCanRecordReply(lead: {
 
 function computeCanMarkSent(lead: {
   isArchived: boolean;
+  skippedAt: Date | null;
   messageStatus: string;
   preparedTrimLength: number;
 }): boolean {
   if (lead.isArchived) return false;
+  if (lead.skippedAt) return false;
   if (lead.messageStatus !== MESSAGE_STATUS_PREPARED) return false;
   if (lead.preparedTrimLength === 0) return false;
   return true;
@@ -42,11 +50,13 @@ function computeCanMarkSent(lead: {
 
 function computeCanPrepare(lead: {
   isArchived: boolean;
+  skippedAt: Date | null;
   messageStatus: string;
   replyStatus: string | null;
   handoffRequired: boolean;
 }): boolean {
   if (lead.isArchived) return false;
+  if (lead.skippedAt) return false;
   if (lead.replyStatus === "Replied" || lead.replyStatus === "Stopped") {
     return false;
   }
@@ -161,6 +171,8 @@ export default async function LeadDetailPage({
       importBatch: {
         select: { filename: true },
       },
+      skippedAt: true,
+      skipReason: true,
     },
   });
 
@@ -184,13 +196,18 @@ export default async function LeadDetailPage({
 
   const canPrepare = computeCanPrepare({
     isArchived: lead.isArchived,
+    skippedAt: lead.skippedAt,
     messageStatus: lead.messageStatus,
     replyStatus: lead.replyStatus,
     handoffRequired: lead.handoffRequired,
   });
 
+  const prepareReasonHint =
+    lead.skippedAt && !lead.isArchived ? PREPARE_SKIPPED_HINT : PREPARE_BLOCKED_HINT;
+
   const canMarkSent = computeCanMarkSent({
     isArchived: lead.isArchived,
+    skippedAt: lead.skippedAt,
     messageStatus: lead.messageStatus,
     preparedTrimLength: prepared.length,
   });
@@ -259,6 +276,24 @@ export default async function LeadDetailPage({
         </div>
       </section>
 
+      {lead.skippedAt ? (
+        <section className="detail-card skipped-lead-banner">
+          <h2>Skipped from Message Queue</h2>
+          <p className="sub">
+            Reason: <strong>{skipReasonLabel(lead.skipReason)}</strong>
+            <br />
+            Skipped at: {fmtDate(lead.skippedAt)}
+          </p>
+          <RestoreLeadButton leadId={id} />
+        </section>
+      ) : null}
+
+      {!lead.isArchived && !lead.skippedAt ? (
+        <section className="detail-card skip-lead-card">
+          <SkipLeadPanel leadId={id} />
+        </section>
+      ) : null}
+
       <section className="detail-card message-workspace-card">
         <h2>Message Workspace</h2>
         <div className="message-workspace-toolbar">
@@ -266,7 +301,7 @@ export default async function LeadDetailPage({
             <PrepareMessageButton
               leadId={id}
               canPrepare={canPrepare}
-              reason={PREPARE_BLOCKED_HINT}
+              reason={prepareReasonHint}
             />
             {prepared.length > 0 ? (
               <CopyMessageButton text={lead.preparedMessage ?? ""} />

@@ -144,7 +144,10 @@ export async function getFollowUpQueue(
   const dayStart = startOfLocalDay(now);
   const dayEnd = endOfLocalDay(now);
 
-  const archivedFalse: Prisma.LeadWhereInput = { isArchived: false };
+  const archivedFalse: Prisma.LeadWhereInput = {
+    isArchived: false,
+    skippedAt: null,
+  };
 
   const [
     dueToday,

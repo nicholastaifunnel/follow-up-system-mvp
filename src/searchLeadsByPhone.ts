@@ -67,8 +67,12 @@ export async function searchLeadsByPhone(
     );
   }
 
+  const phoneMatch: Prisma.LeadWhereInput = {
+    AND: [{ OR: orClauses }, { isArchived: false }, { skippedAt: null }],
+  };
+
   const rows = await prisma.lead.findMany({
-    where: mergeQueueListWhere({ OR: orClauses }, options?.listExtraWhere),
+    where: mergeQueueListWhere(phoneMatch, options?.listExtraWhere),
     select: {
       id: true,
       businessName: true,

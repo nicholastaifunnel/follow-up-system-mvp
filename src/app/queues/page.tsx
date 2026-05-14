@@ -25,6 +25,7 @@ import { PhoneSearchForm } from "./PhoneSearchForm";
 import { QueueLimitSelector } from "./QueueLimitSelector";
 import { QueueSection } from "./QueueSection";
 import { QueuesFilterBar } from "./QueuesFilterBar";
+import { SkippedLeadsSection } from "./SkippedLeadsSection";
 
 export const dynamic = "force-dynamic";
 
@@ -457,6 +458,8 @@ export default async function QueuesPage({
           );
         })}
       </div>
+
+      <SkippedLeadsSection limit={limit} />
     </div>
   );
 }

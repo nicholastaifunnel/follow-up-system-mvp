@@ -132,7 +132,10 @@ export async function getMessageQueue(
     ? Math.min(500, Math.max(1, Math.floor(raw)))
     : 10;
 
-  const archivedFalse: Prisma.LeadWhereInput = { isArchived: false };
+  const archivedFalse: Prisma.LeadWhereInput = {
+    isArchived: false,
+    skippedAt: null,
+  };
   const extra = options?.listExtraWhere;
 
   const [
