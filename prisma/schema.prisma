@@ -28,6 +28,22 @@ model MessageTemplate {
   campaignsAsDefaultFor Campaign[] @relation("CampaignDefaultTemplate")
 }
 
+// Reply Assistant SOP bodies only (not outbound MessageTemplate).
+model ReplySopTemplate {
+  id        String   @id @default(cuid())
+  key       String
+  language  String
+  label     String
+  body      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([key, language])
+  @@index([language])
+  @@index([isActive])
+}
+
 model Campaign {
   id                            String   @id @default(cuid())
   name                          String

@@ -17,12 +17,12 @@ import {
   recordKeyForReplyType,
 } from "./sopReplies";
 
-function buildReplyAssistantNotes(customerReply: string, sopReply: string): string {
-  const cr = customerReply.trim();
+function buildReplyAssistantNotes(replyTypeLabel: string, sopReply: string): string {
+  const label = replyTypeLabel.trim();
   const sr = sopReply.trim();
   return [
-    "Customer reply:",
-    cr.length ? cr : "(none)",
+    "Reply type:",
+    label.length ? label : "—",
     "",
     "SOP reply sent:",
     sr.length ? sr : "(none)",
@@ -44,6 +44,8 @@ type Props = {
   preparedMessage: string | null;
   canRecordReply: boolean;
   recordReplyBlockedReason: string;
+  /** `${replyTypeKey}:${language}` → DB body (no greeting); missing key uses code default. */
+  sopDatabaseBodies: Record<string, string>;
 };
 
 export function ReplyAssistantClient(props: Props) {
@@ -62,10 +64,10 @@ export function ReplyAssistantClient(props: Props) {
     preparedMessage,
     canRecordReply,
     recordReplyBlockedReason,
+    sopDatabaseBodies,
   } = props;
 
   const router = useRouter();
-  const [customerReply, setCustomerReply] = useState("");
   const [replyTypeId, setReplyTypeId] = useState<ReplyTypeId>("interested");
   const [language, setLanguage] = useState<SopLanguage>("en");
   const [greetingStyle, setGreetingStyle] = useState<GreetingStyle>("neutral");
@@ -78,10 +80,24 @@ export function ReplyAssistantClient(props: Props) {
   const [copied, setCopied] = useState(false);
   const [isPending, startTransition] = useTransition();
 
+  const databaseBody = sopDatabaseBodies[`${replyTypeId}:${language}`] ?? null;
+
   const sopReply = useMemo(
     () =>
-      buildSopReply(replyTypeId, language, greetingStyle, askContactNameRole),
-    [replyTypeId, language, greetingStyle, askContactNameRole],
+      buildSopReply(
+        replyTypeId,
+        language,
+        greetingStyle,
+        askContactNameRole,
+        databaseBody,
+      ),
+    [
+      replyTypeId,
+      language,
+      greetingStyle,
+      askContactNameRole,
+      databaseBody,
+    ],
   );
 
   const waHref = useMemo(
@@ -109,7 +125,9 @@ export function ReplyAssistantClient(props: Props) {
     setError(null);
     setSaved(false);
     const recordKey: ReplyOutcomeKey = recordKeyForReplyType(replyTypeId);
-    const notesPayload = buildReplyAssistantNotes(customerReply, sopReply);
+    const typeLabel =
+      REPLY_TYPE_OPTIONS.find((o) => o.id === replyTypeId)?.label ?? replyTypeId;
+    const notesPayload = buildReplyAssistantNotes(typeLabel, sopReply);
     startTransition(() => {
       void recordReplyOutcomeAction({
         leadId,
@@ -195,23 +213,8 @@ export function ReplyAssistantClient(props: Props) {
       <section className="detail-card sop-build-card">
         <h2>SOP reply builder</h2>
         <p className="sop-build-hint">
-          Paste the customer message, pick reply type, language, and greeting — then copy or open WhatsApp, and save the outcome.
+          Pick reply type, language, and greeting — then copy or open WhatsApp, and save the outcome. SOP bodies come from Reply SOP Settings (with code fallback if a template is missing).
         </p>
-
-        <div className="reply-form-row">
-          <label className="reply-form-label" htmlFor="customer-reply">
-            Customer reply
-          </label>
-          <textarea
-            id="customer-reply"
-            className="reply-form-textarea"
-            rows={4}
-            value={customerReply}
-            onChange={(e) => setCustomerReply(e.target.value)}
-            disabled={isPending}
-            placeholder="Paste the customer’s original reply here…"
-          />
-        </div>
 
         <div className="sop-select-row">
           <div className="reply-form-row sop-select-field">

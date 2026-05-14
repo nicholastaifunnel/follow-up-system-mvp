@@ -99,6 +99,11 @@ function greetingPrefix(lang: SopLanguage, style: GreetingStyle): string {
   return "Hi, thanks for your message. ";
 }
 
+/** Code default SOP body (no greeting); used by DB sync and as fallback when no row. */
+export function codeDefaultSopBody(id: ReplyTypeId, lang: SopLanguage): string {
+  return bodyForType(id, lang);
+}
+
 function bodyForType(id: ReplyTypeId, lang: SopLanguage): string {
   if (lang === "zh") {
     switch (id) {
@@ -154,9 +159,17 @@ export function buildSopReply(
   lang: SopLanguage,
   greeting: GreetingStyle,
   includeContactQuestion: boolean,
+  /** When non-empty after trim, use as SOP body instead of code default. */
+  databaseBody?: string | null,
 ): string {
   const g = greetingPrefix(lang, greeting);
-  const b = bodyForType(replyTypeId, lang);
+  const rawBody =
+    databaseBody !== undefined &&
+    databaseBody !== null &&
+    databaseBody.trim().length > 0
+      ? databaseBody.trim()
+      : bodyForType(replyTypeId, lang);
+  const b = rawBody;
   const core = !g ? b.trim() : `${g}${b}`.trim();
   return appendContactQuestion(core, replyTypeId, lang, includeContactQuestion);
 }

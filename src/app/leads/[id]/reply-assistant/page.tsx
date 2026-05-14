@@ -46,6 +46,15 @@ export default async function ReplyAssistantPage({
     notFound();
   }
 
+  const sopRows = await prisma.replySopTemplate.findMany({
+    where: { isActive: true },
+    select: { key: true, language: true, body: true },
+  });
+  const sopDatabaseBodies: Record<string, string> = {};
+  for (const r of sopRows) {
+    sopDatabaseBodies[`${r.key}:${r.language}`] = r.body;
+  }
+
   const canRecordReply = computeCanRecordReply({
     isArchived: lead.isArchived,
     messageStatus: lead.messageStatus,
@@ -61,11 +70,15 @@ export default async function ReplyAssistantPage({
         <Link className="top-link" href="/queues">
           Queues
         </Link>
+        <span className="top-links-sep">·</span>
+        <Link className="top-link" href="/reply-sop">
+          Reply SOP Settings
+        </Link>
       </p>
       <header className="lead-header">
         <h1>SOP Reply Assistant</h1>
         <p className="sub">
-          {lead.businessName} — fixed templates, no AI
+          {lead.businessName} — database SOP templates, no AI
         </p>
       </header>
 
@@ -84,6 +97,7 @@ export default async function ReplyAssistantPage({
         preparedMessage={lead.preparedMessage}
         canRecordReply={canRecordReply}
         recordReplyBlockedReason={REPLY_ASSISTANT_BLOCKED_HINT}
+        sopDatabaseBodies={sopDatabaseBodies}
       />
     </div>
   );

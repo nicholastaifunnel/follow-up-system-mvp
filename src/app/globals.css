@@ -1000,3 +1000,36 @@ table.queue tbody tr:nth-child(even) {
 .sop-save-card h2 {
   margin-top: 0;
 }
+
+/* Reply SOP settings (/reply-sop) */
+.reply-sop-page .reply-sop-lang-section h2 {
+  margin-bottom: 1rem;
+}
+
+.reply-sop-grid {
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 900px) {
+  .reply-sop-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.reply-sop-card .reply-sop-type-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+}
+
+.reply-sop-body-textarea {
+  margin-top: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.reply-sop-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+}

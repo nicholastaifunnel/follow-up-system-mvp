@@ -98,6 +98,10 @@ function BackToQueues({ leadId }: { leadId?: string }) {
           >
             Reply Assistant
           </a>
+          <span className="top-links-sep">·</span>
+          <Link className="top-link" href="/reply-sop">
+            Reply SOP Settings
+          </Link>
         </>
       ) : null}
     </p>
