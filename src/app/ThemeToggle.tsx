@@ -27,17 +27,14 @@ function applyTheme(mode: ThemeMode): void {
 }
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<ThemeMode>(() =>
-    typeof document !== "undefined" &&
-    document.documentElement.dataset.theme === "dark"
-      ? "dark"
-      : "light",
-  );
+  const [theme, setTheme] = useState<ThemeMode>("light");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const stored = readStoredTheme();
     setTheme(stored);
     applyTheme(stored);
+    setMounted(true);
   }, []);
 
   const toggle = useCallback(() => {
@@ -52,16 +49,21 @@ export function ThemeToggle() {
   }, [theme]);
 
   const label = theme === "dark" ? "Light" : "Dark";
+  const accessibleLabel = mounted
+    ? theme === "dark"
+      ? "Switch to light theme"
+      : "Switch to dark theme"
+    : "Toggle theme";
 
   return (
     <button
       type="button"
       className="theme-toggle"
       onClick={toggle}
-      aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-      title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+      aria-label={accessibleLabel}
+      title={accessibleLabel}
     >
-      <span className="theme-toggle-label">{label}</span>
+      <span className="theme-toggle-label">{mounted ? label : "Theme"}</span>
     </button>
   );
 }
