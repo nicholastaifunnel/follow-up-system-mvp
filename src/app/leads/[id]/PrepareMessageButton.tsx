@@ -15,7 +15,6 @@ export function PrepareMessageButton({ leadId, canPrepare, reason }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
 
   if (!canPrepare) {
     return (
@@ -27,11 +26,9 @@ export function PrepareMessageButton({ leadId, canPrepare, reason }: Props) {
 
   function onClick() {
     setError(null);
-    setSuccess(false);
     startTransition(() => {
       void prepareLeadMessageAction(leadId).then((result) => {
         if (result.ok) {
-          setSuccess(true);
           router.refresh();
         } else {
           setError(result.error);
@@ -51,7 +48,6 @@ export function PrepareMessageButton({ leadId, canPrepare, reason }: Props) {
         {isPending ? "Preparing..." : "Prepare Message"}
       </button>
       {error ? <p className="prepare-error">{error}</p> : null}
-      {success ? <p className="prepare-success">Message prepared.</p> : null}
     </div>
   );
 }

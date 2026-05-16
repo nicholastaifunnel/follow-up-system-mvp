@@ -1283,12 +1283,6 @@ html[data-theme="dark"] .prepare-message-btn:hover:not(:disabled) {
   max-width: 36rem;
 }
 
-.prepare-success {
-  margin: 0;
-  font-size: 0.8125rem;
-  color: var(--success);
-}
-
 .mark-sent-wrap {
   display: flex;
   flex-direction: column;
