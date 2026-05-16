@@ -1631,6 +1631,116 @@ html[data-theme="dark"] .prepare-message-btn:hover:not(:disabled) {
   gap: 0.75rem 1rem;
 }
 
+/* Message template settings (/message-templates) */
+.message-templates-page .message-templates-stage-section {
+  margin-bottom: 2.5rem;
+}
+
+.message-templates-page .message-templates-stage-section > h2 {
+  margin-bottom: 1.25rem;
+  font-size: 1.35rem;
+}
+
+.message-templates-lang-block {
+  margin-bottom: 1.75rem;
+}
+
+.message-templates-lang-block > h3 {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+  color: var(--muted);
+}
+
+.message-templates-grid {
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 900px) {
+  .message-templates-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.message-template-card .message-template-name {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+}
+
+.message-template-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: 0.5rem 1rem;
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+}
+
+.message-template-meta dt {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.message-template-meta dd {
+  margin: 0.15rem 0 0;
+}
+
+.message-template-status {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.message-template-status--active {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--text);
+}
+
+.message-template-status--inactive {
+  background: color-mix(in srgb, var(--muted) 22%, transparent);
+  color: var(--muted);
+}
+
+.message-template-body-textarea {
+  margin-top: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.message-preset-create {
+  display: flex;
+  align-items: end;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.message-preset-create .reply-form-label {
+  flex: 1;
+}
+
+.message-presets-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.message-preset-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.message-preset-summary h2 {
+  margin: 0;
+  flex: 1;
+  font-size: 1.1rem;
+}
+
+.message-preset-editor {
+  margin-top: 1rem;
+}
+
 .theme-toggle {
   display: inline-flex;
   align-items: center;

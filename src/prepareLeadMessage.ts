@@ -7,7 +7,6 @@ import {
 export type PrepareLeadMessageInput = {
   leadId: string;
   messageStage?: string;
-  language?: string;
   /**
    * When true, skips the messageStatus guard only (still blocks archived /
    * Replied / Stopped / handoff). For manual recovery; not for routine CLI use.
@@ -53,11 +52,6 @@ export type PrepareLeadMessageResult = {
   preparedMessage: string;
 };
 
-function normNullable(value: string | null | undefined): string | null {
-  const t = (value ?? "").trim();
-  return t.length ? t : null;
-}
-
 function renderTemplateBody(template: string, lead: Lead): string {
   const businessName = (lead.businessName ?? "").trim() || "there";
   const area = (lead.area ?? "").trim() || "your area";
@@ -74,52 +68,36 @@ function renderTemplateBody(template: string, lead: Lead): string {
     .replaceAll("{website}", website);
 }
 
-async function findMatchingTemplate(
+async function findActivePresetTemplate(
   db: PrismaClient,
-  params: {
-    assignedIndustry: string | null;
-    leadLevel: string | null;
-    messageStage: string;
-    language: string;
-  },
-): Promise<MessageTemplate | null> {
-  const { assignedIndustry: ind, leadLevel: lvl, messageStage, language } =
-    params;
-
-  const base = { messageStage, language, isActive: true };
-
-  if (ind && lvl) {
-    const t = await db.messageTemplate.findFirst({
-      where: { ...base, industry: ind, leadLevel: lvl },
-      orderBy: { createdAt: "asc" },
-    });
-    if (t) return t;
+  messageStage: string,
+): Promise<MessageTemplate> {
+  const activePreset = await db.messageTemplatePreset.findFirst({
+    where: { isActive: true },
+    select: { id: true, name: true },
+  });
+  if (!activePreset) {
+    throw new Error("No active message template preset found.");
   }
 
-  if (ind) {
-    const t = await db.messageTemplate.findFirst({
-      where: { ...base, industry: ind, leadLevel: null },
-      orderBy: { createdAt: "asc" },
-    });
-    if (t) return t;
-  }
-
-  if (lvl) {
-    const t = await db.messageTemplate.findFirst({
-      where: { ...base, industry: null, leadLevel: lvl },
-      orderBy: { createdAt: "asc" },
-    });
-    if (t) return t;
-  }
-
-  return db.messageTemplate.findFirst({
-    where: { ...base, industry: null, leadLevel: null },
+  const template = await db.messageTemplate.findFirst({
+    where: {
+      presetId: activePreset.id,
+      messageStage,
+      isActive: true,
+    },
     orderBy: { createdAt: "asc" },
   });
+  if (!template) {
+    throw new Error(
+      `Active preset "${activePreset.name}" is missing template stage: ${messageStage}.`,
+    );
+  }
+  return template;
 }
 
 /**
- * Selects a MessageTemplate from assignedIndustry + leadLevel + stage + language,
+ * Selects a MessageTemplate from the active preset + requested stage,
  * renders placeholders, updates Lead prepared fields and messageStatus only.
  */
 export async function prepareLeadMessage(
@@ -127,7 +105,6 @@ export async function prepareLeadMessage(
   input: PrepareLeadMessageInput,
 ): Promise<PrepareLeadMessageResult> {
   const messageStage = input.messageStage ?? "First Message";
-  const language = input.language ?? "en";
 
   const lead = await db.lead.findUnique({ where: { id: input.leadId } });
   if (!lead) {
@@ -136,21 +113,7 @@ export async function prepareLeadMessage(
 
   assertCanPrepareLead(lead, input);
 
-  const assignedIndustry = normNullable(lead.assignedIndustry);
-  const leadLevel = normNullable(lead.leadLevel);
-
-  const template = await findMatchingTemplate(db, {
-    assignedIndustry,
-    leadLevel,
-    messageStage,
-    language,
-  });
-
-  if (!template) {
-    throw new Error(
-      `No message template matched (stage=${messageStage}, language=${language}).`,
-    );
-  }
+  const template = await findActivePresetTemplate(db, messageStage);
 
   const preparedMessage = renderTemplateBody(template.body, lead);
 

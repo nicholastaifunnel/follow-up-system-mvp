@@ -32,6 +32,7 @@ export const config = {
     "/import/:path*",
     "/leads/:path*",
     "/reply-sop/:path*",
+    "/message-templates/:path*",
     "/skipped-leads/:path*",
   ],
 };

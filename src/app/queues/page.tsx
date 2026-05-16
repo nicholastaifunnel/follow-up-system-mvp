@@ -450,6 +450,10 @@ export default async function QueuesPage({
           Import Excel
         </Link>
         <span className="top-links-sep">·</span>
+        <Link className="top-link" href="/message-templates">
+          Message Templates
+        </Link>
+        <span className="top-links-sep">·</span>
         <Link className="top-link" href="/reply-sop">
           Reply SOP Settings
         </Link>

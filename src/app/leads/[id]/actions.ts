@@ -22,10 +22,7 @@ export type PrepareLeadMessageActionResult =
 
 export async function prepareLeadMessageAction(
   leadId: string,
-  language: string = "en",
 ): Promise<PrepareLeadMessageActionResult> {
-  const normalizedLanguage = language === "zh" ? "zh" : "en";
-
   const snap = await prisma.lead.findUnique({
     where: { id: leadId },
     select: { skippedAt: true },
@@ -39,10 +36,7 @@ export async function prepareLeadMessageAction(
   }
 
   try {
-    await prepareLeadMessage(prisma, {
-      leadId,
-      language: normalizedLanguage,
-    });
+    await prepareLeadMessage(prisma, { leadId });
     revalidatePath(`/leads/${leadId}`);
     revalidatePath(`/leads/${leadId}/reply-assistant`);
     revalidatePath("/queues");
