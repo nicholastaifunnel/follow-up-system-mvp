@@ -20,6 +20,67 @@ export type PrepareLeadMessageActionResult =
   | { ok: true }
   | { ok: false; error: string };
 
+export type UpdatePreparedMessageDraftActionResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
+export async function updatePreparedMessageDraftAction(
+  leadId: string,
+  body: string,
+): Promise<UpdatePreparedMessageDraftActionResult> {
+  if (body.trim().length === 0) {
+    return { ok: false, error: "Draft cannot be empty." };
+  }
+
+  const snapshot = await prisma.lead.findUnique({
+    where: { id: leadId },
+    select: {
+      isArchived: true,
+      skippedAt: true,
+      messageStatus: true,
+    },
+  });
+
+  if (!snapshot) {
+    return { ok: false, error: `Lead not found: ${leadId}` };
+  }
+
+  if (snapshot.isArchived) {
+    return { ok: false, error: "Archived leads cannot be edited." };
+  }
+
+  if (snapshot.skippedAt) {
+    return {
+      ok: false,
+      error: "Skipped leads cannot be edited. Restore from Queues first.",
+    };
+  }
+
+  if (snapshot.messageStatus !== MESSAGE_STATUS_PREPARED) {
+    return {
+      ok: false,
+      error: `Draft editing is only available when message status is Prepared (current: ${snapshot.messageStatus ?? "(null)"}).`,
+    };
+  }
+
+  try {
+    await prisma.lead.update({
+      where: { id: leadId },
+      data: { preparedMessage: body },
+    });
+    revalidatePath(`/leads/${leadId}`);
+    revalidatePath(`/leads/${leadId}/reply-assistant`);
+    revalidatePath("/queues");
+    return { ok: true };
+  } catch (e) {
+    const message =
+      e instanceof Error
+        ? e.message
+        : "Failed to save draft. Please try again.";
+    return { ok: false, error: message };
+  }
+}
+
 export async function prepareLeadMessageAction(
   leadId: string,
 ): Promise<PrepareLeadMessageActionResult> {

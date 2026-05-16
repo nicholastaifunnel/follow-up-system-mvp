@@ -1053,23 +1053,42 @@ html[data-theme="dark"] .import-page .import-form input[type="file"]::file-selec
   word-break: break-word;
 }
 
-.message-workspace-preview {
+.message-workspace-draft {
   margin: 0;
-  padding: 0.75rem 1rem;
-  background: var(--card-muted-2);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  max-height: 24rem;
-  overflow: auto;
 }
 
-.message-workspace-preview pre {
-  margin: 0;
-  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
-  font-size: 0.8125rem;
+.message-workspace-draft .reply-form-label {
+  margin-bottom: 0.35rem;
+}
+
+.message-workspace-draft-textarea {
+  width: 100%;
+  min-height: 6rem;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-block: 0.55rem;
   line-height: 1.45;
-  white-space: pre-wrap;
-  word-break: break-word;
+  resize: none;
+  overflow: hidden;
+}
+
+.message-workspace-draft-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.85rem;
+  margin-top: 0.65rem;
+}
+
+.message-workspace-unsaved {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.message-workspace-save-draft {
+  min-height: 2.1rem;
+  padding-inline: 0.85rem;
 }
 
 .message-actions {

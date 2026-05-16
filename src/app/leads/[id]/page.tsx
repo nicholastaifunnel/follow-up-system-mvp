@@ -1,9 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { CopyMessageButton } from "./CopyMessageButton";
-import { MarkAsSentButton } from "./MarkAsSentButton";
-import { OpenWhatsAppButton } from "./OpenWhatsAppButton";
-import { PrepareMessageButton } from "./PrepareMessageButton";
+import { PreparedMessageWorkspace } from "./PreparedMessageWorkspace";
 import { ReplyOutcomeForm } from "./ReplyOutcomeForm";
 import { RestoreLeadButton } from "./RestoreLeadButton";
 import { SkipLeadPanel } from "./SkipLeadPanel";
@@ -296,44 +293,16 @@ export default async function LeadDetailPage({
 
       <section className="detail-card message-workspace-card">
         <h2>Message Workspace</h2>
-        <div className="message-workspace-actions">
-          <div className="message-workspace-primary-actions">
-            <PrepareMessageButton
-              leadId={id}
-              canPrepare={canPrepare}
-              reason={prepareReasonHint}
-            />
-            {prepared.length > 0 ? (
-              <CopyMessageButton text={lead.preparedMessage ?? ""} />
-            ) : null}
-          </div>
-          <div className="message-workspace-secondary-actions">
-            <OpenWhatsAppButton
-              phone={lead.phone}
-              internationalPhone={lead.internationalPhone}
-              preparedMessage={lead.preparedMessage}
-            />
-            <MarkAsSentButton
-              leadId={id}
-              canMarkSent={canMarkSent}
-              reason={MARK_SENT_HINT}
-            />
-          </div>
-        </div>
-        <div className="message-workspace-status">
-          {prepared.length > 0 ? (
-            <p className="message-wa-tip">
-              After sending in WhatsApp, come back and click Mark sent.
-            </p>
-          ) : (
-            <p className="empty">No prepared message yet</p>
-          )}
-        </div>
-        {prepared.length > 0 ? (
-          <div className="message-workspace-preview">
-            <pre>{lead.preparedMessage}</pre>
-          </div>
-        ) : null}
+        <PreparedMessageWorkspace
+          leadId={id}
+          initialPreparedMessage={lead.preparedMessage}
+          phone={lead.phone}
+          internationalPhone={lead.internationalPhone}
+          canPrepare={canPrepare}
+          prepareReason={prepareReasonHint}
+          canMarkSent={canMarkSent}
+          markSentReason={MARK_SENT_HINT}
+        />
       </section>
 
       <section className="detail-card">

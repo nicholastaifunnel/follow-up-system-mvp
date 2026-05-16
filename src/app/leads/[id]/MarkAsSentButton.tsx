@@ -8,9 +8,15 @@ type Props = {
   leadId: string;
   canMarkSent: boolean;
   reason: string;
+  hasUnsavedChanges?: boolean;
 };
 
-export function MarkAsSentButton({ leadId, canMarkSent, reason }: Props) {
+export function MarkAsSentButton({
+  leadId,
+  canMarkSent,
+  reason,
+  hasUnsavedChanges = false,
+}: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -23,6 +29,10 @@ export function MarkAsSentButton({ leadId, canMarkSent, reason }: Props) {
   function onClick() {
     setError(null);
     setSuccess(false);
+    if (hasUnsavedChanges) {
+      setError("Save draft before marking as sent.");
+      return;
+    }
     startTransition(() => {
       void markLeadAsSentAction(leadId).then((result) => {
         if (result.ok) {
