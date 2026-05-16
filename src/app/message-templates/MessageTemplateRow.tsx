@@ -94,7 +94,7 @@ export function MessageTemplateRow({
         <div className="message-preset-heading">
           <button
             type="button"
-            className="message-preset-toggle"
+            className="message-preset-button message-preset-toggle"
             onClick={() => setExpanded((value) => !value)}
             aria-expanded={expanded}
           >
@@ -105,16 +105,26 @@ export function MessageTemplateRow({
         </div>
         <div className="message-preset-actions">
           {!isActive ? (
-            <button type="button" onClick={setActive} disabled={isPending}>
+            <button
+              type="button"
+              className="message-preset-button message-preset-set-active"
+              onClick={setActive}
+              disabled={isPending}
+            >
               Set Active
             </button>
           ) : null}
-          <button type="button" onClick={duplicate} disabled={isPending}>
+          <button
+            type="button"
+            className="message-preset-button message-preset-duplicate"
+            onClick={duplicate}
+            disabled={isPending}
+          >
             Duplicate
           </button>
           <button
             type="button"
-            className="message-preset-delete"
+            className="message-preset-button message-preset-delete"
             onClick={remove}
             disabled={isPending}
           >
@@ -135,7 +145,7 @@ export function MessageTemplateRow({
             />
           </label>
           {STAGES.map((stage) => (
-            <label className="reply-form-label" key={stage}>
+            <label className="reply-form-label message-preset-stage-field" key={stage}>
               {stage}
               <textarea
                 className="reply-form-textarea message-template-body-textarea"
