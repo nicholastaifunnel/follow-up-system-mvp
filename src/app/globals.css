@@ -987,13 +987,6 @@ html[data-theme="dark"] .import-page .import-form input[type="file"]::file-selec
   margin: 0;
 }
 
-.message-workspace-status-title {
-  margin: 0;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--text-heading);
-}
-
 .message-wa-tip {
   margin: 0;
   font-size: 0.75rem;

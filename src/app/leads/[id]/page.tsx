@@ -322,12 +322,9 @@ export default async function LeadDetailPage({
         </div>
         <div className="message-workspace-status">
           {prepared.length > 0 ? (
-            <>
-              <p className="message-workspace-status-title">Message prepared</p>
-              <p className="message-wa-tip">
-                After sending in WhatsApp, come back and click Mark sent.
-              </p>
-            </>
+            <p className="message-wa-tip">
+              After sending in WhatsApp, come back and click Mark sent.
+            </p>
           ) : (
             <p className="empty">No prepared message yet</p>
           )}
