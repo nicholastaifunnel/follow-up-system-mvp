@@ -5,7 +5,12 @@ import { MessageTemplateRow } from "./MessageTemplateRow";
 
 export const dynamic = "force-dynamic";
 
-export default async function MessageTemplateSettingsPage() {
+export default async function MessageTemplateSettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ expanded?: string }>;
+}) {
+  const { expanded } = await searchParams;
   const presets = await prisma.messageTemplatePreset.findMany({
     include: { templates: true },
     orderBy: [{ isActive: "desc" }, { createdAt: "asc" }],
@@ -35,6 +40,7 @@ export default async function MessageTemplateSettingsPage() {
             id={preset.id}
             name={preset.name}
             isActive={preset.isActive}
+            defaultExpanded={preset.isActive || expanded === preset.id}
             templates={Object.fromEntries(
               preset.templates.map((template) => [
                 template.messageStage,

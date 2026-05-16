@@ -296,8 +296,8 @@ export default async function LeadDetailPage({
 
       <section className="detail-card message-workspace-card">
         <h2>Message Workspace</h2>
-        <div className="message-workspace-toolbar">
-          <div className="message-workspace-actions">
+        <div className="message-workspace-actions">
+          <div className="message-workspace-primary-actions">
             <PrepareMessageButton
               leadId={id}
               canPrepare={canPrepare}
@@ -307,33 +307,36 @@ export default async function LeadDetailPage({
               <CopyMessageButton text={lead.preparedMessage ?? ""} />
             ) : null}
           </div>
-          <div className="message-workspace-secondary-row">
-            <div className="message-workspace-secondary-actions">
-              <OpenWhatsAppButton
-                phone={lead.phone}
-                internationalPhone={lead.internationalPhone}
-                preparedMessage={lead.preparedMessage}
-              />
-              <MarkAsSentButton
-                leadId={id}
-                canMarkSent={canMarkSent}
-                reason={MARK_SENT_HINT}
-              />
-            </div>
-            {prepared.length > 0 ? (
+          <div className="message-workspace-secondary-actions">
+            <OpenWhatsAppButton
+              phone={lead.phone}
+              internationalPhone={lead.internationalPhone}
+              preparedMessage={lead.preparedMessage}
+            />
+            <MarkAsSentButton
+              leadId={id}
+              canMarkSent={canMarkSent}
+              reason={MARK_SENT_HINT}
+            />
+          </div>
+        </div>
+        <div className="message-workspace-status">
+          {prepared.length > 0 ? (
+            <>
+              <p className="message-workspace-status-title">Message prepared</p>
               <p className="message-wa-tip">
                 After sending in WhatsApp, come back and click Mark sent.
               </p>
-            ) : null}
-          </div>
+            </>
+          ) : (
+            <p className="empty">No prepared message yet</p>
+          )}
         </div>
-        {prepared.length === 0 ? (
-          <p className="empty">No prepared message yet</p>
-        ) : (
-          <div className="prepared-message-box">
+        {prepared.length > 0 ? (
+          <div className="message-workspace-preview">
             <pre>{lead.preparedMessage}</pre>
           </div>
-        )}
+        ) : null}
       </section>
 
       <section className="detail-card">

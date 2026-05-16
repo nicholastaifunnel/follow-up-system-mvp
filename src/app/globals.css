@@ -959,14 +959,14 @@ html[data-theme="dark"] .import-page .import-form input[type="file"]::file-selec
   border-color: var(--workspace-border);
 }
 
-.message-workspace-toolbar {
+.message-workspace-actions {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   margin-bottom: 0.8rem;
 }
 
-.message-workspace-actions,
+.message-workspace-primary-actions,
 .message-workspace-secondary-actions {
   display: flex;
   flex-wrap: wrap;
@@ -974,11 +974,24 @@ html[data-theme="dark"] .import-page .import-form input[type="file"]::file-selec
   align-items: center;
 }
 
-.message-workspace-secondary-row {
+.message-workspace-status {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
   align-items: flex-start;
+  min-height: 2.65rem;
+  margin-bottom: 0.8rem;
+}
+
+.message-workspace-status .empty {
+  margin: 0;
+}
+
+.message-workspace-status-title {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-heading);
 }
 
 .message-wa-tip {
@@ -1047,8 +1060,8 @@ html[data-theme="dark"] .import-page .import-form input[type="file"]::file-selec
   word-break: break-word;
 }
 
-.prepared-message-box {
-  margin: 0.25rem 0 0;
+.message-workspace-preview {
+  margin: 0;
   padding: 0.75rem 1rem;
   background: var(--card-muted-2);
   border: 1px solid var(--border);
@@ -1057,7 +1070,7 @@ html[data-theme="dark"] .import-page .import-form input[type="file"]::file-selec
   overflow: auto;
 }
 
-.prepared-message-box pre {
+.message-workspace-preview pre {
   margin: 0;
   font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
   font-size: 0.8125rem;
@@ -1724,18 +1737,46 @@ html[data-theme="dark"] .prepare-message-btn:hover:not(:disabled) {
 .message-preset-summary {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.message-preset-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: min(100%, 18rem);
+  flex: 1;
   flex-wrap: wrap;
 }
 
 .message-preset-summary h2 {
   margin: 0;
-  flex: 1;
   font-size: 1.1rem;
+}
+
+.message-preset-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
 }
 
 .message-preset-editor {
   margin-top: 1rem;
+}
+
+.message-preset-toggle,
+.message-preset-actions button {
+  color: var(--text);
+  border-color: var(--border);
+  background: var(--card-muted);
+}
+
+.message-preset-toggle:hover,
+.message-preset-actions button:hover {
+  background: var(--card-muted-2);
 }
 
 .message-preset-delete {
@@ -1746,6 +1787,35 @@ html[data-theme="dark"] .prepare-message-btn:hover:not(:disabled) {
 
 .message-preset-delete:hover {
   background: color-mix(in srgb, var(--danger-bg) 82%, var(--card));
+}
+
+.message-preset-name-field {
+  max-width: 24rem;
+  margin-bottom: 0.75rem;
+}
+
+.message-preset-name-input {
+  width: 100%;
+}
+
+.message-preset-save-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.message-preset-save-status {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-right: auto;
+}
+
+.message-preset-save {
+  background: var(--reply-submit-bg);
+  color: var(--reply-submit-text);
 }
 
 .theme-toggle {
