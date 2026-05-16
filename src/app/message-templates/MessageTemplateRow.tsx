@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useLayoutEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   deleteMessageTemplatePresetAction,
@@ -22,6 +22,37 @@ const STAGES = [
   "First Follow Up",
   "Second Follow Up",
 ] as const;
+
+function AutoResizeTextarea({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  disabled: boolean;
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useLayoutEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    textarea.style.height = "auto";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  }, [value]);
+
+  return (
+    <textarea
+      ref={textareaRef}
+      className="reply-form-textarea message-template-body-textarea"
+      rows={5}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      disabled={disabled}
+    />
+  );
+}
 
 export function MessageTemplateRow({
   id,
@@ -147,14 +178,12 @@ export function MessageTemplateRow({
           {STAGES.map((stage) => (
             <label className="reply-form-label message-preset-stage-field" key={stage}>
               {stage}
-              <textarea
-                className="reply-form-textarea message-template-body-textarea"
-                rows={5}
+              <AutoResizeTextarea
                 value={bodies[stage] ?? ""}
-                onChange={(e) =>
+                onChange={(value) =>
                   setBodies((current) => ({
                     ...current,
-                    [stage]: e.target.value,
+                    [stage]: value,
                   }))
                 }
                 disabled={isPending}
