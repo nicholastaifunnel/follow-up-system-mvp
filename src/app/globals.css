@@ -1840,6 +1840,111 @@ html[data-theme="dark"] .prepare-message-btn:hover:not(:disabled) {
   margin-bottom: 0;
 }
 
+.message-preset-stage-label {
+  display: block;
+  font-weight: 600;
+}
+
+.message-preset-stage-hint {
+  display: block;
+  margin-top: 0.2rem;
+  margin-bottom: 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.message-template-variables {
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card-muted);
+}
+
+.message-template-variables-title {
+  margin: 0 0 0.35rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.message-template-variables-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.message-template-variables-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.message-template-variable-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  flex-wrap: wrap;
+  max-width: 100%;
+  padding: 0.42rem 0.72rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card) 82%, var(--card-muted));
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.message-template-variable-chip:hover:not(:disabled) {
+  background: var(--card-muted-2);
+  border-color: color-mix(in srgb, var(--border) 55%, var(--text));
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--text) 6%, transparent);
+}
+
+.message-template-variable-chip:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.message-template-variable-chip-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.12rem 0.4rem;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--card-muted) 55%, transparent);
+  border: 1px solid var(--border);
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.message-template-variable-chip-desc {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  .message-template-variable-chip {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .message-template-variable-chip-desc {
+    white-space: normal;
+  }
+}
+
 .message-preset-save-row {
   display: flex;
   align-items: center;
