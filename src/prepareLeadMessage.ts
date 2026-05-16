@@ -52,6 +52,11 @@ export type PrepareLeadMessageResult = {
   preparedMessage: string;
 };
 
+function formatOptionalMetric(value: number | null | undefined): string {
+  if (value === null || value === undefined) return "—";
+  return String(value);
+}
+
 function renderTemplateBody(template: string, lead: Lead): string {
   const businessName = (lead.businessName ?? "").trim() || "there";
   const area = (lead.area ?? "").trim() || "your area";
@@ -59,13 +64,17 @@ function renderTemplateBody(template: string, lead: Lead): string {
     (lead.assignedIndustry ?? "").trim() || "your business";
   const leadLevel = (lead.leadLevel ?? "").trim();
   const website = (lead.website ?? "").trim();
+  const reviewCount = formatOptionalMetric(lead.reviewCount);
+  const googleRating = formatOptionalMetric(lead.googleRating);
 
   return template
     .replaceAll("{businessName}", businessName)
     .replaceAll("{area}", area)
     .replaceAll("{assignedIndustry}", assignedIndustry)
     .replaceAll("{leadLevel}", leadLevel)
-    .replaceAll("{website}", website);
+    .replaceAll("{website}", website)
+    .replaceAll("{reviewCount}", reviewCount)
+    .replaceAll("{googleRating}", googleRating);
 }
 
 async function findActivePresetTemplate(
