@@ -122,3 +122,47 @@ export async function setActiveMessageTemplatePresetAction(
     return { ok: false, error: message };
   }
 }
+
+export async function deleteMessageTemplatePresetAction(
+  presetId: string,
+): Promise<MessagePresetActionResult> {
+  try {
+    await prisma.$transaction(async (tx) => {
+      const preset = await tx.messageTemplatePreset.findUnique({
+        where: { id: presetId },
+        select: { id: true, isActive: true },
+      });
+      if (!preset) throw new Error("Preset not found.");
+
+      await tx.messageTemplate.deleteMany({
+        where: { presetId },
+      });
+      await tx.messageTemplatePreset.delete({
+        where: { id: presetId },
+      });
+
+      if (preset.isActive) {
+        const nextPreset = await tx.messageTemplatePreset.findFirst({
+          orderBy: { updatedAt: "desc" },
+          select: { id: true },
+        });
+
+        await tx.messageTemplatePreset.updateMany({
+          data: { isActive: false },
+        });
+
+        if (nextPreset) {
+          await tx.messageTemplatePreset.update({
+            where: { id: nextPreset.id },
+            data: { isActive: true },
+          });
+        }
+      }
+    });
+    revalidatePath("/message-templates");
+    return { ok: true };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Could not delete preset.";
+    return { ok: false, error: message };
+  }
+}

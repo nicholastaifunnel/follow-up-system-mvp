@@ -297,7 +297,7 @@ export default async function LeadDetailPage({
       <section className="detail-card message-workspace-card">
         <h2>Message Workspace</h2>
         <div className="message-workspace-toolbar">
-          <div className="message-actions message-workspace-actions-primary">
+          <div className="message-workspace-actions">
             <PrepareMessageButton
               leadId={id}
               canPrepare={canPrepare}
@@ -307,8 +307,8 @@ export default async function LeadDetailPage({
               <CopyMessageButton text={lead.preparedMessage ?? ""} />
             ) : null}
           </div>
-          <div className="message-wa-row">
-            <div className="message-wa-actions">
+          <div className="message-workspace-secondary-row">
+            <div className="message-workspace-secondary-actions">
               <OpenWhatsAppButton
                 phone={lead.phone}
                 internationalPhone={lead.internationalPhone}
@@ -330,7 +330,7 @@ export default async function LeadDetailPage({
         {prepared.length === 0 ? (
           <p className="empty">No prepared message yet</p>
         ) : (
-          <div className="message-box">
+          <div className="prepared-message-box">
             <pre>{lead.preparedMessage}</pre>
           </div>
         )}

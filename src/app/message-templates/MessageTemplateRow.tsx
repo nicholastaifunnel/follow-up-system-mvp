@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import {
+  deleteMessageTemplatePresetAction,
   setActiveMessageTemplatePresetAction,
   updateMessageTemplatePresetAction,
 } from "./actions";
@@ -53,6 +54,18 @@ export function MessageTemplateRow({
     });
   }
 
+  function remove() {
+    if (!window.confirm("Delete this preset and its 3 messages?")) return;
+
+    setFeedback(null);
+    setError(null);
+    startTransition(() => {
+      void deleteMessageTemplatePresetAction(id).then((result) => {
+        if (!result.ok) setError(result.error);
+      });
+    });
+  }
+
   return (
     <section className="detail-card message-preset-card">
       <div className="message-preset-summary">
@@ -71,6 +84,14 @@ export function MessageTemplateRow({
             Set Active
           </button>
         ) : null}
+        <button
+          type="button"
+          className="message-preset-delete"
+          onClick={remove}
+          disabled={isPending}
+        >
+          Delete
+        </button>
       </div>
 
       {expanded ? (
