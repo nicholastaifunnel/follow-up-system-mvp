@@ -15,6 +15,10 @@ import {
   MESSAGE_STATUS_PREPARED,
 } from "../../../statusConstants";
 import { isSkipReasonValue } from "../../../skipLeadReasons";
+import {
+  isReviewTrialStatus,
+  type ReviewTrialStatus,
+} from "../../../reviewTrialConstants";
 
 export type PrepareLeadMessageActionResult =
   | { ok: true }
@@ -335,4 +339,127 @@ export async function restoreLeadAction(
       e instanceof Error ? e.message : "Could not restore lead. Please try again.";
     return { ok: false, error: message };
   }
+}
+
+export type ReviewTrialActionResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
+function nullableTrimmed(value: string | null | undefined): string | null {
+  const trimmed = value?.trim() ?? "";
+  return trimmed === "" ? null : trimmed;
+}
+
+function parseDateInput(value: string | null | undefined): Date | null {
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed) return null;
+  const parsed = new Date(`${trimmed}T00:00:00.000Z`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function todayDateOnlyUtc(): Date {
+  const now = new Date();
+  return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+}
+
+async function ensureLeadExists(leadId: string): Promise<boolean> {
+  const lead = await prisma.lead.findUnique({
+    where: { id: leadId },
+    select: { id: true },
+  });
+  return lead !== null;
+}
+
+function revalidateReviewTrialPaths(leadId: string): void {
+  revalidatePath(`/leads/${leadId}`);
+  revalidatePath("/review-trials");
+  revalidatePath("/queues");
+}
+
+export async function updateReviewTrialAction(input: {
+  leadId: string;
+  status: string;
+  startDate: string | null;
+  endDate: string | null;
+  publicUrl: string | null;
+  merchantUrl: string | null;
+  notes: string | null;
+}): Promise<ReviewTrialActionResult> {
+  if (!isReviewTrialStatus(input.status)) {
+    return { ok: false, error: "Invalid review trial status." };
+  }
+  if (!(await ensureLeadExists(input.leadId))) {
+    return { ok: false, error: `Lead not found: ${input.leadId}` };
+  }
+
+  const startAt = parseDateInput(input.startDate);
+  const endAt = parseDateInput(input.endDate);
+  if (input.startDate && !startAt) {
+    return { ok: false, error: "Invalid trial start date." };
+  }
+  if (input.endDate && !endAt) {
+    return { ok: false, error: "Invalid trial end date." };
+  }
+
+  await prisma.lead.update({
+    where: { id: input.leadId },
+    data: {
+      reviewTrialStatus: input.status as ReviewTrialStatus,
+      reviewTrialStartAt: startAt,
+      reviewTrialEndAt: endAt,
+      reviewPublicUrl: nullableTrimmed(input.publicUrl),
+      reviewMerchantUrl: nullableTrimmed(input.merchantUrl),
+      reviewTrialNotes: nullableTrimmed(input.notes),
+      reviewTrialUpdatedAt: new Date(),
+    },
+  });
+  revalidateReviewTrialPaths(input.leadId);
+  return { ok: true };
+}
+
+export async function startOneMonthReviewTrialAction(
+  leadId: string,
+): Promise<ReviewTrialActionResult> {
+  if (!(await ensureLeadExists(leadId))) {
+    return { ok: false, error: `Lead not found: ${leadId}` };
+  }
+
+  const start = todayDateOnlyUtc();
+  const end = new Date(start);
+  end.setDate(end.getDate() + 30);
+
+  await prisma.lead.update({
+    where: { id: leadId },
+    data: {
+      reviewTrialStatus: "Trial Active",
+      reviewTrialStartAt: start,
+      reviewTrialEndAt: end,
+      reviewTrialUpdatedAt: new Date(),
+    },
+  });
+  revalidateReviewTrialPaths(leadId);
+  return { ok: true };
+}
+
+export async function clearReviewTrialAction(
+  leadId: string,
+): Promise<ReviewTrialActionResult> {
+  if (!(await ensureLeadExists(leadId))) {
+    return { ok: false, error: `Lead not found: ${leadId}` };
+  }
+
+  await prisma.lead.update({
+    where: { id: leadId },
+    data: {
+      reviewTrialStatus: null,
+      reviewTrialStartAt: null,
+      reviewTrialEndAt: null,
+      reviewPublicUrl: null,
+      reviewMerchantUrl: null,
+      reviewTrialNotes: null,
+      reviewTrialUpdatedAt: null,
+    },
+  });
+  revalidateReviewTrialPaths(leadId);
+  return { ok: true };
 }

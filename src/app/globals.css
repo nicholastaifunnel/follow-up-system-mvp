@@ -1986,6 +1986,125 @@ html[data-theme="dark"] .prepare-message-btn:hover:not(:disabled) {
   color: var(--reply-submit-text);
 }
 
+.review-trial-card {
+  display: grid;
+  gap: 1rem;
+}
+
+.review-trial-summary {
+  margin-bottom: 0.25rem;
+}
+
+.review-trial-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.review-trial-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 720px) {
+  .review-trial-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.review-trial-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 0.75rem;
+  align-items: center;
+}
+
+.review-trial-secondary-btn,
+.review-trial-danger-btn {
+  font: inherit;
+  font-size: 0.875rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.review-trial-secondary-btn {
+  border: 1px solid var(--border);
+  background: var(--card-muted);
+  color: var(--text);
+}
+
+.review-trial-secondary-btn:hover:not(:disabled) {
+  background: var(--card-muted-2);
+}
+
+.review-trial-danger-btn {
+  border: 1px solid var(--danger-border);
+  background: var(--danger-bg);
+  color: var(--danger-text-muted);
+}
+
+.review-trial-danger-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--danger-bg) 82%, var(--card));
+}
+
+.review-trial-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+}
+
+.review-trials-table td {
+  vertical-align: middle;
+}
+
+.review-trial-links-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.65rem;
+}
+
+.review-trial-badge {
+  display: inline-block;
+  padding: 0.18rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--card-muted);
+  color: var(--text);
+}
+
+.review-trial-badge--active {
+  border-color: var(--success-border);
+  background: var(--success-soft-bg);
+  color: var(--success);
+}
+
+.review-trial-badge--expiring {
+  border-color: color-mix(in srgb, var(--warning-text) 40%, var(--border));
+  background: color-mix(in srgb, var(--warning-text) 14%, transparent);
+  color: var(--warning-text);
+}
+
+.review-trial-badge--expired {
+  border-color: var(--danger-border);
+  background: var(--danger-bg);
+  color: var(--danger-text-muted);
+}
+
+.review-trial-badge--converted {
+  border-color: var(--primary-border-alt);
+  background: var(--primary-soft);
+  color: var(--primary-active-fg);
+}
+
+.review-trial-badge--stopped {
+  border-color: var(--border);
+  background: var(--card-muted);
+  color: var(--muted);
+}
+
 .theme-toggle {
   display: inline-flex;
   align-items: center;

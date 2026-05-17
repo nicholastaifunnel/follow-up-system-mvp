@@ -33,6 +33,7 @@ export const config = {
     "/leads/:path*",
     "/reply-sop/:path*",
     "/message-templates/:path*",
+    "/review-trials/:path*",
     "/skipped-leads/:path*",
   ],
 };

@@ -152,6 +152,14 @@ model Lead {
   leadTemperature String  @default("Cold")
   manualNotes     String?
 
+  reviewTrialStatus    String?
+  reviewTrialStartAt   DateTime?
+  reviewTrialEndAt     DateTime?
+  reviewPublicUrl      String?
+  reviewMerchantUrl    String?
+  reviewTrialNotes     String?
+  reviewTrialUpdatedAt DateTime?
+
   isArchived     Boolean   @default(false)
   archivedAt     DateTime?
   archivedReason String?
@@ -190,6 +198,8 @@ model Lead {
   @@index([messageStatus])
   @@index([replyStatus])
   @@index([contactStatus])
+  @@index([reviewTrialStatus])
+  @@index([reviewTrialEndAt])
   @@index([nextCheckAt])
   @@index([nextFollowUpAt])
   @@index([isArchived])

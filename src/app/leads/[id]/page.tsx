@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { PreparedMessageWorkspace } from "./PreparedMessageWorkspace";
 import { ReplyOutcomeForm } from "./ReplyOutcomeForm";
+import { ReviewTrialForm } from "./ReviewTrialForm";
 import { RestoreLeadButton } from "./RestoreLeadButton";
 import { SkipLeadPanel } from "./SkipLeadPanel";
 import { prisma } from "@/lib/prisma";
@@ -77,6 +78,11 @@ function fmtText(v: string | null | undefined): string {
 function fmtDate(d: Date | null): string {
   if (!d) return "—";
   return d.toISOString().replace("T", " ").slice(0, 19);
+}
+
+function fmtDateOnly(d: Date | null): string {
+  if (!d) return "—";
+  return d.toISOString().slice(0, 10);
 }
 
 function fmtBool(v: boolean): string {
@@ -162,6 +168,12 @@ export default async function LeadDetailPage({
       googleRating: true,
       reviewCount: true,
       sourceKeyword: true,
+      reviewTrialStatus: true,
+      reviewTrialStartAt: true,
+      reviewTrialEndAt: true,
+      reviewPublicUrl: true,
+      reviewMerchantUrl: true,
+      reviewTrialNotes: true,
       campaign: {
         select: { name: true, sourceKeyword: true },
       },
@@ -190,6 +202,25 @@ export default async function LeadDetailPage({
     lead.sourceKeyword ?? lead.campaign?.sourceKeyword ?? null;
 
   const prepared = (lead.preparedMessage ?? "").trim();
+  const reviewTrialDaysText = (() => {
+    if (!lead.reviewTrialEndAt) return "—";
+    const today = new Date();
+    const todayDateOnly = Date.UTC(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+    );
+    const end = Date.UTC(
+      lead.reviewTrialEndAt.getUTCFullYear(),
+      lead.reviewTrialEndAt.getUTCMonth(),
+      lead.reviewTrialEndAt.getUTCDate(),
+    );
+    const diffDays = Math.round((end - todayDateOnly) / 86_400_000);
+    if (diffDays > 0) return `${diffDays} day${diffDays === 1 ? "" : "s"} left`;
+    if (diffDays === 0) return "Ends today";
+    const expiredDays = Math.abs(diffDays);
+    return `Expired ${expiredDays} day${expiredDays === 1 ? "" : "s"} ago`;
+  })();
 
   const canPrepare = computeCanPrepare({
     isArchived: lead.isArchived,
@@ -311,6 +342,44 @@ export default async function LeadDetailPage({
           leadId={id}
           canRecordReply={canRecordReply}
           reason={REPLY_FORM_HINT}
+        />
+      </section>
+
+      <section className="detail-card review-trial-card">
+        <h2>Review Trial</h2>
+        <div className="kv-list review-trial-summary">
+          <Row label="Current Status">{fmtText(lead.reviewTrialStatus)}</Row>
+          <Row label="Trial Start Date">{fmtDateOnly(lead.reviewTrialStartAt)}</Row>
+          <Row label="Trial End Date">{fmtDateOnly(lead.reviewTrialEndAt)}</Row>
+          <Row label="Days Left">{reviewTrialDaysText}</Row>
+          <Row label="Public Review Link">
+            {lead.reviewPublicUrl ? (
+              <a href={lead.reviewPublicUrl} target="_blank" rel="noopener noreferrer">
+                Open public link
+              </a>
+            ) : (
+              "—"
+            )}
+          </Row>
+          <Row label="Merchant/Admin Link">
+            {lead.reviewMerchantUrl ? (
+              <a href={lead.reviewMerchantUrl} target="_blank" rel="noopener noreferrer">
+                Open admin link
+              </a>
+            ) : (
+              "—"
+            )}
+          </Row>
+          <Row label="Notes">{fmtText(lead.reviewTrialNotes)}</Row>
+        </div>
+        <ReviewTrialForm
+          leadId={id}
+          status={lead.reviewTrialStatus}
+          startDate={lead.reviewTrialStartAt ? lead.reviewTrialStartAt.toISOString().slice(0, 10) : ""}
+          endDate={lead.reviewTrialEndAt ? lead.reviewTrialEndAt.toISOString().slice(0, 10) : ""}
+          publicUrl={lead.reviewPublicUrl}
+          merchantUrl={lead.reviewMerchantUrl}
+          notes={lead.reviewTrialNotes}
         />
       </section>
 
