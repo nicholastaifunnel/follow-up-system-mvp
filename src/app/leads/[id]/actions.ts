@@ -15,9 +15,20 @@ import {
   MESSAGE_STATUS_PREPARED,
 } from "../../../statusConstants";
 import { isSkipReasonValue } from "../../../skipLeadReasons";
-import { isReviewPlanType } from "../../../reviewPlanConstants";
-import type { ReviewFollowUpReason } from "../../../reviewPlanConstants";
-import type { ReviewPlanType } from "../../../reviewPlanConstants";
+import {
+  getDefaultPlanAmountCents,
+  isReviewPlanType,
+  REVIEW_FOLLOW_UP_DRAFT_FIELDS,
+  REVIEW_FOLLOW_UP_SENT_FIELDS,
+  type ReviewFollowUpActionKey,
+  type ReviewFollowUpReason,
+  type ReviewPlanType,
+} from "../../../reviewPlanConstants";
+import { parseRmToCents } from "../../../money";
+import {
+  buildReviewFollowUpMessage,
+  isReviewFollowUpActionKey,
+} from "../../../reviewFollowUpMessages";
 import type { ReviewTrialStatus } from "../../../reviewTrialConstants";
 import {
   canStartReviewTrial,
@@ -33,11 +44,31 @@ const reviewPlanLeadSelect = {
   reviewTrialStartAt: true,
   reviewTrialEndAt: true,
   reviewPlanType: true,
+  reviewPlanAmountCents: true,
+  reviewPlanCurrency: true,
   reviewTrialCheckInSentAt: true,
   reviewRenewalReminderSentAt: true,
   reviewExpiredReminder1SentAt: true,
   reviewExpiredFollowUp1SentAt: true,
   reviewExpiredFollowUp2SentAt: true,
+  reviewTrialCheckInDraft: true,
+  reviewRenewalReminderDraft: true,
+  reviewExpiredReminder1Draft: true,
+  reviewExpiredFollowUp1Draft: true,
+  reviewExpiredFollowUp2Draft: true,
+} as const;
+
+const CLEAR_REVIEW_FOLLOW_UP_TRACKING_DATA = {
+  reviewTrialCheckInDraft: null,
+  reviewRenewalReminderDraft: null,
+  reviewExpiredReminder1Draft: null,
+  reviewExpiredFollowUp1Draft: null,
+  reviewExpiredFollowUp2Draft: null,
+  reviewTrialCheckInSentAt: null,
+  reviewRenewalReminderSentAt: null,
+  reviewExpiredReminder1SentAt: null,
+  reviewExpiredFollowUp1SentAt: null,
+  reviewExpiredFollowUp2SentAt: null,
 } as const;
 
 export type PrepareLeadMessageActionResult =
@@ -365,8 +396,20 @@ export type ReviewTrialSavedSnapshot = {
   planType: string | null;
   startDate: string;
   endDate: string;
+  amountCents: number | null;
+  currency: string;
   displayStatus: ReviewTrialStatus;
   followUpReason: ReviewFollowUpReason;
+  checkInDraft: string | null;
+  renewalDraft: string | null;
+  expiredReminder1Draft: string | null;
+  expiredFollowUp1Draft: string | null;
+  expiredFollowUp2Draft: string | null;
+  checkInSentAt: string | null;
+  renewalReminderSentAt: string | null;
+  expiredReminder1SentAt: string | null;
+  expiredFollowUp1SentAt: string | null;
+  expiredFollowUp2SentAt: string | null;
 };
 
 export type ReviewTrialActionResult =
@@ -377,14 +420,54 @@ function formatPlanDateInput(date: Date | null): string {
   return date ? date.toISOString().slice(0, 10) : "";
 }
 
-function buildReviewTrialSavedSnapshot(lead: ReviewPlanLeadFields): ReviewTrialSavedSnapshot {
+type ReviewPlanLeadSnapshotRow = ReviewPlanLeadFields & {
+  reviewPlanAmountCents?: number | null;
+  reviewPlanCurrency?: string | null;
+  reviewTrialCheckInDraft?: string | null;
+  reviewRenewalReminderDraft?: string | null;
+  reviewExpiredReminder1Draft?: string | null;
+  reviewExpiredFollowUp1Draft?: string | null;
+  reviewExpiredFollowUp2Draft?: string | null;
+};
+
+function buildReviewTrialSavedSnapshot(
+  lead: ReviewPlanLeadSnapshotRow,
+): ReviewTrialSavedSnapshot {
   return {
     planType: lead.reviewPlanType,
     startDate: formatPlanDateInput(lead.reviewTrialStartAt),
     endDate: formatPlanDateInput(lead.reviewTrialEndAt),
+    amountCents: lead.reviewPlanAmountCents ?? null,
+    currency: lead.reviewPlanCurrency ?? "MYR",
     displayStatus: computeReviewPlanDisplayStatus(lead),
     followUpReason: computeReviewFollowUpReason(lead),
+    checkInDraft: lead.reviewTrialCheckInDraft ?? null,
+    renewalDraft: lead.reviewRenewalReminderDraft ?? null,
+    expiredReminder1Draft: lead.reviewExpiredReminder1Draft ?? null,
+    expiredFollowUp1Draft: lead.reviewExpiredFollowUp1Draft ?? null,
+    expiredFollowUp2Draft: lead.reviewExpiredFollowUp2Draft ?? null,
+    checkInSentAt: lead.reviewTrialCheckInSentAt?.toISOString() ?? null,
+    renewalReminderSentAt: lead.reviewRenewalReminderSentAt?.toISOString() ?? null,
+    expiredReminder1SentAt: lead.reviewExpiredReminder1SentAt?.toISOString() ?? null,
+    expiredFollowUp1SentAt: lead.reviewExpiredFollowUp1SentAt?.toISOString() ?? null,
+    expiredFollowUp2SentAt: lead.reviewExpiredFollowUp2SentAt?.toISOString() ?? null,
   };
+}
+
+function parsePlanPriceInput(
+  planPrice: string | null | undefined,
+  planType: ReviewPlanType | null,
+): { ok: true; cents: number | null; currency: string } | { ok: false; error: string } {
+  const parsed = parseRmToCents(planPrice ?? "");
+  if (!parsed.ok) {
+    return parsed;
+  }
+
+  if (parsed.cents === null && planType) {
+    return { ok: true, cents: getDefaultPlanAmountCents(planType), currency: "MYR" };
+  }
+
+  return { ok: true, cents: parsed.cents, currency: "MYR" };
 }
 
 function nullableTrimmed(value: string | null | undefined): string | null {
@@ -423,6 +506,7 @@ export async function updateReviewTrialAction(input: {
   planType: string | null;
   startDate: string | null;
   endDate: string | null;
+  planPrice: string | null;
   publicUrl: string | null;
   merchantUrl: string | null;
   notes: string | null;
@@ -444,6 +528,11 @@ export async function updateReviewTrialAction(input: {
   }
 
   const planType = input.planType && isReviewPlanType(input.planType) ? input.planType : null;
+  const priceResult = parsePlanPriceInput(input.planPrice, planType);
+  if (!priceResult.ok) {
+    return { ok: false, error: priceResult.error };
+  }
+
   if (planType) {
     if (!startAt) {
       startAt = todayDateOnlyUtc();
@@ -457,6 +546,8 @@ export async function updateReviewTrialAction(input: {
       reviewPlanType: planType,
       reviewTrialStartAt: startAt,
       reviewTrialEndAt: endAt,
+      reviewPlanAmountCents: priceResult.cents,
+      reviewPlanCurrency: priceResult.currency,
       ...(planType === "Monthly Paid" || planType === "Yearly Paid"
         ? { reviewTrialStatus: null }
         : {}),
@@ -482,6 +573,8 @@ export async function updateReviewTrialAction(input: {
 export async function startOneMonthReviewTrialAction(
   leadId: string,
   planTypeInput?: string | null,
+  planPriceInput?: string | null,
+  isRenew = false,
 ): Promise<ReviewTrialActionResult> {
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
@@ -515,16 +608,54 @@ export async function startOneMonthReviewTrialAction(
   const start = todayDateOnlyUtc();
   const end = computePlanEndDate(start, planType);
 
-  await prisma.lead.update({
-    where: { id: leadId },
-    data: {
-      reviewPlanType: planType,
-      reviewTrialStatus: planType === "Free Trial" ? "Trial Active" : null,
-      reviewTrialStartAt: start,
-      reviewTrialEndAt: end,
-      reviewTrialUpdatedAt: new Date(),
-    },
-  });
+  const priceResult = parsePlanPriceInput(
+    planPriceInput ?? "",
+    planType,
+  );
+  if (!priceResult.ok) {
+    return { ok: false, error: priceResult.error };
+  }
+
+  const amountCents =
+    priceResult.cents ??
+    lead.reviewPlanAmountCents ??
+    getDefaultPlanAmountCents(planType);
+  const currency = lead.reviewPlanCurrency ?? "MYR";
+
+  const periodSource = isRenew ? "Renew Plan" : "Start Plan";
+
+  await prisma.$transaction([
+    prisma.reviewPlanPeriod.updateMany({
+      where: { leadId, status: "Active" },
+      data: { status: "Replaced" },
+    }),
+    prisma.lead.update({
+      where: { id: leadId },
+      data: {
+        reviewPlanType: planType,
+        reviewTrialStatus: planType === "Free Trial" ? "Trial Active" : null,
+        reviewTrialStartAt: start,
+        reviewTrialEndAt: end,
+        reviewPlanAmountCents: amountCents,
+        reviewPlanCurrency: currency,
+        reviewTrialUpdatedAt: new Date(),
+        ...CLEAR_REVIEW_FOLLOW_UP_TRACKING_DATA,
+      },
+    }),
+    prisma.reviewPlanPeriod.create({
+      data: {
+        leadId,
+        planType,
+        startAt: start,
+        endAt: end,
+        priceCents: amountCents,
+        amountCents,
+        currency,
+        status: "Active",
+        source: periodSource,
+      },
+    }),
+  ]);
 
   const updated = await prisma.lead.findUnique({
     where: { id: leadId },
@@ -557,13 +688,19 @@ export async function stopReviewTrialAction(
     };
   }
 
-  await prisma.lead.update({
-    where: { id: leadId },
-    data: {
-      reviewTrialStatus: "Stopped",
-      reviewTrialUpdatedAt: new Date(),
-    },
-  });
+  await prisma.$transaction([
+    prisma.reviewPlanPeriod.updateMany({
+      where: { leadId, status: "Active" },
+      data: { status: "Stopped" },
+    }),
+    prisma.lead.update({
+      where: { id: leadId },
+      data: {
+        reviewTrialStatus: "Stopped",
+        reviewTrialUpdatedAt: new Date(),
+      },
+    }),
+  ]);
 
   const updated = await prisma.lead.findUnique({
     where: { id: leadId },
@@ -630,4 +767,144 @@ export async function markReviewExpiredFollowUp2SentAction(
   leadId: string,
 ): Promise<ReviewTrialActionResult> {
   return markReviewFollowUpSent(leadId, "reviewExpiredFollowUp2SentAt");
+}
+
+const reviewFollowUpActionSelect = {
+  businessName: true,
+  area: true,
+  reviewCount: true,
+  googleRating: true,
+  reviewPlanType: true,
+  reviewTrialStartAt: true,
+  reviewTrialEndAt: true,
+  reviewPublicUrl: true,
+  reviewMerchantUrl: true,
+  reviewTrialCheckInDraft: true,
+  reviewRenewalReminderDraft: true,
+  reviewExpiredReminder1Draft: true,
+  reviewExpiredFollowUp1Draft: true,
+  reviewExpiredFollowUp2Draft: true,
+  reviewTrialCheckInSentAt: true,
+  reviewRenewalReminderSentAt: true,
+  reviewExpiredReminder1SentAt: true,
+  reviewExpiredFollowUp1SentAt: true,
+  reviewExpiredFollowUp2SentAt: true,
+} as const;
+
+export type ReviewFollowUpDraftActionResult =
+  | { ok: true; draft: string; sentAt: string | null }
+  | { ok: false; error: string };
+
+export type ReviewFollowUpMarkSentActionResult =
+  | { ok: true; sentAt: string }
+  | { ok: false; error: string };
+
+function parseReviewFollowUpType(
+  followUpType: string,
+): ReviewFollowUpActionKey | null {
+  return isReviewFollowUpActionKey(followUpType) ? followUpType : null;
+}
+
+export async function generateReviewFollowUpDraftAction(
+  leadId: string,
+  followUpType: string,
+): Promise<ReviewFollowUpDraftActionResult> {
+  const type = parseReviewFollowUpType(followUpType);
+  if (!type) {
+    return { ok: false, error: "Invalid follow-up type." };
+  }
+
+  const lead = await prisma.lead.findUnique({
+    where: { id: leadId },
+    select: reviewFollowUpActionSelect,
+  });
+  if (!lead) {
+    return { ok: false, error: `Lead not found: ${leadId}` };
+  }
+
+  const draft = buildReviewFollowUpMessage(type, lead);
+  const draftField = REVIEW_FOLLOW_UP_DRAFT_FIELDS[type];
+  const sentField = REVIEW_FOLLOW_UP_SENT_FIELDS[type];
+
+  await prisma.lead.update({
+    where: { id: leadId },
+    data: {
+      [draftField]: draft,
+      reviewTrialUpdatedAt: new Date(),
+    },
+  });
+
+  revalidateReviewTrialPaths(leadId);
+  return {
+    ok: true,
+    draft,
+    sentAt: lead[sentField]?.toISOString() ?? null,
+  };
+}
+
+export async function updateReviewFollowUpDraftAction(
+  leadId: string,
+  followUpType: string,
+  body: string,
+): Promise<ReviewFollowUpDraftActionResult> {
+  const type = parseReviewFollowUpType(followUpType);
+  if (!type) {
+    return { ok: false, error: "Invalid follow-up type." };
+  }
+
+  const trimmed = body.trim();
+  if (!trimmed) {
+    return { ok: false, error: "Draft cannot be empty." };
+  }
+
+  if (!(await ensureLeadExists(leadId))) {
+    return { ok: false, error: `Lead not found: ${leadId}` };
+  }
+
+  const draftField = REVIEW_FOLLOW_UP_DRAFT_FIELDS[type];
+  const sentField = REVIEW_FOLLOW_UP_SENT_FIELDS[type];
+
+  const updated = await prisma.lead.update({
+    where: { id: leadId },
+    data: {
+      [draftField]: trimmed,
+      reviewTrialUpdatedAt: new Date(),
+    },
+    select: reviewFollowUpActionSelect,
+  });
+
+  revalidateReviewTrialPaths(leadId);
+  return {
+    ok: true,
+    draft: trimmed,
+    sentAt: updated[sentField]?.toISOString() ?? null,
+  };
+}
+
+export async function markReviewFollowUpSentAction(
+  leadId: string,
+  followUpType: string,
+): Promise<ReviewFollowUpMarkSentActionResult> {
+  const type = parseReviewFollowUpType(followUpType);
+  if (!type) {
+    return { ok: false, error: "Invalid follow-up type." };
+  }
+
+  if (!(await ensureLeadExists(leadId))) {
+    return { ok: false, error: `Lead not found: ${leadId}` };
+  }
+
+  const sentField = REVIEW_FOLLOW_UP_SENT_FIELDS[type];
+  const now = new Date();
+
+  await prisma.lead.update({
+    where: { id: leadId },
+    data: {
+      [sentField]: now,
+      reviewTrialUpdatedAt: now,
+    },
+  });
+
+  revalidateReviewTrialPaths(leadId);
+  return { ok: true, sentAt: now.toISOString() };
 }

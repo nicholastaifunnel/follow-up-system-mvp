@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { PreparedMessageWorkspace } from "./PreparedMessageWorkspace";
 import { ReplyOutcomeForm } from "./ReplyOutcomeForm";
+import { PlanUsageHistory } from "./PlanUsageHistory";
 import { ReviewTrialForm } from "./ReviewTrialForm";
 import { RestoreLeadButton } from "./RestoreLeadButton";
 import { SkipLeadPanel } from "./SkipLeadPanel";
@@ -15,6 +16,7 @@ import {
   reviewTrialStatusBadgeClass,
 } from "@/reviewPlanFollowUp";
 import { formatDateTimeMYT } from "@/formatMalaysiaTime";
+import { formatRmFromCents } from "@/money";
 import {
   MESSAGE_STATUS_FIRST_SENT,
   MESSAGE_STATUS_NOT_PREPARED,
@@ -175,6 +177,8 @@ export default async function LeadDetailPage({
       reviewTrialStartAt: true,
       reviewTrialEndAt: true,
       reviewPlanType: true,
+      reviewPlanAmountCents: true,
+      reviewPlanCurrency: true,
       reviewPublicUrl: true,
       reviewMerchantUrl: true,
       reviewTrialNotes: true,
@@ -183,6 +187,11 @@ export default async function LeadDetailPage({
       reviewExpiredReminder1SentAt: true,
       reviewExpiredFollowUp1SentAt: true,
       reviewExpiredFollowUp2SentAt: true,
+      reviewTrialCheckInDraft: true,
+      reviewRenewalReminderDraft: true,
+      reviewExpiredReminder1Draft: true,
+      reviewExpiredFollowUp1Draft: true,
+      reviewExpiredFollowUp2Draft: true,
       campaign: {
         select: { name: true, sourceKeyword: true },
       },
@@ -191,6 +200,22 @@ export default async function LeadDetailPage({
       },
       skippedAt: true,
       skipReason: true,
+      reviewPlanPeriods: {
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          planType: true,
+          startAt: true,
+          endAt: true,
+          priceCents: true,
+          amountCents: true,
+          currency: true,
+          status: true,
+          source: true,
+          notes: true,
+          createdAt: true,
+        },
+      },
     },
   });
 
@@ -226,6 +251,15 @@ export default async function LeadDetailPage({
   const reviewFollowUpReason = computeReviewFollowUpReason(reviewPlanFields);
   const reviewTrialDaysText = formatReviewTrialDaysLeft(lead.reviewTrialEndAt);
   const reviewPlanTypeDisplay = resolveReviewPlanType(reviewPlanFields) ?? "—";
+
+  const isReviewCustomer = Boolean(
+    lead.reviewPlanType ||
+      lead.reviewTrialStartAt ||
+      lead.reviewTrialEndAt ||
+      lead.reviewTrialStatus ||
+      lead.reviewPublicUrl ||
+      lead.reviewMerchantUrl,
+  );
 
   const canPrepare = computeCanPrepare({
     isArchived: lead.isArchived,
@@ -327,33 +361,40 @@ export default async function LeadDetailPage({
         </section>
       ) : null}
 
-      <section className="detail-card message-workspace-card">
-        <h2>Message Workspace</h2>
-        <PreparedMessageWorkspace
-          leadId={id}
-          initialPreparedMessage={lead.preparedMessage}
-          phone={lead.phone}
-          internationalPhone={lead.internationalPhone}
-          canPrepare={canPrepare}
-          prepareReason={prepareReasonHint}
-          canMarkSent={canMarkSent}
-          markSentReason={MARK_SENT_HINT}
-        />
-      </section>
+      {!isReviewCustomer ? (
+        <section className="detail-card message-workspace-card">
+          <h2>Message Workspace</h2>
+          <PreparedMessageWorkspace
+            leadId={id}
+            initialPreparedMessage={lead.preparedMessage}
+            phone={lead.phone}
+            internationalPhone={lead.internationalPhone}
+            canPrepare={canPrepare}
+            prepareReason={prepareReasonHint}
+            canMarkSent={canMarkSent}
+            markSentReason={MARK_SENT_HINT}
+          />
+        </section>
+      ) : null}
 
-      <section className="detail-card">
-        <h2>Reply outcome</h2>
-        <ReplyOutcomeForm
-          leadId={id}
-          canRecordReply={canRecordReply}
-          reason={REPLY_FORM_HINT}
-        />
-      </section>
+      {!isReviewCustomer ? (
+        <section className="detail-card">
+          <h2>Reply outcome</h2>
+          <ReplyOutcomeForm
+            leadId={id}
+            canRecordReply={canRecordReply}
+            reason={REPLY_FORM_HINT}
+          />
+        </section>
+      ) : null}
 
       <section className="detail-card review-trial-card">
         <h2>Review Plan</h2>
         <div className="kv-list review-trial-summary">
           <Row label="Plan Type">{reviewPlanTypeDisplay}</Row>
+          <Row label="Plan Price">
+            {formatRmFromCents(lead.reviewPlanAmountCents, lead.reviewPlanCurrency)}
+          </Row>
           <Row label="Current Status">
             <span className={reviewTrialStatusBadgeClass(reviewTrialDisplayStatus)}>
               {reviewTrialDisplayStatus}
@@ -386,7 +427,9 @@ export default async function LeadDetailPage({
         <ReviewTrialForm
           leadId={id}
           displayStatus={reviewTrialDisplayStatus}
+          reviewTrialStatus={lead.reviewTrialStatus}
           planType={lead.reviewPlanType}
+          planAmountCents={lead.reviewPlanAmountCents}
           startDate={lead.reviewTrialStartAt ? lead.reviewTrialStartAt.toISOString().slice(0, 10) : ""}
           endDate={lead.reviewTrialEndAt ? lead.reviewTrialEndAt.toISOString().slice(0, 10) : ""}
           publicUrl={lead.reviewPublicUrl}
@@ -417,6 +460,13 @@ export default async function LeadDetailPage({
               ? lead.reviewExpiredFollowUp2SentAt.toISOString()
               : null
           }
+          phone={lead.phone}
+          internationalPhone={lead.internationalPhone}
+          checkInDraft={lead.reviewTrialCheckInDraft}
+          renewalDraft={lead.reviewRenewalReminderDraft}
+          expiredReminder1Draft={lead.reviewExpiredReminder1Draft}
+          expiredFollowUp1Draft={lead.reviewExpiredFollowUp1Draft}
+          expiredFollowUp2Draft={lead.reviewExpiredFollowUp2Draft}
         />
       </section>
 
@@ -457,6 +507,11 @@ export default async function LeadDetailPage({
           <Row label="Google rating">{fmtNum(lead.googleRating)}</Row>
           <Row label="Review count">{fmtNum(lead.reviewCount)}</Row>
         </div>
+      </section>
+
+      <section className="detail-card plan-usage-history-card">
+        <h2>Plan Usage History</h2>
+        <PlanUsageHistory periods={lead.reviewPlanPeriods} />
       </section>
     </div>
   );

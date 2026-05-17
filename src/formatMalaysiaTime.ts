@@ -66,3 +66,15 @@ export function formatDateTimeMYT(value: Date | null | undefined): string {
 
   return `${datePart}, ${timePart}`;
 }
+
+/** Calendar date only in Malaysia time (e.g. 18 May 2026). */
+export function formatDateOnlyMYT(value: Date | null | undefined): string {
+  if (!value) return "—";
+
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: MYT_TIMEZONE,
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(value);
+}

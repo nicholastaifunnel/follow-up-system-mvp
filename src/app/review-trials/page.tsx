@@ -1,41 +1,53 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import {
-  computeReviewFollowUpReason,
-  computeReviewPlanDisplayStatus,
-  formatReviewTrialDaysLeft,
+  bucketReviewDailyWorkLeads,
   matchesReviewTrialsFilter,
-  resolveReviewPlanType,
-  reviewTrialStatusBadgeClass,
+  REVIEW_DAILY_WORK_LABELS,
   reviewTrialsFilterWhere,
+  sortReviewLeadsByRecentActivity,
+  type ReviewDailyWorkBucket,
   type ReviewTrialsFilterKey,
 } from "@/reviewPlanFollowUp";
+import { QueueSection } from "@/app/queues/QueueSection";
+import { ReviewCustomersPanel, type ReviewFilterChip } from "./ReviewCustomersPanel";
+import { ReviewTrialsTable, type ReviewTrialsTableLead } from "./ReviewTrialsTable";
 
 export const dynamic = "force-dynamic";
 
-const FILTERS: { key: ReviewTrialsFilterKey; label: string }[] = [
+const FILTER_CHIPS: { key: ReviewTrialsFilterKey; label: string }[] = [
   { key: "all", label: "All" },
+  { key: "need-follow-up", label: "Need Follow-up" },
   { key: "trial-check-in", label: "Trial Check-in" },
   { key: "trial-expiring", label: "Trial Expiring" },
   { key: "monthly-renewal", label: "Monthly Renewal" },
   { key: "yearly-renewal", label: "Yearly Renewal" },
+  { key: "expired-follow-up", label: "Expired Follow-up" },
   { key: "paid-active", label: "Paid Active" },
-  { key: "expired", label: "Expired" },
   { key: "stopped", label: "Stopped" },
   { key: "converted", label: "Converted Paid" },
 ];
 
+const DAILY_WORK_SECTIONS: {
+  key: ReviewDailyWorkBucket;
+  defaultExpanded: boolean;
+}[] = [
+  { key: "overdue", defaultExpanded: true },
+  { key: "due-today", defaultExpanded: true },
+  { key: "upcoming-soon", defaultExpanded: false },
+  { key: "no-action-needed", defaultExpanded: false },
+];
+
 function resolveFilter(raw: string | string[] | undefined): ReviewTrialsFilterKey {
   const value = Array.isArray(raw) ? raw[0] : raw;
-  return FILTERS.some((item) => item.key === value) ? (value as ReviewTrialsFilterKey) : "all";
+  return FILTER_CHIPS.some((item) => item.key === value)
+    ? (value as ReviewTrialsFilterKey)
+    : "all";
 }
 
-function fmtText(value: string | null): string {
-  return value && value.trim() ? value : "—";
-}
-
-function fmtDate(value: Date | null): string {
-  return value ? value.toISOString().slice(0, 10) : "—";
+function filterHref(key: ReviewTrialsFilterKey): string {
+  if (key === "all") return "/review-trials";
+  return `/review-trials?filter=${key}`;
 }
 
 const reviewPlanSelect = {
@@ -47,6 +59,9 @@ const reviewPlanSelect = {
   reviewTrialStartAt: true,
   reviewTrialEndAt: true,
   reviewPlanType: true,
+  reviewPlanAmountCents: true,
+  reviewPlanCurrency: true,
+  reviewTrialUpdatedAt: true,
   reviewTrialCheckInSentAt: true,
   reviewRenewalReminderSentAt: true,
   reviewExpiredReminder1SentAt: true,
@@ -55,6 +70,7 @@ const reviewPlanSelect = {
   reviewPublicUrl: true,
   reviewMerchantUrl: true,
   updatedAt: true,
+  createdAt: true,
 } as const;
 
 export default async function ReviewTrialsPage({
@@ -64,14 +80,29 @@ export default async function ReviewTrialsPage({
 }) {
   const filter = resolveFilter((await searchParams).filter);
   const rows = await prisma.lead.findMany({
-    where: reviewTrialsFilterWhere(filter),
+    where: reviewTrialsFilterWhere("all"),
     select: reviewPlanSelect,
     orderBy: [{ reviewTrialEndAt: "asc" }, { updatedAt: "desc" }],
   });
-  const leads =
+
+  const filteredLeads: ReviewTrialsTableLead[] =
     filter === "all" || filter === "stopped" || filter === "converted"
-      ? rows
+      ? filter === "all"
+        ? rows
+        : rows.filter((lead) => matchesReviewTrialsFilter(lead, filter))
       : rows.filter((lead) => matchesReviewTrialsFilter(lead, filter));
+
+  const mainListLeads = sortReviewLeadsByRecentActivity(filteredLeads);
+  const dailyBuckets = bucketReviewDailyWorkLeads(rows);
+
+  const filterChips: ReviewFilterChip[] = FILTER_CHIPS.map((item) => ({
+    key: item.key,
+    label: item.label,
+    href: filterHref(item.key),
+  }));
+
+  const filterLabel =
+    FILTER_CHIPS.find((item) => item.key === filter)?.label ?? filter;
 
   return (
     <div className="page review-trials-page">
@@ -80,106 +111,39 @@ export default async function ReviewTrialsPage({
           Back to Queues
         </Link>
       </p>
-      <h1>Review Trials</h1>
-      <p className="sub">Track trials, renewals, and follow-up reminders.</p>
+      <h1>Review Follow-up</h1>
+      <p className="sub">Workbench for trials, renewals, and expired follow-ups.</p>
 
-      <div className="review-trial-filters">
-        {FILTERS.map((item) => (
-          <Link
-            key={item.key}
-            href={item.key === "all" ? "/review-trials" : `/review-trials?filter=${item.key}`}
-            className={
-              filter === item.key
-                ? "queue-filter-pill queue-filter-pill-active"
-                : "queue-filter-pill"
-            }
-          >
-            {item.label}
-          </Link>
-        ))}
-      </div>
+      <ReviewCustomersPanel
+        filterKey={filter}
+        filterLabel={filterLabel}
+        filterChips={filterChips}
+        leads={mainListLeads}
+      />
 
-      <div className="table-wrap">
-        <table className="queue review-trials-table">
-          <thead>
-            <tr>
-              <th>Business</th>
-              <th>Phone</th>
-              <th>Plan Type</th>
-              <th>Status</th>
-              <th>Trial / Plan End</th>
-              <th>Days Left</th>
-              <th>Next Follow-up Reason</th>
-              <th>Review Links</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {leads.map((lead) => {
-              const displayStatus = computeReviewPlanDisplayStatus(lead);
-              const followUpReason = computeReviewFollowUpReason(lead);
-              const planType = resolveReviewPlanType(lead) ?? "—";
-              return (
-                <tr key={lead.id}>
-                  <td>{lead.businessName}</td>
-                  <td>
-                    {fmtText(lead.phone)}
-                    {lead.internationalPhone ? (
-                      <>
-                        <br />
-                        <span className="queue-muted">{lead.internationalPhone}</span>
-                      </>
-                    ) : null}
-                  </td>
-                  <td>{planType}</td>
-                  <td>
-                    <span className={reviewTrialStatusBadgeClass(displayStatus)}>
-                      {displayStatus}
-                    </span>
-                  </td>
-                  <td>{fmtDate(lead.reviewTrialEndAt)}</td>
-                  <td>{formatReviewTrialDaysLeft(lead.reviewTrialEndAt)}</td>
-                  <td className="review-follow-up-reason-cell">{followUpReason}</td>
-                  <td className="review-trial-links-cell">
-                    {lead.reviewPublicUrl || lead.reviewMerchantUrl ? (
-                      <div className="review-trial-links-inner">
-                        {lead.reviewPublicUrl ? (
-                          <a
-                            className="review-trial-link-badge"
-                            href={lead.reviewPublicUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            Public
-                          </a>
-                        ) : null}
-                        {lead.reviewMerchantUrl ? (
-                          <a
-                            className="review-trial-link-badge"
-                            href={lead.reviewMerchantUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            Admin
-                          </a>
-                        ) : null}
-                      </div>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                  <td className="review-trial-action-cell">
-                    <Link className="review-trial-action-link" href={`/leads/${lead.id}`}>
-                      View Lead
-                    </Link>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-      {leads.length === 0 ? <p className="empty">No review trials found.</p> : null}
+      <section className="review-follow-up-daily">
+        <h2 className="review-follow-up-main-heading">Daily work</h2>
+        <p className="review-follow-up-daily-hint">
+          Each customer appears in one section only, sorted by follow-up due date (Malaysia
+          time).
+        </p>
+        <div className="review-follow-up-sections">
+          {DAILY_WORK_SECTIONS.map((section) => {
+            const leads = dailyBuckets[section.key];
+            return (
+              <QueueSection
+                key={section.key}
+                title={REVIEW_DAILY_WORK_LABELS[section.key]}
+                totalCount={leads.length}
+                shownCount={leads.length}
+                defaultExpanded={section.defaultExpanded}
+              >
+                <ReviewTrialsTable leads={leads} emptyMessage="No leads in this group." />
+              </QueueSection>
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 }

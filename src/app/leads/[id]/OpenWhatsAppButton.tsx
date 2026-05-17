@@ -6,12 +6,14 @@ type Props = {
   phone: string | null;
   internationalPhone: string | null;
   preparedMessage: string | null;
+  label?: string;
 };
 
 export function OpenWhatsAppButton({
   phone,
   internationalPhone,
   preparedMessage,
+  label = "Open WhatsApp with draft",
 }: Props) {
   const prepared = (preparedMessage ?? "").trim();
   const digits = digitsForWaMe(phone, internationalPhone);
@@ -41,7 +43,7 @@ export function OpenWhatsAppButton({
       rel="noopener noreferrer"
       className="open-whatsapp-btn open-whatsapp-btn-primary"
     >
-      Open WhatsApp with draft
+      {label}
     </a>
   );
 }

@@ -161,11 +161,18 @@ model Lead {
   reviewTrialUpdatedAt DateTime?
 
   reviewPlanType               String?
+  reviewPlanAmountCents        Int?
+  reviewPlanCurrency           String    @default("MYR")
   reviewTrialCheckInSentAt     DateTime?
   reviewRenewalReminderSentAt  DateTime?
   reviewExpiredReminder1SentAt DateTime?
   reviewExpiredFollowUp1SentAt DateTime?
   reviewExpiredFollowUp2SentAt DateTime?
+  reviewTrialCheckInDraft      String?
+  reviewRenewalReminderDraft   String?
+  reviewExpiredReminder1Draft  String?
+  reviewExpiredFollowUp1Draft  String?
+  reviewExpiredFollowUp2Draft  String?
 
   isArchived     Boolean   @default(false)
   archivedAt     DateTime?
@@ -191,9 +198,10 @@ model Lead {
   skippedAt  DateTime?
   skipReason String?
 
-  campaign        Campaign?        @relation(fields: [campaignId], references: [id])
-  importBatch     ImportBatch?     @relation(fields: [importBatchId], references: [id])
-  messageTemplate MessageTemplate? @relation(fields: [messageTemplateId], references: [id])
+  campaign          Campaign?          @relation(fields: [campaignId], references: [id])
+  importBatch       ImportBatch?       @relation(fields: [importBatchId], references: [id])
+  messageTemplate   MessageTemplate?   @relation(fields: [messageTemplateId], references: [id])
+  reviewPlanPeriods ReviewPlanPeriod[]
 
   @@unique([placeId])
   @@index([businessName])
@@ -214,4 +222,28 @@ model Lead {
   @@index([campaignId])
   @@index([importBatchId])
   @@index([skippedAt])
+}
+
+model ReviewPlanPeriod {
+  id          String   @id @default(cuid())
+  leadId      String
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  planType    String
+  startAt     DateTime
+  endAt       DateTime
+  priceCents  Int?
+  amountCents Int?
+  currency    String   @default("MYR")
+  status      String   @default("Active")
+  source      String?
+  notes       String?
+  note        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([leadId])
+  @@index([planType])
+  @@index([startAt])
+  @@index([endAt])
+  @@index([status])
 }
