@@ -15,11 +15,30 @@ import {
   MESSAGE_STATUS_PREPARED,
 } from "../../../statusConstants";
 import { isSkipReasonValue } from "../../../skipLeadReasons";
+import { isReviewPlanType } from "../../../reviewPlanConstants";
+import type { ReviewFollowUpReason } from "../../../reviewPlanConstants";
+import type { ReviewPlanType } from "../../../reviewPlanConstants";
+import type { ReviewTrialStatus } from "../../../reviewTrialConstants";
 import {
   canStartReviewTrial,
   canStopReviewTrial,
-  computeReviewTrialDisplayStatus,
-} from "../../../reviewTrialStatus";
+  computePlanEndDate,
+  computeReviewPlanDisplayStatus,
+  computeReviewFollowUpReason,
+  type ReviewPlanLeadFields,
+} from "../../../reviewPlanFollowUp";
+
+const reviewPlanLeadSelect = {
+  reviewTrialStatus: true,
+  reviewTrialStartAt: true,
+  reviewTrialEndAt: true,
+  reviewPlanType: true,
+  reviewTrialCheckInSentAt: true,
+  reviewRenewalReminderSentAt: true,
+  reviewExpiredReminder1SentAt: true,
+  reviewExpiredFollowUp1SentAt: true,
+  reviewExpiredFollowUp2SentAt: true,
+} as const;
 
 export type PrepareLeadMessageActionResult =
   | { ok: true }
@@ -342,9 +361,31 @@ export async function restoreLeadAction(
   }
 }
 
+export type ReviewTrialSavedSnapshot = {
+  planType: string | null;
+  startDate: string;
+  endDate: string;
+  displayStatus: ReviewTrialStatus;
+  followUpReason: ReviewFollowUpReason;
+};
+
 export type ReviewTrialActionResult =
-  | { ok: true }
+  | { ok: true; saved?: ReviewTrialSavedSnapshot }
   | { ok: false; error: string };
+
+function formatPlanDateInput(date: Date | null): string {
+  return date ? date.toISOString().slice(0, 10) : "";
+}
+
+function buildReviewTrialSavedSnapshot(lead: ReviewPlanLeadFields): ReviewTrialSavedSnapshot {
+  return {
+    planType: lead.reviewPlanType,
+    startDate: formatPlanDateInput(lead.reviewTrialStartAt),
+    endDate: formatPlanDateInput(lead.reviewTrialEndAt),
+    displayStatus: computeReviewPlanDisplayStatus(lead),
+    followUpReason: computeReviewFollowUpReason(lead),
+  };
+}
 
 function nullableTrimmed(value: string | null | undefined): string | null {
   const trimmed = value?.trim() ?? "";
@@ -379,84 +420,122 @@ function revalidateReviewTrialPaths(leadId: string): void {
 
 export async function updateReviewTrialAction(input: {
   leadId: string;
+  planType: string | null;
   startDate: string | null;
   endDate: string | null;
   publicUrl: string | null;
   merchantUrl: string | null;
   notes: string | null;
 }): Promise<ReviewTrialActionResult> {
+  if (input.planType && !isReviewPlanType(input.planType)) {
+    return { ok: false, error: "Invalid review plan type." };
+  }
   if (!(await ensureLeadExists(input.leadId))) {
     return { ok: false, error: `Lead not found: ${input.leadId}` };
   }
 
-  const startAt = parseDateInput(input.startDate);
-  const endAt = parseDateInput(input.endDate);
+  let startAt = parseDateInput(input.startDate);
+  let endAt = parseDateInput(input.endDate);
   if (input.startDate && !startAt) {
-    return { ok: false, error: "Invalid trial start date." };
+    return { ok: false, error: "Invalid plan start date." };
   }
-  if (input.endDate && !endAt) {
-    return { ok: false, error: "Invalid trial end date." };
+  if (input.endDate && !endAt && !input.planType) {
+    return { ok: false, error: "Invalid plan end date." };
+  }
+
+  const planType = input.planType && isReviewPlanType(input.planType) ? input.planType : null;
+  if (planType) {
+    if (!startAt) {
+      startAt = todayDateOnlyUtc();
+    }
+    endAt = computePlanEndDate(startAt, planType);
   }
 
   await prisma.lead.update({
     where: { id: input.leadId },
     data: {
+      reviewPlanType: planType,
       reviewTrialStartAt: startAt,
       reviewTrialEndAt: endAt,
+      ...(planType === "Monthly Paid" || planType === "Yearly Paid"
+        ? { reviewTrialStatus: null }
+        : {}),
       reviewPublicUrl: nullableTrimmed(input.publicUrl),
       reviewMerchantUrl: nullableTrimmed(input.merchantUrl),
       reviewTrialNotes: nullableTrimmed(input.notes),
       reviewTrialUpdatedAt: new Date(),
     },
   });
+
+  const updated = await prisma.lead.findUnique({
+    where: { id: input.leadId },
+    select: reviewPlanLeadSelect,
+  });
+  if (!updated) {
+    return { ok: false, error: `Lead not found: ${input.leadId}` };
+  }
+
   revalidateReviewTrialPaths(input.leadId);
-  return { ok: true };
+  return { ok: true, saved: buildReviewTrialSavedSnapshot(updated) };
 }
 
 export async function startOneMonthReviewTrialAction(
   leadId: string,
+  planTypeInput?: string | null,
 ): Promise<ReviewTrialActionResult> {
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
-    select: {
-      reviewTrialStatus: true,
-      reviewTrialStartAt: true,
-      reviewTrialEndAt: true,
-    },
+    select: reviewPlanLeadSelect,
   });
   if (!lead) {
     return { ok: false, error: `Lead not found: ${leadId}` };
   }
 
-  const displayStatus = computeReviewTrialDisplayStatus(lead);
+  const displayStatus = computeReviewPlanDisplayStatus(lead);
   if (!canStartReviewTrial(displayStatus)) {
     if (displayStatus === "Converted Paid") {
       return {
         ok: false,
-        error: "Cannot start a new trial for a converted paid lead.",
+        error: "Cannot start a new plan for a converted paid lead.",
       };
     }
     return {
       ok: false,
-      error: "An active trial is already in progress.",
+      error: "An active plan is already in progress.",
     };
   }
 
+  const planType: ReviewPlanType =
+    planTypeInput && isReviewPlanType(planTypeInput)
+      ? planTypeInput
+      : lead.reviewPlanType && isReviewPlanType(lead.reviewPlanType)
+        ? lead.reviewPlanType
+        : "Free Trial";
+
   const start = todayDateOnlyUtc();
-  const end = new Date(start);
-  end.setUTCDate(end.getUTCDate() + 30);
+  const end = computePlanEndDate(start, planType);
 
   await prisma.lead.update({
     where: { id: leadId },
     data: {
-      reviewTrialStatus: "Trial Active",
+      reviewPlanType: planType,
+      reviewTrialStatus: planType === "Free Trial" ? "Trial Active" : null,
       reviewTrialStartAt: start,
       reviewTrialEndAt: end,
       reviewTrialUpdatedAt: new Date(),
     },
   });
+
+  const updated = await prisma.lead.findUnique({
+    where: { id: leadId },
+    select: reviewPlanLeadSelect,
+  });
+  if (!updated) {
+    return { ok: false, error: `Lead not found: ${leadId}` };
+  }
+
   revalidateReviewTrialPaths(leadId);
-  return { ok: true };
+  return { ok: true, saved: buildReviewTrialSavedSnapshot(updated) };
 }
 
 export async function stopReviewTrialAction(
@@ -464,21 +543,17 @@ export async function stopReviewTrialAction(
 ): Promise<ReviewTrialActionResult> {
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
-    select: {
-      reviewTrialStatus: true,
-      reviewTrialStartAt: true,
-      reviewTrialEndAt: true,
-    },
+    select: reviewPlanLeadSelect,
   });
   if (!lead) {
     return { ok: false, error: `Lead not found: ${leadId}` };
   }
 
-  const displayStatus = computeReviewTrialDisplayStatus(lead);
+  const displayStatus = computeReviewPlanDisplayStatus(lead);
   if (!canStopReviewTrial(displayStatus)) {
     return {
       ok: false,
-      error: "Stop Trial is only available for an active or expiring trial.",
+      error: "Stop Plan is only available for an active or expiring plan.",
     };
   }
 
@@ -489,6 +564,70 @@ export async function stopReviewTrialAction(
       reviewTrialUpdatedAt: new Date(),
     },
   });
+
+  const updated = await prisma.lead.findUnique({
+    where: { id: leadId },
+    select: reviewPlanLeadSelect,
+  });
+  if (!updated) {
+    return { ok: false, error: `Lead not found: ${leadId}` };
+  }
+
+  revalidateReviewTrialPaths(leadId);
+  return { ok: true, saved: buildReviewTrialSavedSnapshot(updated) };
+}
+
+type ReviewFollowUpMarkField =
+  | "reviewTrialCheckInSentAt"
+  | "reviewRenewalReminderSentAt"
+  | "reviewExpiredReminder1SentAt"
+  | "reviewExpiredFollowUp1SentAt"
+  | "reviewExpiredFollowUp2SentAt";
+
+async function markReviewFollowUpSent(
+  leadId: string,
+  field: ReviewFollowUpMarkField,
+): Promise<ReviewTrialActionResult> {
+  if (!(await ensureLeadExists(leadId))) {
+    return { ok: false, error: `Lead not found: ${leadId}` };
+  }
+  await prisma.lead.update({
+    where: { id: leadId },
+    data: {
+      [field]: new Date(),
+      reviewTrialUpdatedAt: new Date(),
+    },
+  });
   revalidateReviewTrialPaths(leadId);
   return { ok: true };
+}
+
+export async function markReviewTrialCheckInSentAction(
+  leadId: string,
+): Promise<ReviewTrialActionResult> {
+  return markReviewFollowUpSent(leadId, "reviewTrialCheckInSentAt");
+}
+
+export async function markReviewRenewalReminderSentAction(
+  leadId: string,
+): Promise<ReviewTrialActionResult> {
+  return markReviewFollowUpSent(leadId, "reviewRenewalReminderSentAt");
+}
+
+export async function markReviewExpiredReminder1SentAction(
+  leadId: string,
+): Promise<ReviewTrialActionResult> {
+  return markReviewFollowUpSent(leadId, "reviewExpiredReminder1SentAt");
+}
+
+export async function markReviewExpiredFollowUp1SentAction(
+  leadId: string,
+): Promise<ReviewTrialActionResult> {
+  return markReviewFollowUpSent(leadId, "reviewExpiredFollowUp1SentAt");
+}
+
+export async function markReviewExpiredFollowUp2SentAction(
+  leadId: string,
+): Promise<ReviewTrialActionResult> {
+  return markReviewFollowUpSent(leadId, "reviewExpiredFollowUp2SentAt");
 }

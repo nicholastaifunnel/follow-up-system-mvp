@@ -8,10 +8,12 @@ import { SkipLeadPanel } from "./SkipLeadPanel";
 import { prisma } from "@/lib/prisma";
 import { skipReasonLabel } from "@/skipLeadReasons";
 import {
-  computeReviewTrialDisplayStatus,
+  computeReviewFollowUpReason,
+  computeReviewPlanDisplayStatus,
   formatReviewTrialDaysLeft,
+  resolveReviewPlanType,
   reviewTrialStatusBadgeClass,
-} from "@/reviewTrialStatus";
+} from "@/reviewPlanFollowUp";
 import {
   MESSAGE_STATUS_FIRST_SENT,
   MESSAGE_STATUS_NOT_PREPARED,
@@ -176,9 +178,15 @@ export default async function LeadDetailPage({
       reviewTrialStatus: true,
       reviewTrialStartAt: true,
       reviewTrialEndAt: true,
+      reviewPlanType: true,
       reviewPublicUrl: true,
       reviewMerchantUrl: true,
       reviewTrialNotes: true,
+      reviewTrialCheckInSentAt: true,
+      reviewRenewalReminderSentAt: true,
+      reviewExpiredReminder1SentAt: true,
+      reviewExpiredFollowUp1SentAt: true,
+      reviewExpiredFollowUp2SentAt: true,
       campaign: {
         select: { name: true, sourceKeyword: true },
       },
@@ -207,12 +215,21 @@ export default async function LeadDetailPage({
     lead.sourceKeyword ?? lead.campaign?.sourceKeyword ?? null;
 
   const prepared = (lead.preparedMessage ?? "").trim();
-  const reviewTrialDisplayStatus = computeReviewTrialDisplayStatus({
+  const reviewPlanFields = {
     reviewTrialStatus: lead.reviewTrialStatus,
     reviewTrialStartAt: lead.reviewTrialStartAt,
     reviewTrialEndAt: lead.reviewTrialEndAt,
-  });
+    reviewPlanType: lead.reviewPlanType,
+    reviewTrialCheckInSentAt: lead.reviewTrialCheckInSentAt,
+    reviewRenewalReminderSentAt: lead.reviewRenewalReminderSentAt,
+    reviewExpiredReminder1SentAt: lead.reviewExpiredReminder1SentAt,
+    reviewExpiredFollowUp1SentAt: lead.reviewExpiredFollowUp1SentAt,
+    reviewExpiredFollowUp2SentAt: lead.reviewExpiredFollowUp2SentAt,
+  };
+  const reviewTrialDisplayStatus = computeReviewPlanDisplayStatus(reviewPlanFields);
+  const reviewFollowUpReason = computeReviewFollowUpReason(reviewPlanFields);
   const reviewTrialDaysText = formatReviewTrialDaysLeft(lead.reviewTrialEndAt);
+  const reviewPlanTypeDisplay = resolveReviewPlanType(reviewPlanFields) ?? "—";
 
   const canPrepare = computeCanPrepare({
     isArchived: lead.isArchived,
@@ -338,15 +355,17 @@ export default async function LeadDetailPage({
       </section>
 
       <section className="detail-card review-trial-card">
-        <h2>Review Trial</h2>
+        <h2>Review Plan</h2>
         <div className="kv-list review-trial-summary">
+          <Row label="Plan Type">{reviewPlanTypeDisplay}</Row>
           <Row label="Current Status">
             <span className={reviewTrialStatusBadgeClass(reviewTrialDisplayStatus)}>
               {reviewTrialDisplayStatus}
             </span>
           </Row>
-          <Row label="Trial Start Date">{fmtDateOnly(lead.reviewTrialStartAt)}</Row>
-          <Row label="Trial End Date">{fmtDateOnly(lead.reviewTrialEndAt)}</Row>
+          <Row label="Next Follow-up">{reviewFollowUpReason}</Row>
+          <Row label="Plan Start Date">{fmtDateOnly(lead.reviewTrialStartAt)}</Row>
+          <Row label="Plan End Date">{fmtDateOnly(lead.reviewTrialEndAt)}</Row>
           <Row label="Days Left">{reviewTrialDaysText}</Row>
           <Row label="Public Review Link">
             {lead.reviewPublicUrl ? (
@@ -371,11 +390,37 @@ export default async function LeadDetailPage({
         <ReviewTrialForm
           leadId={id}
           displayStatus={reviewTrialDisplayStatus}
+          planType={lead.reviewPlanType}
           startDate={lead.reviewTrialStartAt ? lead.reviewTrialStartAt.toISOString().slice(0, 10) : ""}
           endDate={lead.reviewTrialEndAt ? lead.reviewTrialEndAt.toISOString().slice(0, 10) : ""}
           publicUrl={lead.reviewPublicUrl}
           merchantUrl={lead.reviewMerchantUrl}
           notes={lead.reviewTrialNotes}
+          checkInSentAt={
+            lead.reviewTrialCheckInSentAt
+              ? lead.reviewTrialCheckInSentAt.toISOString()
+              : null
+          }
+          renewalReminderSentAt={
+            lead.reviewRenewalReminderSentAt
+              ? lead.reviewRenewalReminderSentAt.toISOString()
+              : null
+          }
+          expiredReminder1SentAt={
+            lead.reviewExpiredReminder1SentAt
+              ? lead.reviewExpiredReminder1SentAt.toISOString()
+              : null
+          }
+          expiredFollowUp1SentAt={
+            lead.reviewExpiredFollowUp1SentAt
+              ? lead.reviewExpiredFollowUp1SentAt.toISOString()
+              : null
+          }
+          expiredFollowUp2SentAt={
+            lead.reviewExpiredFollowUp2SentAt
+              ? lead.reviewExpiredFollowUp2SentAt.toISOString()
+              : null
+          }
         />
       </section>
 

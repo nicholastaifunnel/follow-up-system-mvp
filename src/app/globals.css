@@ -2204,6 +2204,49 @@ html[data-theme="dark"] .review-trial-action-link {
   color: var(--muted);
 }
 
+.review-trial-badge--paid-active {
+  border-color: color-mix(in srgb, var(--link) 35%, var(--border));
+  background: color-mix(in srgb, var(--link) 8%, var(--card-muted));
+  color: var(--text);
+}
+
+.review-follow-up-reason-cell {
+  min-width: 10rem;
+  max-width: 14rem;
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
+.review-follow-up-tracking {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+  display: grid;
+  gap: 0.75rem;
+}
+
+.review-follow-up-heading {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.review-follow-up-sent-list {
+  margin: 0;
+  padding-left: 1.15rem;
+  font-size: 0.875rem;
+  color: var(--muted);
+  display: grid;
+  gap: 0.25rem;
+}
+
+.review-follow-up-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.65rem;
+  max-width: 100%;
+}
+
 .theme-toggle {
   display: inline-flex;
   align-items: center;

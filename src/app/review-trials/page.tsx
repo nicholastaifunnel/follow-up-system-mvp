@@ -1,22 +1,28 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import {
-  computeReviewTrialDisplayStatus,
+  computeReviewFollowUpReason,
+  computeReviewPlanDisplayStatus,
   formatReviewTrialDaysLeft,
+  matchesReviewTrialsFilter,
+  resolveReviewPlanType,
   reviewTrialStatusBadgeClass,
   reviewTrialsFilterWhere,
   type ReviewTrialsFilterKey,
-} from "@/reviewTrialStatus";
+} from "@/reviewPlanFollowUp";
 
 export const dynamic = "force-dynamic";
 
 const FILTERS: { key: ReviewTrialsFilterKey; label: string }[] = [
   { key: "all", label: "All" },
-  { key: "active", label: "Active" },
-  { key: "expiring", label: "Expiring Soon" },
+  { key: "trial-check-in", label: "Trial Check-in" },
+  { key: "trial-expiring", label: "Trial Expiring" },
+  { key: "monthly-renewal", label: "Monthly Renewal" },
+  { key: "yearly-renewal", label: "Yearly Renewal" },
+  { key: "paid-active", label: "Paid Active" },
   { key: "expired", label: "Expired" },
-  { key: "converted", label: "Converted Paid" },
   { key: "stopped", label: "Stopped" },
+  { key: "converted", label: "Converted Paid" },
 ];
 
 function resolveFilter(raw: string | string[] | undefined): ReviewTrialsFilterKey {
@@ -32,28 +38,40 @@ function fmtDate(value: Date | null): string {
   return value ? value.toISOString().slice(0, 10) : "—";
 }
 
+const reviewPlanSelect = {
+  id: true,
+  businessName: true,
+  phone: true,
+  internationalPhone: true,
+  reviewTrialStatus: true,
+  reviewTrialStartAt: true,
+  reviewTrialEndAt: true,
+  reviewPlanType: true,
+  reviewTrialCheckInSentAt: true,
+  reviewRenewalReminderSentAt: true,
+  reviewExpiredReminder1SentAt: true,
+  reviewExpiredFollowUp1SentAt: true,
+  reviewExpiredFollowUp2SentAt: true,
+  reviewPublicUrl: true,
+  reviewMerchantUrl: true,
+  updatedAt: true,
+} as const;
+
 export default async function ReviewTrialsPage({
   searchParams,
 }: {
   searchParams: Promise<{ filter?: string | string[] }>;
 }) {
   const filter = resolveFilter((await searchParams).filter);
-  const leads = await prisma.lead.findMany({
+  const rows = await prisma.lead.findMany({
     where: reviewTrialsFilterWhere(filter),
-    select: {
-      id: true,
-      businessName: true,
-      phone: true,
-      internationalPhone: true,
-      reviewTrialStatus: true,
-      reviewTrialStartAt: true,
-      reviewTrialEndAt: true,
-      reviewPublicUrl: true,
-      reviewMerchantUrl: true,
-      updatedAt: true,
-    },
+    select: reviewPlanSelect,
     orderBy: [{ reviewTrialEndAt: "asc" }, { updatedAt: "desc" }],
   });
+  const leads =
+    filter === "all" || filter === "stopped" || filter === "converted"
+      ? rows
+      : rows.filter((lead) => matchesReviewTrialsFilter(lead, filter));
 
   return (
     <div className="page review-trials-page">
@@ -63,7 +81,7 @@ export default async function ReviewTrialsPage({
         </Link>
       </p>
       <h1>Review Trials</h1>
-      <p className="sub">Track free trials and expiry follow-ups.</p>
+      <p className="sub">Track trials, renewals, and follow-up reminders.</p>
 
       <div className="review-trial-filters">
         {FILTERS.map((item) => (
@@ -87,16 +105,20 @@ export default async function ReviewTrialsPage({
             <tr>
               <th>Business</th>
               <th>Phone</th>
+              <th>Plan Type</th>
               <th>Status</th>
-              <th>Trial End</th>
+              <th>Trial / Plan End</th>
               <th>Days Left</th>
+              <th>Next Follow-up Reason</th>
               <th>Review Links</th>
               <th>Action</th>
             </tr>
           </thead>
           <tbody>
             {leads.map((lead) => {
-              const displayStatus = computeReviewTrialDisplayStatus(lead);
+              const displayStatus = computeReviewPlanDisplayStatus(lead);
+              const followUpReason = computeReviewFollowUpReason(lead);
+              const planType = resolveReviewPlanType(lead) ?? "—";
               return (
                 <tr key={lead.id}>
                   <td>{lead.businessName}</td>
@@ -109,6 +131,7 @@ export default async function ReviewTrialsPage({
                       </>
                     ) : null}
                   </td>
+                  <td>{planType}</td>
                   <td>
                     <span className={reviewTrialStatusBadgeClass(displayStatus)}>
                       {displayStatus}
@@ -116,6 +139,7 @@ export default async function ReviewTrialsPage({
                   </td>
                   <td>{fmtDate(lead.reviewTrialEndAt)}</td>
                   <td>{formatReviewTrialDaysLeft(lead.reviewTrialEndAt)}</td>
+                  <td className="review-follow-up-reason-cell">{followUpReason}</td>
                   <td className="review-trial-links-cell">
                     {lead.reviewPublicUrl || lead.reviewMerchantUrl ? (
                       <div className="review-trial-links-inner">

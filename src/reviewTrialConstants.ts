@@ -3,6 +3,7 @@ export const REVIEW_TRIAL_STATUSES = [
   "Trial Active",
   "Trial Expiring Soon",
   "Trial Expired",
+  "Paid Active",
   "Converted Paid",
   "Stopped",
 ] as const;

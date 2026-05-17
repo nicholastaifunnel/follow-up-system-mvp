@@ -160,6 +160,13 @@ model Lead {
   reviewTrialNotes     String?
   reviewTrialUpdatedAt DateTime?
 
+  reviewPlanType               String?
+  reviewTrialCheckInSentAt     DateTime?
+  reviewRenewalReminderSentAt  DateTime?
+  reviewExpiredReminder1SentAt DateTime?
+  reviewExpiredFollowUp1SentAt DateTime?
+  reviewExpiredFollowUp2SentAt DateTime?
+
   isArchived     Boolean   @default(false)
   archivedAt     DateTime?
   archivedReason String?
@@ -200,6 +207,7 @@ model Lead {
   @@index([contactStatus])
   @@index([reviewTrialStatus])
   @@index([reviewTrialEndAt])
+  @@index([reviewPlanType])
   @@index([nextCheckAt])
   @@index([nextFollowUpAt])
   @@index([isArchived])
