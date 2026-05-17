@@ -1,4 +1,5 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
+import { malaysiaScheduledAt } from "./formatMalaysiaTime";
 import {
   BOT_STATUS_NOT_CONNECTED,
   CONTACT_STATUS_CONTACTED,
@@ -15,16 +16,10 @@ export type MarkWhatsAppFirstMessageSentInput = {
   nextFollowUpAt?: Date;
 };
 
-const FALLBACK_REPLY_CHECK_HOURS = 24;
-const FALLBACK_FOLLOW_UP_DAYS = 3;
-
-function addHours(from: Date, hours: number): Date {
-  return new Date(from.getTime() + hours * 60 * 60 * 1000);
-}
-
-function addDays(from: Date, days: number): Date {
-  return new Date(from.getTime() + days * 24 * 60 * 60 * 1000);
-}
+/** Mark sent: next check tomorrow 10:00 MYT; next follow-up 2 days later 10:00 MYT. */
+const MARK_SENT_NEXT_CHECK_DAYS = 1;
+const MARK_SENT_NEXT_FOLLOW_UP_DAYS = 2;
+const MARK_SENT_WORK_HOUR_MYT = 10;
 
 /**
  * User manually sent the first WhatsApp and clicked "Mark as Sent".
@@ -44,15 +39,13 @@ export async function markWhatsAppFirstMessageSent(
   }
 
   const now = new Date();
-  const replyCheckHours =
-    lead.campaign?.defaultReplyCheckHours ?? FALLBACK_REPLY_CHECK_HOURS;
-  const followUpDays =
-    lead.campaign?.defaultFollowUpDays ?? FALLBACK_FOLLOW_UP_DAYS;
 
   const nextCheckAt =
-    input.nextCheckAt ?? addHours(now, replyCheckHours);
+    input.nextCheckAt ??
+    malaysiaScheduledAt(MARK_SENT_NEXT_CHECK_DAYS, MARK_SENT_WORK_HOUR_MYT, 0);
   const nextFollowUpAt =
-    input.nextFollowUpAt ?? addDays(now, followUpDays);
+    input.nextFollowUpAt ??
+    malaysiaScheduledAt(MARK_SENT_NEXT_FOLLOW_UP_DAYS, MARK_SENT_WORK_HOUR_MYT, 0);
 
   const data: Prisma.LeadUpdateInput = {
     messageStatus: MESSAGE_STATUS_FIRST_SENT,

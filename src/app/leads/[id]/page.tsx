@@ -14,6 +14,7 @@ import {
   resolveReviewPlanType,
   reviewTrialStatusBadgeClass,
 } from "@/reviewPlanFollowUp";
+import { formatDateTimeMYT } from "@/formatMalaysiaTime";
 import {
   MESSAGE_STATUS_FIRST_SENT,
   MESSAGE_STATUS_NOT_PREPARED,
@@ -80,11 +81,6 @@ export const dynamic = "force-dynamic";
 function fmtText(v: string | null | undefined): string {
   if (v === null || v === undefined || v === "") return "—";
   return v;
-}
-
-function fmtDate(d: Date | null): string {
-  if (!d) return "—";
-  return d.toISOString().replace("T", " ").slice(0, 19);
 }
 
 function fmtDateOnly(d: Date | null): string {
@@ -272,8 +268,8 @@ export default async function LeadDetailPage({
           <Row label="Lead Temperature">{fmtText(lead.leadTemperature)}</Row>
           <Row label="Next Action">{fmtText(lead.nextAction)}</Row>
           <Row label="Handoff Required">{fmtBool(lead.handoffRequired)}</Row>
-          <Row label="Next Check At">{fmtDate(lead.nextCheckAt)}</Row>
-          <Row label="Next Follow-up At">{fmtDate(lead.nextFollowUpAt)}</Row>
+          <Row label="Next Check At">{formatDateTimeMYT(lead.nextCheckAt)}</Row>
+          <Row label="Next Follow-up At">{formatDateTimeMYT(lead.nextFollowUpAt)}</Row>
         </div>
       </section>
 
@@ -319,7 +315,7 @@ export default async function LeadDetailPage({
           <p className="sub">
             Reason: <strong>{skipReasonLabel(lead.skipReason)}</strong>
             <br />
-            Skipped at: {fmtDate(lead.skippedAt)}
+            Skipped at: {formatDateTimeMYT(lead.skippedAt)}
           </p>
           <RestoreLeadButton leadId={id} />
         </section>
@@ -446,8 +442,8 @@ export default async function LeadDetailPage({
           <Row label="Handoff Required">{fmtBool(lead.handoffRequired)}</Row>
           <Row label="Handoff Reason">{fmtText(lead.handoffReason)}</Row>
           <Row label="Next Action">{fmtText(lead.nextAction)}</Row>
-          <Row label="Next Check At">{fmtDate(lead.nextCheckAt)}</Row>
-          <Row label="Next Follow-up At">{fmtDate(lead.nextFollowUpAt)}</Row>
+          <Row label="Next Check At">{formatDateTimeMYT(lead.nextCheckAt)}</Row>
+          <Row label="Next Follow-up At">{formatDateTimeMYT(lead.nextFollowUpAt)}</Row>
         </div>
       </section>
 
