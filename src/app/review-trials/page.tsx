@@ -1,12 +1,16 @@
 import Link from "next/link";
-import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import {
+  computeReviewTrialDisplayStatus,
+  formatReviewTrialDaysLeft,
+  reviewTrialStatusBadgeClass,
+  reviewTrialsFilterWhere,
+  type ReviewTrialsFilterKey,
+} from "@/reviewTrialStatus";
 
 export const dynamic = "force-dynamic";
 
-type FilterKey = "all" | "active" | "expiring" | "expired" | "converted" | "stopped";
-
-const FILTERS: { key: FilterKey; label: string }[] = [
+const FILTERS: { key: ReviewTrialsFilterKey; label: string }[] = [
   { key: "all", label: "All" },
   { key: "active", label: "Active" },
   { key: "expiring", label: "Expiring Soon" },
@@ -15,49 +19,9 @@ const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "stopped", label: "Stopped" },
 ];
 
-function resolveFilter(raw: string | string[] | undefined): FilterKey {
+function resolveFilter(raw: string | string[] | undefined): ReviewTrialsFilterKey {
   const value = Array.isArray(raw) ? raw[0] : raw;
-  return FILTERS.some((item) => item.key === value) ? (value as FilterKey) : "all";
-}
-
-function startOfToday(): Date {
-  const now = new Date();
-  return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-}
-
-function endOfNextSevenDays(): Date {
-  const d = startOfToday();
-  d.setDate(d.getDate() + 7);
-  d.setHours(23, 59, 59, 999);
-  return d;
-}
-
-function filterWhere(filter: FilterKey): Prisma.LeadWhereInput {
-  const today = startOfToday();
-  const soon = endOfNextSevenDays();
-  switch (filter) {
-    case "active":
-      return { reviewTrialStatus: "Trial Active" };
-    case "expiring":
-      return {
-        OR: [
-          { reviewTrialStatus: "Trial Expiring Soon" },
-          {
-            reviewTrialStatus: "Trial Active",
-            reviewTrialEndAt: { gte: today, lte: soon },
-          },
-        ],
-      };
-    case "expired":
-      return { reviewTrialStatus: "Trial Expired" };
-    case "converted":
-      return { reviewTrialStatus: "Converted Paid" };
-    case "stopped":
-      return { reviewTrialStatus: "Stopped" };
-    case "all":
-    default:
-      return { reviewTrialStatus: { not: null } };
-  }
+  return FILTERS.some((item) => item.key === value) ? (value as ReviewTrialsFilterKey) : "all";
 }
 
 function fmtText(value: string | null): string {
@@ -68,36 +32,6 @@ function fmtDate(value: Date | null): string {
   return value ? value.toISOString().slice(0, 10) : "—";
 }
 
-function daysLeft(value: Date | null): string {
-  if (!value) return "—";
-  const today = startOfToday();
-  const end = new Date(
-    Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()),
-  );
-  const diff = Math.round((end.getTime() - today.getTime()) / 86_400_000);
-  if (diff > 0) return `${diff} day${diff === 1 ? "" : "s"} left`;
-  if (diff === 0) return "Ends today";
-  const expired = Math.abs(diff);
-  return `Expired ${expired} day${expired === 1 ? "" : "s"} ago`;
-}
-
-function statusClass(status: string | null): string {
-  switch (status) {
-    case "Trial Active":
-      return "review-trial-badge review-trial-badge--active";
-    case "Trial Expiring Soon":
-      return "review-trial-badge review-trial-badge--expiring";
-    case "Trial Expired":
-      return "review-trial-badge review-trial-badge--expired";
-    case "Converted Paid":
-      return "review-trial-badge review-trial-badge--converted";
-    case "Stopped":
-      return "review-trial-badge review-trial-badge--stopped";
-    default:
-      return "review-trial-badge";
-  }
-}
-
 export default async function ReviewTrialsPage({
   searchParams,
 }: {
@@ -105,13 +39,14 @@ export default async function ReviewTrialsPage({
 }) {
   const filter = resolveFilter((await searchParams).filter);
   const leads = await prisma.lead.findMany({
-    where: filterWhere(filter),
+    where: reviewTrialsFilterWhere(filter),
     select: {
       id: true,
       businessName: true,
       phone: true,
       internationalPhone: true,
       reviewTrialStatus: true,
+      reviewTrialStartAt: true,
       reviewTrialEndAt: true,
       reviewPublicUrl: true,
       reviewMerchantUrl: true,
@@ -156,47 +91,67 @@ export default async function ReviewTrialsPage({
               <th>Trial End</th>
               <th>Days Left</th>
               <th>Review Links</th>
-              <th></th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
-            {leads.map((lead) => (
-              <tr key={lead.id}>
-                <td>{lead.businessName}</td>
-                <td>
-                  {fmtText(lead.phone)}
-                  {lead.internationalPhone ? (
-                    <>
-                      <br />
-                      <span className="queue-muted">{lead.internationalPhone}</span>
-                    </>
-                  ) : null}
-                </td>
-                <td>
-                  <span className={statusClass(lead.reviewTrialStatus)}>
-                    {fmtText(lead.reviewTrialStatus)}
-                  </span>
-                </td>
-                <td>{fmtDate(lead.reviewTrialEndAt)}</td>
-                <td>{daysLeft(lead.reviewTrialEndAt)}</td>
-                <td className="review-trial-links-cell">
-                  {lead.reviewPublicUrl ? (
-                    <a href={lead.reviewPublicUrl} target="_blank" rel="noopener noreferrer">
-                      Public
-                    </a>
-                  ) : null}
-                  {lead.reviewMerchantUrl ? (
-                    <a href={lead.reviewMerchantUrl} target="_blank" rel="noopener noreferrer">
-                      Admin
-                    </a>
-                  ) : null}
-                  {!lead.reviewPublicUrl && !lead.reviewMerchantUrl ? "—" : null}
-                </td>
-                <td>
-                  <Link href={`/leads/${lead.id}`}>View Lead</Link>
-                </td>
-              </tr>
-            ))}
+            {leads.map((lead) => {
+              const displayStatus = computeReviewTrialDisplayStatus(lead);
+              return (
+                <tr key={lead.id}>
+                  <td>{lead.businessName}</td>
+                  <td>
+                    {fmtText(lead.phone)}
+                    {lead.internationalPhone ? (
+                      <>
+                        <br />
+                        <span className="queue-muted">{lead.internationalPhone}</span>
+                      </>
+                    ) : null}
+                  </td>
+                  <td>
+                    <span className={reviewTrialStatusBadgeClass(displayStatus)}>
+                      {displayStatus}
+                    </span>
+                  </td>
+                  <td>{fmtDate(lead.reviewTrialEndAt)}</td>
+                  <td>{formatReviewTrialDaysLeft(lead.reviewTrialEndAt)}</td>
+                  <td className="review-trial-links-cell">
+                    {lead.reviewPublicUrl || lead.reviewMerchantUrl ? (
+                      <div className="review-trial-links-inner">
+                        {lead.reviewPublicUrl ? (
+                          <a
+                            className="review-trial-link-badge"
+                            href={lead.reviewPublicUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Public
+                          </a>
+                        ) : null}
+                        {lead.reviewMerchantUrl ? (
+                          <a
+                            className="review-trial-link-badge"
+                            href={lead.reviewMerchantUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Admin
+                          </a>
+                        ) : null}
+                      </div>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                  <td className="review-trial-action-cell">
+                    <Link className="review-trial-action-link" href={`/leads/${lead.id}`}>
+                      View Lead
+                    </Link>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

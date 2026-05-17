@@ -16,9 +16,10 @@ import {
 } from "../../../statusConstants";
 import { isSkipReasonValue } from "../../../skipLeadReasons";
 import {
-  isReviewTrialStatus,
-  type ReviewTrialStatus,
-} from "../../../reviewTrialConstants";
+  canStartReviewTrial,
+  canStopReviewTrial,
+  computeReviewTrialDisplayStatus,
+} from "../../../reviewTrialStatus";
 
 export type PrepareLeadMessageActionResult =
   | { ok: true }
@@ -378,16 +379,12 @@ function revalidateReviewTrialPaths(leadId: string): void {
 
 export async function updateReviewTrialAction(input: {
   leadId: string;
-  status: string;
   startDate: string | null;
   endDate: string | null;
   publicUrl: string | null;
   merchantUrl: string | null;
   notes: string | null;
 }): Promise<ReviewTrialActionResult> {
-  if (!isReviewTrialStatus(input.status)) {
-    return { ok: false, error: "Invalid review trial status." };
-  }
   if (!(await ensureLeadExists(input.leadId))) {
     return { ok: false, error: `Lead not found: ${input.leadId}` };
   }
@@ -404,7 +401,6 @@ export async function updateReviewTrialAction(input: {
   await prisma.lead.update({
     where: { id: input.leadId },
     data: {
-      reviewTrialStatus: input.status as ReviewTrialStatus,
       reviewTrialStartAt: startAt,
       reviewTrialEndAt: endAt,
       reviewPublicUrl: nullableTrimmed(input.publicUrl),
@@ -420,13 +416,35 @@ export async function updateReviewTrialAction(input: {
 export async function startOneMonthReviewTrialAction(
   leadId: string,
 ): Promise<ReviewTrialActionResult> {
-  if (!(await ensureLeadExists(leadId))) {
+  const lead = await prisma.lead.findUnique({
+    where: { id: leadId },
+    select: {
+      reviewTrialStatus: true,
+      reviewTrialStartAt: true,
+      reviewTrialEndAt: true,
+    },
+  });
+  if (!lead) {
     return { ok: false, error: `Lead not found: ${leadId}` };
+  }
+
+  const displayStatus = computeReviewTrialDisplayStatus(lead);
+  if (!canStartReviewTrial(displayStatus)) {
+    if (displayStatus === "Converted Paid") {
+      return {
+        ok: false,
+        error: "Cannot start a new trial for a converted paid lead.",
+      };
+    }
+    return {
+      ok: false,
+      error: "An active trial is already in progress.",
+    };
   }
 
   const start = todayDateOnlyUtc();
   const end = new Date(start);
-  end.setDate(end.getDate() + 30);
+  end.setUTCDate(end.getUTCDate() + 30);
 
   await prisma.lead.update({
     where: { id: leadId },
@@ -441,23 +459,34 @@ export async function startOneMonthReviewTrialAction(
   return { ok: true };
 }
 
-export async function clearReviewTrialAction(
+export async function stopReviewTrialAction(
   leadId: string,
 ): Promise<ReviewTrialActionResult> {
-  if (!(await ensureLeadExists(leadId))) {
+  const lead = await prisma.lead.findUnique({
+    where: { id: leadId },
+    select: {
+      reviewTrialStatus: true,
+      reviewTrialStartAt: true,
+      reviewTrialEndAt: true,
+    },
+  });
+  if (!lead) {
     return { ok: false, error: `Lead not found: ${leadId}` };
+  }
+
+  const displayStatus = computeReviewTrialDisplayStatus(lead);
+  if (!canStopReviewTrial(displayStatus)) {
+    return {
+      ok: false,
+      error: "Stop Trial is only available for an active or expiring trial.",
+    };
   }
 
   await prisma.lead.update({
     where: { id: leadId },
     data: {
-      reviewTrialStatus: null,
-      reviewTrialStartAt: null,
-      reviewTrialEndAt: null,
-      reviewPublicUrl: null,
-      reviewMerchantUrl: null,
-      reviewTrialNotes: null,
-      reviewTrialUpdatedAt: null,
+      reviewTrialStatus: "Stopped",
+      reviewTrialUpdatedAt: new Date(),
     },
   });
   revalidateReviewTrialPaths(leadId);

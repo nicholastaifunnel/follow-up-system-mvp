@@ -8,6 +8,11 @@ import { SkipLeadPanel } from "./SkipLeadPanel";
 import { prisma } from "@/lib/prisma";
 import { skipReasonLabel } from "@/skipLeadReasons";
 import {
+  computeReviewTrialDisplayStatus,
+  formatReviewTrialDaysLeft,
+  reviewTrialStatusBadgeClass,
+} from "@/reviewTrialStatus";
+import {
   MESSAGE_STATUS_FIRST_SENT,
   MESSAGE_STATUS_NOT_PREPARED,
   MESSAGE_STATUS_PREPARED,
@@ -202,25 +207,12 @@ export default async function LeadDetailPage({
     lead.sourceKeyword ?? lead.campaign?.sourceKeyword ?? null;
 
   const prepared = (lead.preparedMessage ?? "").trim();
-  const reviewTrialDaysText = (() => {
-    if (!lead.reviewTrialEndAt) return "—";
-    const today = new Date();
-    const todayDateOnly = Date.UTC(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate(),
-    );
-    const end = Date.UTC(
-      lead.reviewTrialEndAt.getUTCFullYear(),
-      lead.reviewTrialEndAt.getUTCMonth(),
-      lead.reviewTrialEndAt.getUTCDate(),
-    );
-    const diffDays = Math.round((end - todayDateOnly) / 86_400_000);
-    if (diffDays > 0) return `${diffDays} day${diffDays === 1 ? "" : "s"} left`;
-    if (diffDays === 0) return "Ends today";
-    const expiredDays = Math.abs(diffDays);
-    return `Expired ${expiredDays} day${expiredDays === 1 ? "" : "s"} ago`;
-  })();
+  const reviewTrialDisplayStatus = computeReviewTrialDisplayStatus({
+    reviewTrialStatus: lead.reviewTrialStatus,
+    reviewTrialStartAt: lead.reviewTrialStartAt,
+    reviewTrialEndAt: lead.reviewTrialEndAt,
+  });
+  const reviewTrialDaysText = formatReviewTrialDaysLeft(lead.reviewTrialEndAt);
 
   const canPrepare = computeCanPrepare({
     isArchived: lead.isArchived,
@@ -348,7 +340,11 @@ export default async function LeadDetailPage({
       <section className="detail-card review-trial-card">
         <h2>Review Trial</h2>
         <div className="kv-list review-trial-summary">
-          <Row label="Current Status">{fmtText(lead.reviewTrialStatus)}</Row>
+          <Row label="Current Status">
+            <span className={reviewTrialStatusBadgeClass(reviewTrialDisplayStatus)}>
+              {reviewTrialDisplayStatus}
+            </span>
+          </Row>
           <Row label="Trial Start Date">{fmtDateOnly(lead.reviewTrialStartAt)}</Row>
           <Row label="Trial End Date">{fmtDateOnly(lead.reviewTrialEndAt)}</Row>
           <Row label="Days Left">{reviewTrialDaysText}</Row>
@@ -374,7 +370,7 @@ export default async function LeadDetailPage({
         </div>
         <ReviewTrialForm
           leadId={id}
-          status={lead.reviewTrialStatus}
+          displayStatus={reviewTrialDisplayStatus}
           startDate={lead.reviewTrialStartAt ? lead.reviewTrialStartAt.toISOString().slice(0, 10) : ""}
           endDate={lead.reviewTrialEndAt ? lead.reviewTrialEndAt.toISOString().slice(0, 10) : ""}
           publicUrl={lead.reviewPublicUrl}
