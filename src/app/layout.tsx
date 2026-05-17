@@ -15,14 +15,12 @@ const themeBootstrap = `(function(){try{var t=localStorage.getItem("theme");if(t
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
+      <body>
         <Script
           id="theme-bootstrap"
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{ __html: themeBootstrap }}
         />
-      </head>
-      <body>
         <div className="app-top-bar">
           <Link href="/logout" className="theme-toggle" prefetch={false}>
             <span className="theme-toggle-label">Logout</span>
