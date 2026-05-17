@@ -540,23 +540,48 @@ export async function updateReviewTrialAction(input: {
     endAt = computePlanEndDate(startAt, planType);
   }
 
-  await prisma.lead.update({
-    where: { id: input.leadId },
-    data: {
-      reviewPlanType: planType,
-      reviewTrialStartAt: startAt,
-      reviewTrialEndAt: endAt,
-      reviewPlanAmountCents: priceResult.cents,
-      reviewPlanCurrency: priceResult.currency,
-      ...(planType === "Monthly Paid" || planType === "Yearly Paid"
-        ? { reviewTrialStatus: null }
-        : {}),
-      reviewPublicUrl: nullableTrimmed(input.publicUrl),
-      reviewMerchantUrl: nullableTrimmed(input.merchantUrl),
-      reviewTrialNotes: nullableTrimmed(input.notes),
-      reviewTrialUpdatedAt: new Date(),
-    },
-  });
+  const leadData = {
+    reviewPlanType: planType,
+    reviewTrialStartAt: startAt,
+    reviewTrialEndAt: endAt,
+    reviewPlanAmountCents: priceResult.cents,
+    reviewPlanCurrency: priceResult.currency,
+    ...(planType === "Monthly Paid" || planType === "Yearly Paid"
+      ? { reviewTrialStatus: null }
+      : {}),
+    reviewPublicUrl: nullableTrimmed(input.publicUrl),
+    reviewMerchantUrl: nullableTrimmed(input.merchantUrl),
+    reviewTrialNotes: nullableTrimmed(input.notes),
+    reviewTrialUpdatedAt: new Date(),
+  };
+
+  const activePeriodUpdate =
+    planType && startAt && endAt
+      ? {
+          planType,
+          startAt,
+          endAt,
+          priceCents: priceResult.cents,
+          amountCents: priceResult.cents,
+          currency: priceResult.currency,
+          notes: nullableTrimmed(input.notes),
+        }
+      : null;
+
+  await prisma.$transaction([
+    prisma.lead.update({
+      where: { id: input.leadId },
+      data: leadData,
+    }),
+    ...(activePeriodUpdate
+      ? [
+          prisma.reviewPlanPeriod.updateMany({
+            where: { leadId: input.leadId, status: "Active" },
+            data: activePeriodUpdate,
+          }),
+        ]
+      : []),
+  ]);
 
   const updated = await prisma.lead.findUnique({
     where: { id: input.leadId },

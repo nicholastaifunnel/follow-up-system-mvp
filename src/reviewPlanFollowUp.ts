@@ -630,3 +630,58 @@ export function computeReviewTrialDisplayStatus(
 ): ReviewTrialStatus {
   return computeReviewPlanDisplayStatus(lead, today);
 }
+
+export type ReviewCustomerOverviewCounts = {
+  freeTrialActive: number;
+  freeTrialExpired: number;
+  monthlyPaidActive: number;
+  yearlyPaidActive: number;
+  stopped: number;
+  convertedPaid: number;
+  needFollowUp: number;
+};
+
+export function summarizeReviewCustomerOverview(
+  leads: ReviewPlanLeadFields[],
+  now = new Date(),
+): ReviewCustomerOverviewCounts {
+  const counts: ReviewCustomerOverviewCounts = {
+    freeTrialActive: 0,
+    freeTrialExpired: 0,
+    monthlyPaidActive: 0,
+    yearlyPaidActive: 0,
+    stopped: 0,
+    convertedPaid: 0,
+    needFollowUp: 0,
+  };
+
+  for (const lead of leads) {
+    const displayStatus = computeReviewPlanDisplayStatus(lead);
+    const planType = resolveReviewPlanType(lead);
+
+    if (displayStatus === "Stopped") {
+      counts.stopped += 1;
+    }
+    if (displayStatus === "Converted Paid") {
+      counts.convertedPaid += 1;
+    }
+    if (planType === "Free Trial") {
+      if (displayStatus === "Trial Active" || displayStatus === "Trial Expiring Soon") {
+        counts.freeTrialActive += 1;
+      } else if (displayStatus === "Trial Expired") {
+        counts.freeTrialExpired += 1;
+      }
+    }
+    if (planType === "Monthly Paid" && displayStatus === "Paid Active") {
+      counts.monthlyPaidActive += 1;
+    }
+    if (planType === "Yearly Paid" && displayStatus === "Paid Active") {
+      counts.yearlyPaidActive += 1;
+    }
+    if (matchesReviewTrialsFilter(lead, "need-follow-up", now)) {
+      counts.needFollowUp += 1;
+    }
+  }
+
+  return counts;
+}

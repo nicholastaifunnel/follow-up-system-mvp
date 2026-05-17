@@ -63,21 +63,24 @@ export function ReviewCustomersPanel({
         <h2 className="review-follow-up-main-heading">Review customers</h2>
         <div className="review-customers-toolbar-actions">
           <div className="review-customers-row-limit" role="group" aria-label="Rows to show">
-            <span className="review-customers-row-limit-label">Show</span>
-            {ROW_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                className={
-                  rowLimit === option.value
-                    ? "queue-filter-pill queue-filter-pill-active"
-                    : "queue-filter-pill"
-                }
-                onClick={() => setRowLimit(option.value)}
-              >
-                {option.label}
-              </button>
-            ))}
+            <span className="review-customers-row-limit-label">Rows</span>
+            <div className="review-customers-row-limit-options">
+              {ROW_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={
+                    rowLimit === option.value
+                      ? "review-row-limit-btn review-row-limit-btn--active"
+                      : "review-row-limit-btn"
+                  }
+                  aria-pressed={rowLimit === option.value}
+                  onClick={() => setRowLimit(option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
           <button
             type="button"

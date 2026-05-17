@@ -6,10 +6,12 @@ import {
   REVIEW_DAILY_WORK_LABELS,
   reviewTrialsFilterWhere,
   sortReviewLeadsByRecentActivity,
+  summarizeReviewCustomerOverview,
   type ReviewDailyWorkBucket,
   type ReviewTrialsFilterKey,
 } from "@/reviewPlanFollowUp";
 import { QueueSection } from "@/app/queues/QueueSection";
+import { ReviewCustomerOverview } from "./ReviewCustomerOverview";
 import { ReviewCustomersPanel, type ReviewFilterChip } from "./ReviewCustomersPanel";
 import { ReviewTrialsTable, type ReviewTrialsTableLead } from "./ReviewTrialsTable";
 
@@ -94,6 +96,7 @@ export default async function ReviewTrialsPage({
 
   const mainListLeads = sortReviewLeadsByRecentActivity(filteredLeads);
   const dailyBuckets = bucketReviewDailyWorkLeads(rows);
+  const overviewCounts = summarizeReviewCustomerOverview(rows);
 
   const filterChips: ReviewFilterChip[] = FILTER_CHIPS.map((item) => ({
     key: item.key,
@@ -113,6 +116,8 @@ export default async function ReviewTrialsPage({
       </p>
       <h1>Review Follow-up</h1>
       <p className="sub">Workbench for trials, renewals, and expired follow-ups.</p>
+
+      <ReviewCustomerOverview counts={overviewCounts} />
 
       <ReviewCustomersPanel
         filterKey={filter}

@@ -9,14 +9,15 @@ import { SkipLeadPanel } from "./SkipLeadPanel";
 import { prisma } from "@/lib/prisma";
 import { skipReasonLabel } from "@/skipLeadReasons";
 import {
-  computeReviewFollowUpReason,
   computeReviewPlanDisplayStatus,
   formatReviewTrialDaysLeft,
+  getReviewPlanFollowUpState,
   resolveReviewPlanType,
   reviewTrialStatusBadgeClass,
 } from "@/reviewPlanFollowUp";
-import { formatDateTimeMYT } from "@/formatMalaysiaTime";
+import { formatDateOnlyMYT, formatDateTimeMYT } from "@/formatMalaysiaTime";
 import { formatRmFromCents } from "@/money";
+import { summarizePlanUsage } from "@/reviewPlanUsage";
 import {
   MESSAGE_STATUS_FIRST_SENT,
   MESSAGE_STATUS_NOT_PREPARED,
@@ -99,11 +100,20 @@ function fmtNum(v: number | null | undefined): string {
   return String(v);
 }
 
-function BackToQueues({ leadId }: { leadId?: string }) {
+function BackToQueues({
+  leadId,
+  isReviewCustomer = false,
+}: {
+  leadId?: string;
+  isReviewCustomer?: boolean;
+}) {
   return (
     <p className="top-links">
-      <Link className="top-link" href="/queues">
-        ← Back to queues
+      <Link
+        className="top-link"
+        href={isReviewCustomer ? "/review-trials" : "/queues"}
+      >
+        {isReviewCustomer ? "← Back to Review Follow-up" : "← Back to queues"}
       </Link>
       {leadId ? (
         <>
@@ -248,9 +258,11 @@ export default async function LeadDetailPage({
     reviewExpiredFollowUp2SentAt: lead.reviewExpiredFollowUp2SentAt,
   };
   const reviewTrialDisplayStatus = computeReviewPlanDisplayStatus(reviewPlanFields);
-  const reviewFollowUpReason = computeReviewFollowUpReason(reviewPlanFields);
+  const reviewFollowUpState = getReviewPlanFollowUpState(reviewPlanFields);
+  const reviewFollowUpReason = reviewFollowUpState.nextActionReason;
   const reviewTrialDaysText = formatReviewTrialDaysLeft(lead.reviewTrialEndAt);
   const reviewPlanTypeDisplay = resolveReviewPlanType(reviewPlanFields) ?? "—";
+  const planUsageSummary = summarizePlanUsage(lead.reviewPlanPeriods);
 
   const isReviewCustomer = Boolean(
     lead.reviewPlanType ||
@@ -286,26 +298,49 @@ export default async function LeadDetailPage({
 
   return (
     <div className="page lead-detail">
-      <BackToQueues leadId={id} />
+      <BackToQueues leadId={id} isReviewCustomer={isReviewCustomer} />
 
       <header className="lead-header">
         <h1>{fmtText(lead.businessName)}</h1>
-        <p className="sub">Lead follow-up workspace</p>
+        <p className="sub">
+          {isReviewCustomer ? "Review plan workspace" : "Lead follow-up workspace"}
+        </p>
       </header>
 
-      <section className="detail-card follow-up-summary-card">
-        <h2>Follow-up Summary</h2>
-        <div className="kv-list">
-          <Row label="Message Status">{fmtText(lead.messageStatus)}</Row>
-          <Row label="Reply Status">{fmtText(lead.replyStatus)}</Row>
-          <Row label="Contact Status">{fmtText(lead.contactStatus)}</Row>
-          <Row label="Lead Temperature">{fmtText(lead.leadTemperature)}</Row>
-          <Row label="Next Action">{fmtText(lead.nextAction)}</Row>
-          <Row label="Handoff Required">{fmtBool(lead.handoffRequired)}</Row>
-          <Row label="Next Check At">{formatDateTimeMYT(lead.nextCheckAt)}</Row>
-          <Row label="Next Follow-up At">{formatDateTimeMYT(lead.nextFollowUpAt)}</Row>
-        </div>
-      </section>
+      {isReviewCustomer ? (
+        <section className="detail-card review-plan-summary-card">
+          <h2>Review Plan Summary</h2>
+          <div className="kv-list">
+            <Row label="Plan Type">{reviewPlanTypeDisplay}</Row>
+            <Row label="Current Status">
+              <span className={reviewTrialStatusBadgeClass(reviewTrialDisplayStatus)}>
+                {reviewTrialDisplayStatus}
+              </span>
+            </Row>
+            <Row label="Plan End Date">{fmtDateOnly(lead.reviewTrialEndAt)}</Row>
+            <Row label="Days Left">{reviewTrialDaysText}</Row>
+            <Row label="Next Follow-up">{reviewFollowUpReason}</Row>
+            <Row label="Due Date">
+              {formatDateOnlyMYT(reviewFollowUpState.nextActionDueDate)}
+            </Row>
+            <Row label="Total Paid">{planUsageSummary.totalPaidLabel}</Row>
+          </div>
+        </section>
+      ) : (
+        <section className="detail-card follow-up-summary-card">
+          <h2>Follow-up Summary</h2>
+          <div className="kv-list">
+            <Row label="Message Status">{fmtText(lead.messageStatus)}</Row>
+            <Row label="Reply Status">{fmtText(lead.replyStatus)}</Row>
+            <Row label="Contact Status">{fmtText(lead.contactStatus)}</Row>
+            <Row label="Lead Temperature">{fmtText(lead.leadTemperature)}</Row>
+            <Row label="Next Action">{fmtText(lead.nextAction)}</Row>
+            <Row label="Handoff Required">{fmtBool(lead.handoffRequired)}</Row>
+            <Row label="Next Check At">{formatDateTimeMYT(lead.nextCheckAt)}</Row>
+            <Row label="Next Follow-up At">{formatDateTimeMYT(lead.nextFollowUpAt)}</Row>
+          </div>
+        </section>
+      )}
 
       <section className="detail-card">
         <h2>Contact</h2>
@@ -355,7 +390,7 @@ export default async function LeadDetailPage({
         </section>
       ) : null}
 
-      {!lead.isArchived && !lead.skippedAt ? (
+      {!isReviewCustomer && !lead.isArchived && !lead.skippedAt ? (
         <section className="detail-card skip-lead-card">
           <SkipLeadPanel leadId={id} />
         </section>
@@ -477,7 +512,9 @@ export default async function LeadDetailPage({
           <Row label="Assigned Industry">{fmtText(lead.assignedIndustry)}</Row>
           <Row label="Lead Level">{fmtText(lead.leadLevel)}</Row>
           <Row label="Outreach Readiness">{fmtText(lead.outreachReadiness)}</Row>
-          <Row label="Lead Temperature">{fmtText(lead.leadTemperature)}</Row>
+          {!isReviewCustomer ? (
+            <Row label="Lead Temperature">{fmtText(lead.leadTemperature)}</Row>
+          ) : null}
         </div>
       </section>
 
