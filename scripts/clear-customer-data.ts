@@ -1,93 +1,118 @@
 /**
- * Clears imported customer / lead data (Lead, ImportBatch, Campaign).
- * Preserves MessageTemplate, ReplySopTemplate, and schema.
+ * Clears imported customer / lead data only.
  *
- * Dry-run (default): prints table names and row counts only — no PII, no DB writes.
- * Execute: npm run data:clear-customers -- --confirm
+ * Dry-run (default): prints table names and row counts only. No DB writes.
+ * Execute: npm run clear:customer-data -- --confirm CLEAR_CUSTOMER_DATA
+ *
+ * Preserves MessageTemplate, MessageTemplatePreset, ReplySopTemplate, auth/env,
+ * and all system/template settings.
  */
 
 import { PrismaClient } from "@prisma/client";
 
-const CONFIRM = process.argv.includes("--confirm");
+const CONFIRM_FLAG = "--confirm";
+const CONFIRM_VALUE = "CLEAR_CUSTOMER_DATA";
+
+const confirmIndex = process.argv.indexOf(CONFIRM_FLAG);
+const hasConfirm =
+  confirmIndex !== -1 && process.argv[confirmIndex + 1] === CONFIRM_VALUE;
 
 type Snapshot = {
   lead: number;
+  reviewPlanPeriod: number;
   importBatch: number;
   campaign: number;
   messageTemplate: number;
+  messageTemplatePreset: number;
   replySopTemplate: number;
 };
 
 async function readCounts(db: PrismaClient): Promise<Snapshot> {
-  const [lead, importBatch, campaign, messageTemplate, replySopTemplate] =
-    await Promise.all([
-      db.lead.count(),
-      db.importBatch.count(),
-      db.campaign.count(),
-      db.messageTemplate.count(),
-      db.replySopTemplate.count(),
-    ]);
-  return {
+  const [
     lead,
+    reviewPlanPeriod,
     importBatch,
     campaign,
     messageTemplate,
+    messageTemplatePreset,
+    replySopTemplate,
+  ] = await Promise.all([
+    db.lead.count(),
+    db.reviewPlanPeriod.count(),
+    db.importBatch.count(),
+    db.campaign.count(),
+    db.messageTemplate.count(),
+    db.messageTemplatePreset.count(),
+    db.replySopTemplate.count(),
+  ]);
+
+  return {
+    lead,
+    reviewPlanPeriod,
+    importBatch,
+    campaign,
+    messageTemplate,
+    messageTemplatePreset,
     replySopTemplate,
   };
 }
 
 function printSnapshot(label: string, s: Snapshot): void {
   console.log(`\n${label}`);
-  console.log("─".repeat(56));
-  console.log("Will delete / deleted (customer & import data only):");
-  console.log(`  Lead            ${s.lead}`);
-  console.log(`  ImportBatch     ${s.importBatch}`);
-  console.log(`  Campaign        ${s.campaign}`);
-  console.log("Preserved (not modified by this script):");
-  console.log(`  MessageTemplate ${s.messageTemplate}`);
-  console.log(`  ReplySopTemplate ${s.replySopTemplate}`);
+  console.log("-".repeat(64));
+  console.log("Customer / lead data targeted for deletion:");
+  console.log(`  ReviewPlanPeriod      ${s.reviewPlanPeriod}`);
+  console.log(`  Lead                  ${s.lead}`);
+  console.log(`  ImportBatch           ${s.importBatch}`);
+  console.log(`  Campaign              ${s.campaign}`);
+  console.log("\nPreserved system/template data:");
+  console.log(`  MessageTemplate       ${s.messageTemplate}`);
+  console.log(`  MessageTemplatePreset ${s.messageTemplatePreset}`);
+  console.log(`  ReplySopTemplate      ${s.replySopTemplate}`);
 }
 
-function printSchemaNote(): void {
-  console.log("\nPrisma relations (read-only summary):");
-  console.log(
-    "  Lead → Campaign?, ImportBatch?, MessageTemplate? (FKs on Lead)",
-  );
-  console.log("  ImportBatch → Campaign?");
-  console.log("  Campaign → MessageTemplate? (default template; rows kept)");
-  console.log("  Delete order: Lead → ImportBatch → Campaign");
+function printSafetyNote(): void {
+  console.log("Safe customer data cleanup");
+  console.log("-".repeat(64));
+  console.log("Delete order: ReviewPlanPeriod -> Lead -> ImportBatch -> Campaign");
+  console.log("Preserves: message templates, template presets, Reply SOP templates.");
+  console.log("Also preserves: auth/env settings and app configuration.");
 }
 
 async function main(): Promise<void> {
   const db = new PrismaClient();
-  try {
-    const before = await readCounts(db);
-    printSchemaNote();
-    printSnapshot("Current row counts (counts only):", before);
 
-    if (!CONFIRM) {
-      console.log("\nDry-run: no database changes were made.");
+  try {
+    printSafetyNote();
+    const before = await readCounts(db);
+    printSnapshot("Current row counts:", before);
+
+    if (!hasConfirm) {
+      console.log("\nDry-run only: no database changes were made.");
       console.log(
-        'To delete the rows above, run: npm run data:clear-customers -- --confirm',
+        `To delete the customer data above, run: npm run clear:customer-data -- ${CONFIRM_FLAG} ${CONFIRM_VALUE}`,
       );
       return;
     }
 
-    console.log("\n--confirm: starting deleteMany in transaction…");
-    const [delLead, delBatch, delCampaign] = await db.$transaction([
-      db.lead.deleteMany(),
-      db.importBatch.deleteMany(),
-      db.campaign.deleteMany(),
-    ]);
+    console.log("\nConfirmation accepted. Deleting customer data...");
+    const [deletedReviewPlanPeriod, deletedLead, deletedImportBatch, deletedCampaign] =
+      await db.$transaction([
+        db.reviewPlanPeriod.deleteMany(),
+        db.lead.deleteMany(),
+        db.importBatch.deleteMany(),
+        db.campaign.deleteMany(),
+      ]);
 
-    console.log("Deleted rows (reported counts only):");
-    console.log(`  Lead            ${delLead.count}`);
-    console.log(`  ImportBatch     ${delBatch.count}`);
-    console.log(`  Campaign        ${delCampaign.count}`);
+    console.log("\nDeleted rows:");
+    console.log(`  ReviewPlanPeriod      ${deletedReviewPlanPeriod.count}`);
+    console.log(`  Lead                  ${deletedLead.count}`);
+    console.log(`  ImportBatch           ${deletedImportBatch.count}`);
+    console.log(`  Campaign              ${deletedCampaign.count}`);
 
     const after = await readCounts(db);
     printSnapshot("Counts after delete:", after);
-    console.log("\nDone. MessageTemplate and ReplySopTemplate were not deleted.");
+    console.log("\nDone. System settings and templates were preserved.");
   } finally {
     await db.$disconnect();
   }

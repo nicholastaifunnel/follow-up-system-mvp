@@ -15,6 +15,7 @@
     "reply:check": "tsx scripts/reply-check.ts",
     "followup:queue": "tsx scripts/followup-queue.ts",
     "data:clear-customers": "tsx scripts/clear-customer-data.ts",
+    "clear:customer-data": "tsx scripts/clear-customer-data.ts",
     "dev": "next dev",
     "start": "next start",
     "build:web": "prisma generate && next build",
