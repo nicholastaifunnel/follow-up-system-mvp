@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   REPLY_TYPE_OPTIONS,
   type ReplyTypeId,
+  normalizeReplySopKey,
 } from "@/app/leads/[id]/reply-assistant/sopReplies";
 import { prisma } from "@/lib/prisma";
 import { ReplySopTemplateRow } from "./ReplySopTemplateRow";
@@ -26,6 +27,30 @@ type SopRow = {
   label: string;
   body: string;
 };
+
+function canonicalRows(rows: SopRow[]): SopRow[] {
+  const byLanguageAndKey = new Map<string, SopRow>();
+
+  for (const row of rows) {
+    const canonicalKey = normalizeReplySopKey(row.key);
+    if (!canonicalKey) continue;
+
+    const mapKey = `${row.language}:${canonicalKey}`;
+    const canonicalLabel =
+      REPLY_TYPE_OPTIONS.find((o) => o.id === canonicalKey)?.label ?? row.label;
+    const canonicalRow = {
+      ...row,
+      key: canonicalKey,
+      label: canonicalLabel,
+    };
+
+    if (row.key === canonicalKey || !byLanguageAndKey.has(mapKey)) {
+      byLanguageAndKey.set(mapKey, canonicalRow);
+    }
+  }
+
+  return [...byLanguageAndKey.values()];
+}
 
 function groupByLanguage(rows: SopRow[]): Map<string, SopRow[]> {
   const map = new Map<string, SopRow[]>();
@@ -60,7 +85,7 @@ export default async function ReplySopSettingsPage() {
     },
   });
 
-  const grouped = groupByLanguage(rows);
+  const grouped = groupByLanguage(canonicalRows(rows));
   const sectionLangs = languageSectionOrder(grouped);
 
   return (

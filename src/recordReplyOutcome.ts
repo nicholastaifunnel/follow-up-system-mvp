@@ -27,6 +27,7 @@ export const SUPPORTED_OUTCOMES = [
   "follow-up-later",
   "not-interested",
   "wrong-contact",
+  "stop-contacting",
   "need-more-info",
 ] as const;
 
@@ -174,6 +175,24 @@ function buildUpdateData(
         isArchived: true,
         archivedAt: now,
         archivedReason: "Wrong contact",
+        ...inbound,
+      };
+
+    case "stop-contacting":
+      return {
+        replyStatus: "Stopped",
+        replyOutcome: "Stop Contacting",
+        messageStatus: "Stopped",
+        contactStatus: "Do Not Contact",
+        leadTemperature: "Cold",
+        handoffRequired: false,
+        handoffReason: null,
+        nextAction: null,
+        nextCheckAt: null,
+        nextFollowUpAt: null,
+        isArchived: true,
+        archivedAt: now,
+        archivedReason: "Stop contacting",
         ...inbound,
       };
 

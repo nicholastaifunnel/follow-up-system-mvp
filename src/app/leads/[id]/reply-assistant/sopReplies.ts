@@ -5,42 +5,63 @@ export type SopLanguage = "en" | "zh";
 export type GreetingStyle = "neutral" | "boss" | "none";
 
 export type ReplyTypeId =
+  | "interested-ask-sample"
   | "asked-price"
+  | "need-boss-approval-later"
+  | "already-has-solution-objection"
+  | "not-interested"
+  | "wrong-number-stop-contacting";
+
+export type LegacyReplyTypeId =
   | "interested"
   | "ask-what-is-this"
   | "ask-for-example"
   | "need-boss-approval"
   | "later"
-  | "not-interested"
-  | "wrong-number"
   | "already-has-solution"
+  | "wrong-number"
   | "stop-contacting";
 
+export type ReplySopTemplateKey = ReplyTypeId | LegacyReplyTypeId;
+
 export const REPLY_TYPE_OPTIONS: { id: ReplyTypeId; label: string }[] = [
+  { id: "interested-ask-sample", label: "Interested / Ask Sample" },
   { id: "asked-price", label: "Asked price" },
-  { id: "interested", label: "Interested" },
-  { id: "ask-what-is-this", label: "Ask what is this" },
-  { id: "ask-for-example", label: "Ask for example" },
-  { id: "need-boss-approval", label: "Need boss approval" },
-  { id: "later", label: "Later" },
+  { id: "need-boss-approval-later", label: "Need Boss Approval / Later" },
+  {
+    id: "already-has-solution-objection",
+    label: "Already Has Solution / Objection",
+  },
   { id: "not-interested", label: "Not interested" },
-  { id: "wrong-number", label: "Wrong number" },
-  { id: "already-has-solution", label: "Already has solution" },
-  { id: "stop-contacting", label: "Stop contacting" },
+  { id: "wrong-number-stop-contacting", label: "Wrong Number / Stop Contacting" },
 ];
 
 const RECORD_KEY: Record<ReplyTypeId, ReplyOutcomeKey> = {
+  "interested-ask-sample": "interested",
   "asked-price": "asked-price",
-  interested: "interested",
-  "ask-what-is-this": "need-more-info",
-  "ask-for-example": "need-more-info",
-  "need-boss-approval": "follow-up-later",
-  later: "follow-up-later",
+  "need-boss-approval-later": "follow-up-later",
+  "already-has-solution-objection": "need-more-info",
   "not-interested": "not-interested",
-  "wrong-number": "wrong-contact",
-  "already-has-solution": "need-more-info",
-  "stop-contacting": "not-interested",
+  "wrong-number-stop-contacting": "wrong-contact",
 };
+
+export const LEGACY_REPLY_TYPE_KEY_MAP: Record<LegacyReplyTypeId, ReplyTypeId> = {
+  interested: "interested-ask-sample",
+  "ask-what-is-this": "interested-ask-sample",
+  "ask-for-example": "interested-ask-sample",
+  "need-boss-approval": "need-boss-approval-later",
+  later: "need-boss-approval-later",
+  "already-has-solution": "already-has-solution-objection",
+  "wrong-number": "wrong-number-stop-contacting",
+  "stop-contacting": "wrong-number-stop-contacting",
+};
+
+export function normalizeReplySopKey(key: string): ReplyTypeId | null {
+  if (REPLY_TYPE_OPTIONS.some((opt) => opt.id === key)) {
+    return key as ReplyTypeId;
+  }
+  return LEGACY_REPLY_TYPE_KEY_MAP[key as LegacyReplyTypeId] ?? null;
+}
 
 export function recordKeyForReplyType(id: ReplyTypeId): ReplyOutcomeKey {
   return RECORD_KEY[id];
@@ -50,13 +71,11 @@ export function needsFollowUpDate(id: ReplyTypeId): boolean {
   return RECORD_KEY[id] === "follow-up-later";
 }
 
-/** Default “Ask contact name / role” per reply type (user can override until type changes). */
+/** Default "Ask contact name / role" per reply type (user can override until type changes). */
 export function defaultAskContactNameRole(id: ReplyTypeId): boolean {
   switch (id) {
-    case "later":
     case "not-interested":
-    case "wrong-number":
-    case "stop-contacting":
+    case "wrong-number-stop-contacting":
       return false;
     default:
       return true;
@@ -64,7 +83,7 @@ export function defaultAskContactNameRole(id: ReplyTypeId): boolean {
 }
 
 function contactQuestionLine(replyTypeId: ReplyTypeId, lang: SopLanguage): string {
-  if (replyTypeId === "need-boss-approval") {
+  if (replyTypeId === "need-boss-approval-later") {
     return lang === "zh"
       ? "顺便问一下，你是老板，还是负责店里 Google 资料的人？"
       : "By the way, are you the owner or the person handling the shop's Google profile?";
@@ -94,7 +113,7 @@ function greetingPrefix(lang: SopLanguage, style: GreetingStyle): string {
     return "您好，感谢您的回复。";
   }
   if (style === "boss") {
-    return "Hi — I'm following up from our shop on behalf of the owner: ";
+    return "Hi, I'm following up from our shop on behalf of the owner: ";
   }
   return "Hi, thanks for your message. ";
 }
@@ -107,49 +126,34 @@ export function codeDefaultSopBody(id: ReplyTypeId, lang: SopLanguage): string {
 function bodyForType(id: ReplyTypeId, lang: SopLanguage): string {
   if (lang === "zh") {
     switch (id) {
+      case "interested-ask-sample":
+        return "可以，我简单给你看。这个 system 是帮店家把 Google / Facebook review 流程变简单，让顾客更容易留下评价。如果你愿意，我可以先给你看 sample，或者帮你看看你现在的 review 流程适不适合用。";
       case "asked-price":
-        return "我们很乐意分享价格与套餐。请问您主要想了解哪一项服务？我可以发一份简要说明。";
-      case "interested":
-        return "太好了。您方便的话，我们约个简短电话或到店时间，我再为您详细介绍。";
-      case "ask-what-is-this":
-        return "这是关于我们之前发给您的推广/服务介绍。若您方便，我可以用一两句话说明我们提供什么，以及是否适合您。";
-      case "ask-for-example":
-        return "可以的。您想看哪一类案例（例如服务内容、价格区间或效果）？我发一个最接近您需求的示例给您参考。";
-      case "need-boss-approval":
-        return "了解，需要老板确认完全没问题。您看大概什么时候方便给答复？我也可以到时再礼貌提醒您。";
-      case "later":
-        return "没问题，我们晚点再联系您。若您有偏好的日期或时间段，请告诉我，我会按您的时间跟进。";
+        return "现在是可以先试用 1 个月。之后如果继续用，月费 RM29，或者一年 RM199。你可以先试，不适合就不用继续。";
+      case "need-boss-approval-later":
+        return "可以，没问题。你先和老板/负责人确认。我迟一点再 follow up 你，不急。";
+      case "already-has-solution-objection":
+        return "明白。如果你们现在已经有方法也没问题。这个主要是让顾客更容易完成 review，也可以把 1-3 星的差评先收进后台，让老板知道哪里需要改善，不会直接公开出去。";
       case "not-interested":
-        return "感谢您的回复。若以后有需要，欢迎随时再联系我们。";
-      case "wrong-number":
-        return "抱歉打扰到您。我们会更新记录，避免再次联系。";
-      case "already-has-solution":
-        return "了解，您这边已经有合适的方案也很好。若未来有需要，欢迎随时找我们。";
-      case "stop-contacting":
-        return "好的，我们这边先不再主动联系。感谢您的回复。";
+        return "好的，没问题。谢谢你回复。如果之后有需要再找我就可以。";
+      case "wrong-number-stop-contacting":
+        return "不好意思打扰了，我会更新记录，不再联系这个号码。谢谢。";
     }
   }
+
   switch (id) {
+    case "interested-ask-sample":
+      return "Sure, I can show you briefly. This system helps local businesses make the Google / Facebook review flow easier, so happy customers can leave reviews with less friction. I can send a sample or quickly check whether your current review flow is suitable.";
     case "asked-price":
-      return "Happy to share pricing and packages. Which service are you mainly interested in? I can send a short summary.";
-    case "interested":
-      return "That’s great. If it works for you, we can arrange a quick call or visit and I’ll walk you through the details.";
-    case "ask-what-is-this":
-      return "This is a follow-up about the message we sent earlier. If you’d like, I can briefly explain what we offer and whether it fits your needs.";
-    case "ask-for-example":
-      return "Sure — what kind of example would help most (service scope, pricing range, or results)? I’ll send the closest match.";
-    case "need-boss-approval":
-      return "Understood — needing the owner’s approval is totally fine. When do you expect you might have an answer? I can follow up gently around that time.";
-    case "later":
-      return "No problem — we can follow up later. If you have a preferred day or time window, tell me and I’ll align with it.";
+      return "You can try it free for 1 month first. After that, it is RM29 per month or RM199 per year if you want to continue. You can test first, and if it is not suitable, no need to continue.";
+    case "need-boss-approval-later":
+      return "No problem. Please check with your boss or the person in charge first. I can follow up later, no rush.";
+    case "already-has-solution-objection":
+      return "Understood. If you already have a method, that is totally fine. This mainly makes it easier for customers to complete a review, and 1-3 star feedback can go to the backend first so the owner can see what needs improving before it becomes public.";
     case "not-interested":
-      return "Thanks for letting us know. If anything changes in the future, feel free to reach out anytime.";
-    case "wrong-number":
-      return "Sorry for the inconvenience. We’ll update our records so you’re not contacted again.";
-    case "already-has-solution":
-      return "Thanks for the update — glad you’re already sorted. If you ever need us in the future, we’re here to help.";
-    case "stop-contacting":
-      return "Understood — we won’t contact you again. Thank you for your time.";
+      return "No problem, thanks for replying. If you need it in the future, feel free to contact me.";
+    case "wrong-number-stop-contacting":
+      return "Sorry to disturb you. I will update the record and stop contacting this number. Thank you.";
   }
 }
 

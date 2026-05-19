@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ReplyAssistantClient } from "./ReplyAssistantClient";
+import { normalizeReplySopKey } from "./sopReplies";
 import { prisma } from "@/lib/prisma";
 import { MESSAGE_STATUS_FIRST_SENT } from "@/statusConstants";
 
@@ -52,7 +53,12 @@ export default async function ReplyAssistantPage({
   });
   const sopDatabaseBodies: Record<string, string> = {};
   for (const r of sopRows) {
-    sopDatabaseBodies[`${r.key}:${r.language}`] = r.body;
+    const canonicalKey = normalizeReplySopKey(r.key);
+    if (!canonicalKey) continue;
+    const lookupKey = `${canonicalKey}:${r.language}`;
+    if (r.key === canonicalKey || sopDatabaseBodies[lookupKey] === undefined) {
+      sopDatabaseBodies[lookupKey] = r.body;
+    }
   }
 
   const canRecordReply = computeCanRecordReply({

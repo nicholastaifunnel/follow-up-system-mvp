@@ -11,7 +11,8 @@ const OUTCOME_OPTIONS: { value: string; label: string }[] = [
   { value: "interested", label: "Interested" },
   { value: "follow-up-later", label: "Follow up later" },
   { value: "not-interested", label: "Not interested" },
-  { value: "wrong-contact", label: "Wrong contact" },
+  { value: "wrong-contact", label: "Wrong number" },
+  { value: "stop-contacting", label: "Stop contacting" },
   { value: "need-more-info", label: "Need more info" },
 ];
 

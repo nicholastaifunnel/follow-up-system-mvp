@@ -68,12 +68,15 @@ export function ReplyAssistantClient(props: Props) {
   } = props;
 
   const router = useRouter();
-  const [replyTypeId, setReplyTypeId] = useState<ReplyTypeId>("interested");
+  const [replyTypeId, setReplyTypeId] =
+    useState<ReplyTypeId>("interested-ask-sample");
   const [language, setLanguage] = useState<SopLanguage>("en");
   const [greetingStyle, setGreetingStyle] = useState<GreetingStyle>("neutral");
   const [askContactNameRole, setAskContactNameRole] = useState(() =>
-    defaultAskContactNameRole("interested"),
+    defaultAskContactNameRole("interested-ask-sample"),
   );
+  const [wrongNumberFinalOutcome, setWrongNumberFinalOutcome] =
+    useState<ReplyOutcomeKey>("wrong-contact");
   const [followUpAt, setFollowUpAt] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -124,7 +127,10 @@ export function ReplyAssistantClient(props: Props) {
     if (!canRecordReply) return;
     setError(null);
     setSaved(false);
-    const recordKey: ReplyOutcomeKey = recordKeyForReplyType(replyTypeId);
+    const recordKey: ReplyOutcomeKey =
+      replyTypeId === "wrong-number-stop-contacting"
+        ? wrongNumberFinalOutcome
+        : recordKeyForReplyType(replyTypeId);
     const typeLabel =
       REPLY_TYPE_OPTIONS.find((o) => o.id === replyTypeId)?.label ?? replyTypeId;
     const notesPayload = buildReplyAssistantNotes(typeLabel, sopReply);
@@ -265,6 +271,9 @@ export function ReplyAssistantClient(props: Props) {
                 onClick={() => {
                   setReplyTypeId(opt.id);
                   setAskContactNameRole(defaultAskContactNameRole(opt.id));
+                  if (opt.id !== "wrong-number-stop-contacting") {
+                    setWrongNumberFinalOutcome("wrong-contact");
+                  }
                 }}
                 disabled={isPending}
               >
@@ -273,6 +282,26 @@ export function ReplyAssistantClient(props: Props) {
             ))}
           </div>
         </div>
+
+        {replyTypeId === "wrong-number-stop-contacting" ? (
+          <div className="reply-form-row sop-select-field">
+            <label className="reply-form-label" htmlFor="sop-final-outcome">
+              Final outcome
+            </label>
+            <select
+              id="sop-final-outcome"
+              className="reply-form-select"
+              value={wrongNumberFinalOutcome}
+              onChange={(e) =>
+                setWrongNumberFinalOutcome(e.target.value as ReplyOutcomeKey)
+              }
+              disabled={isPending}
+            >
+              <option value="wrong-contact">Wrong number</option>
+              <option value="stop-contacting">Stop contacting</option>
+            </select>
+          </div>
+        ) : null}
 
         <div className="sop-ask-contact-row">
           <label className="sop-ask-contact-label">
