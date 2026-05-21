@@ -28,6 +28,16 @@ export type ImportLeadsResult = {
   outreachReadinessCounts: Record<string, number>;
 };
 
+export class ImportLeadsError extends Error {
+  constructor(
+    message: string,
+    public readonly cause?: unknown,
+  ) {
+    super(message);
+    this.name = "ImportLeadsError";
+  }
+}
+
 function coercePlaceId(value: string): string | null {
   const t = value.trim();
   return t ? t : null;
@@ -295,6 +305,67 @@ function bumpIndustry(
   m[key] = (m[key] ?? 0) + 1;
 }
 
+function summarizeRowImportError(error: unknown): string {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof (error as { code?: unknown }).code === "string"
+  ) {
+    const code = (error as { code: string }).code;
+    if (code === "P2002") return "unique constraint conflict";
+    if (code === "P2003") return "foreign key constraint failed";
+    if (code === "P2028") return "database transaction timed out";
+    return `database error ${code}`;
+  }
+
+  if (error instanceof Error && error.message.trim()) {
+    return error.message.replace(/postgres(ql)?:\/\/[^\s'"<>]+/gi, "[redacted]");
+  }
+
+  return "unknown database error";
+}
+
+function summarizePrismaFieldHint(error: unknown): string | null {
+  if (
+    typeof error !== "object" ||
+    error === null ||
+    !("meta" in error) ||
+    typeof (error as { meta?: unknown }).meta !== "object" ||
+    (error as { meta?: unknown }).meta === null
+  ) {
+    return null;
+  }
+
+  const meta = (error as { meta: Record<string, unknown> }).meta;
+  if (Array.isArray(meta.target) && meta.target.length) {
+    return `Field hint: ${meta.target.join(", ")}`;
+  }
+  if (typeof meta.field_name === "string" && meta.field_name.trim()) {
+    return `Field hint: ${meta.field_name}`;
+  }
+  if (typeof meta.constraint === "string" && meta.constraint.trim()) {
+    return `Constraint hint: ${meta.constraint}`;
+  }
+
+  return null;
+}
+
+function summarizeImportRow(rowIndex: number, p: ParsedLeadRow): string {
+  const fields: string[] = [
+    `Excel row ${rowIndex + 2}`,
+    `Business: "${p.businessName.trim() || "(blank)"}"`,
+  ];
+
+  if (p.placeId.trim()) fields.push(`Place ID: "${p.placeId.trim()}"`);
+  if (p.phone.trim()) fields.push(`Phone: "${p.phone.trim()}"`);
+  if (p.internationalPhone.trim()) {
+    fields.push(`International phone: "${p.internationalPhone.trim()}"`);
+  }
+
+  return fields.join("; ");
+}
+
 /**
  * Parses Excel (reuse preview rules), creates Campaign + ImportBatch, upserts Leads with dedupe.
  */
@@ -367,7 +438,8 @@ async function importLeadsFromParsedWorkbook(
         },
       });
 
-      for (const row of rows) {
+      for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
+        const row = rows[rowIndex];
         const p = row.parsed;
         if (!p.businessName.trim()) {
           skippedCount += 1;
@@ -389,19 +461,29 @@ async function importLeadsFromParsedWorkbook(
         outreachReadinessCounts[p.outreachReadiness] =
           (outreachReadinessCounts[p.outreachReadiness] ?? 0) + 1;
 
-        const existing = await findExistingLead(tx, p);
-        if (existing) {
-          duplicateCount += 1;
-          updatedCount += 1;
-          await tx.lead.update({
-            where: { id: existing.id },
-            data: buildUpdateData(existing, campaign.id, batch.id, row, now),
-          });
-        } else {
-          insertedCount += 1;
-          await tx.lead.create({
-            data: buildInsertData(campaign.id, batch.id, row, now),
-          });
+        try {
+          const existing = await findExistingLead(tx, p);
+          if (existing) {
+            duplicateCount += 1;
+            updatedCount += 1;
+            await tx.lead.update({
+              where: { id: existing.id },
+              data: buildUpdateData(existing, campaign.id, batch.id, row, now),
+            });
+          } else {
+            insertedCount += 1;
+            await tx.lead.create({
+              data: buildInsertData(campaign.id, batch.id, row, now),
+            });
+          }
+        } catch (error) {
+          const fieldHint = summarizePrismaFieldHint(error);
+          const rowSummary = summarizeImportRow(rowIndex, p);
+          const suffix = fieldHint ? ` ${fieldHint}.` : "";
+          throw new ImportLeadsError(
+            `Import failed while saving ${rowSummary}: ${summarizeRowImportError(error)}.${suffix}`,
+            error,
+          );
         }
       }
 
@@ -425,7 +507,7 @@ async function importLeadsFromParsedWorkbook(
         importBatchId: batch.id,
       };
     },
-    { maxWait: 10000, timeout: 30000 },
+    { maxWait: 10000, timeout: 120000 },
   );
 
   return {

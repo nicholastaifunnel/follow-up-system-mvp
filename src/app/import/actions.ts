@@ -1,7 +1,10 @@
 "use server";
 
 import { Prisma } from "@prisma/client";
-import { importLeadsFromExcelBuffer } from "../../importLeadsFromExcel";
+import {
+  ImportLeadsError,
+  importLeadsFromExcelBuffer,
+} from "../../importLeadsFromExcel";
 import { prisma } from "../../lib/prisma";
 import {
   ExcelPreviewError,
@@ -137,6 +140,38 @@ function logConfirmImportFailure(error: unknown): void {
   );
 }
 
+function userSafeImportError(error: unknown): string {
+  if (error instanceof ImportLeadsError) {
+    return `Import failed: ${redactConnectionHints(error.message)}`;
+  }
+
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error.code === "P2002") {
+      const target = Array.isArray(error.meta?.target)
+        ? error.meta.target.join(", ")
+        : "a unique field";
+      return `Import failed: duplicate value for ${target}.`;
+    }
+    if (error.code === "P2003") {
+      return "Import failed: a related campaign or import batch could not be linked.";
+    }
+    if (error.code === "P2028") {
+      return "Import failed: database transaction timed out. Please try again; the importer now allows a longer import window.";
+    }
+    return `Import failed: database error ${error.code}.`;
+  }
+
+  if (error instanceof Prisma.PrismaClientInitializationError) {
+    return "Import failed: database connection could not be initialized.";
+  }
+
+  if (error instanceof Error && error.message.trim()) {
+    return `Import failed: ${redactConnectionHints(error.message)}`;
+  }
+
+  return "Import failed. Check the file and try again.";
+}
+
 export async function previewExcelFileAction(
   formData: FormData,
 ): Promise<PreviewExcelFileActionResult> {
@@ -216,8 +251,7 @@ export async function confirmImportExcelFileAction(
     logConfirmImportFailure(e);
     return {
       ok: false,
-      error:
-        "Import failed. Check the file and try again. If the problem continues, verify your database connection.",
+      error: userSafeImportError(e),
     };
   }
 }
