@@ -2,10 +2,8 @@ import type { Prisma, PrismaClient } from "@prisma/client";
 import { mergeQueueListWhere } from "./queueListFilter";
 import { normalizePhoneDigits } from "./searchLeadsByPhone";
 import {
-  MESSAGE_STATUS_FIRST_SENT,
   MESSAGE_STATUS_NOT_PREPARED,
   MESSAGE_STATUS_PREPARED,
-  REPLY_STATUS_WAITING,
 } from "./statusConstants";
 
 const OUTREACH_READY = "Ready";
@@ -29,20 +27,29 @@ export type GetFilteredMessageLeadsOptions = {
   phoneQuery?: string;
 };
 
-/** Same OR groups as {@link getMessageQueue} sections (read-only). */
-function messageQueueEligibleWhere(): Prisma.LeadWhereInput {
+/**
+ * Top /queues “Filtered Message Leads” only: cold outreach still actionable.
+ * Matches Not Prepared + Prepared Not Sent buckets — not sent / replied / handoff.
+ */
+function coldOutreachFilteredWhere(): Prisma.LeadWhereInput {
   return {
     isArchived: false,
     skippedAt: null,
-    OR: [
+    handoffRequired: false,
+    AND: [
       {
-        messageStatus: MESSAGE_STATUS_NOT_PREPARED,
-        outreachReadiness: OUTREACH_READY,
+        OR: [
+          {
+            messageStatus: MESSAGE_STATUS_NOT_PREPARED,
+            outreachReadiness: OUTREACH_READY,
+          },
+          { messageStatus: MESSAGE_STATUS_PREPARED },
+        ],
       },
-      { messageStatus: MESSAGE_STATUS_PREPARED },
-      { messageStatus: MESSAGE_STATUS_FIRST_SENT },
-      { replyStatus: REPLY_STATUS_WAITING },
-      { handoffRequired: true },
+      // Allow-list: SQLite/Prisma `NOT: { replyStatus: "…" }` wrongly drops null rows.
+      {
+        OR: [{ replyStatus: null }, { replyStatus: "No Reply Yet" }],
+      },
     ],
   };
 }
@@ -72,9 +79,9 @@ function phoneMatchWhere(input: string): Prisma.LeadWhereInput | undefined {
 }
 
 /**
- * Single-query list of leads that belong to any Message Queue bucket,
- * with optional angle/review/phone filters (reuses queueListFilter merge).
- * Read-only.
+ * Single-query list of cold-outreach-actionable leads (Not Prepared or Prepared,
+ * not yet first-sent / waiting / replied / handoff), with optional angle/review/phone
+ * filters (reuses queueListFilter merge). Read-only.
  */
 export async function getFilteredMessageLeads(
   db: PrismaClient,
@@ -85,7 +92,7 @@ export async function getFilteredMessageLeads(
     ? Math.min(500, Math.max(1, Math.floor(raw)))
     : 10;
 
-  let where: Prisma.LeadWhereInput = messageQueueEligibleWhere();
+  let where: Prisma.LeadWhereInput = coldOutreachFilteredWhere();
   where = mergeQueueListWhere(where, options?.listExtraWhere);
 
   const phoneQ = options?.phoneQuery?.trim();

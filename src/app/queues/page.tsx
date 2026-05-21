@@ -503,8 +503,8 @@ export default async function QueuesPage({
           />
           <h2>Filtered Message Leads</h2>
           <p className="sub">
-            Showing up to {limit} leads matching Message Queue rules, angle / reviews /
-            phone filters (single query).
+            Showing up to {limit} leads not yet first-sent (Not Prepared or Prepared
+            only), with angle / reviews / phone filters (single query).
           </p>
           {filteredLeads.length === 0 ? (
             <p className="empty">No leads match these filters.</p>
