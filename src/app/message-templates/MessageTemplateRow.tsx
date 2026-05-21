@@ -3,6 +3,11 @@
 import { useLayoutEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
+  MESSAGE_TEMPLATE_STAGE_GROUPS,
+  MESSAGE_TEMPLATE_VARIANT_STAGES,
+  type MessageTemplateVariantStage,
+} from "@/messageTemplatePresetStages";
+import {
   deleteMessageTemplatePresetAction,
   duplicateMessageTemplatePresetAction,
   setActiveMessageTemplatePresetAction,
@@ -17,30 +22,18 @@ type Props = {
   templates: Record<string, string>;
 };
 
-const STAGES = [
-  "First Message",
-  "First Follow Up",
-  "Second Follow Up",
-] as const;
+type Stage = MessageTemplateVariantStage;
 
-type Stage = (typeof STAGES)[number];
-
-const STAGE_HINTS: Record<Stage, string> = {
-  "First Message":
-    "第一次发给商家的 message，目标是让对方愿意回复。",
-  "First Follow Up":
-    "1–2 天后跟进，目标是提醒对方看 example 或 sample。",
-  "Second Follow Up": "最后一次礼貌跟进，不要追太紧。",
-};
+const STAGES = MESSAGE_TEMPLATE_VARIANT_STAGES;
 
 const TEMPLATE_VARIABLES = [
-  { token: "{businessName}", description: "商家名字" },
-  { token: "{area}", description: "地区" },
-  { token: "{assignedIndustry}", description: "行业" },
-  { token: "{leadLevel}", description: "Lead 类型" },
-  { token: "{website}", description: "网站" },
-  { token: "{reviewCount}", description: "Google review 数量" },
-  { token: "{googleRating}", description: "Google 评分" },
+  { token: "{businessName}", description: "Business name" },
+  { token: "{area}", description: "Area" },
+  { token: "{assignedIndustry}", description: "Industry" },
+  { token: "{leadLevel}", description: "Lead type" },
+  { token: "{website}", description: "Website" },
+  { token: "{reviewCount}", description: "Google review count" },
+  { token: "{googleRating}", description: "Google rating" },
 ] as const;
 
 function AutoResizeTextarea({
@@ -73,7 +66,7 @@ function AutoResizeTextarea({
         inputRef(el);
       }}
       className="reply-form-textarea message-template-body-textarea"
-      rows={5}
+      rows={4}
       value={value}
       onChange={(e) => {
         onChange(e.target.value);
@@ -98,7 +91,7 @@ export function MessageTemplateRow({
   const router = useRouter();
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [presetName, setPresetName] = useState(name);
-  const [bodies, setBodies] = useState(templates);
+  const [bodies, setBodies] = useState<Record<string, string>>(templates);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -177,10 +170,12 @@ export function MessageTemplateRow({
     setFeedback(null);
     setError(null);
     startTransition(() => {
-      void updateMessageTemplatePresetAction(id, presetName, bodies).then((result) => {
-        if (result.ok) setFeedback("Saved");
-        else setError(result.error);
-      });
+      void updateMessageTemplatePresetAction(id, presetName, bodies).then(
+        (result) => {
+          if (result.ok) setFeedback("Saved");
+          else setError(result.error);
+        },
+      );
     });
   }
 
@@ -196,7 +191,7 @@ export function MessageTemplateRow({
   }
 
   function remove() {
-    if (!window.confirm("Delete this preset and its 3 messages?")) return;
+    if (!window.confirm("Delete this preset and its 9 messages?")) return;
 
     setFeedback(null);
     setError(null);
@@ -217,8 +212,9 @@ export function MessageTemplateRow({
           if (result.presetId) {
             router.replace(`/message-templates?expanded=${result.presetId}`);
           }
+        } else {
+          setError(result.error);
         }
-        else setError(result.error);
       });
     });
   }
@@ -236,7 +232,11 @@ export function MessageTemplateRow({
             {expanded ? "Hide" : "Show"}
           </button>
           <h2>{presetName}</h2>
-          {isActive ? <span className="message-template-status message-template-status--active">Active</span> : null}
+          {isActive ? (
+            <span className="message-template-status message-template-status--active">
+              Active
+            </span>
+          ) : null}
         </div>
         <div className="message-preset-actions">
           {!isActive ? (
@@ -282,10 +282,10 @@ export function MessageTemplateRow({
 
           <div className="message-template-variables">
             <h3 className="message-template-variables-title">
-              Available Variables / 可用变量
+              Available Variables
             </h3>
             <p className="message-template-variables-hint">
-              点击变量按钮，会插入到目前正在编辑的信息框。
+              Click a variable to insert it into the message box you are editing.
             </p>
             <div className="message-template-variables-grid">
               {TEMPLATE_VARIABLES.map((variable) => (
@@ -308,33 +308,59 @@ export function MessageTemplateRow({
             </div>
           </div>
 
-          {STAGES.map((stage) => (
-            <label className="reply-form-label message-preset-stage-field" key={stage}>
-              <span className="message-preset-stage-label">{stage}</span>
-              <span className="message-preset-stage-hint">{STAGE_HINTS[stage]}</span>
-              <AutoResizeTextarea
-                value={bodies[stage] ?? ""}
-                onChange={(value) =>
-                  setBodies((current) => ({
-                    ...current,
-                    [stage]: value,
-                  }))
-                }
-                disabled={isPending}
-                inputRef={(el) => {
-                  if (el) textareaRefs.current[stage] = el;
-                  else delete textareaRefs.current[stage];
-                }}
-                onStageActivity={() => recordStage(stage)}
-              />
-            </label>
-          ))}
+          <p className="message-template-fallback-note">
+            If Version 2 / 3 is empty, the system automatically uses Version 1.
+          </p>
+
+          <div className="message-preset-stage-groups">
+            {MESSAGE_TEMPLATE_STAGE_GROUPS.map((group) => (
+              <section className="message-preset-stage-group" key={group.baseStage}>
+                <div className="message-preset-stage-group-header">
+                  <h3>{group.label}</h3>
+                  <p>{group.hint}</p>
+                </div>
+                <div className="message-preset-variant-grid">
+                  {group.stages.map((stage, index) => (
+                    <label
+                      className="reply-form-label message-preset-stage-field"
+                      key={stage}
+                    >
+                      <span className="message-preset-stage-label">
+                        Version {index + 1}
+                      </span>
+                      <AutoResizeTextarea
+                        value={bodies[stage] ?? ""}
+                        onChange={(value) =>
+                          setBodies((current) => ({
+                            ...current,
+                            [stage]: value,
+                          }))
+                        }
+                        disabled={isPending}
+                        inputRef={(el) => {
+                          if (el) textareaRefs.current[stage] = el;
+                          else delete textareaRefs.current[stage];
+                        }}
+                        onStageActivity={() => recordStage(stage)}
+                      />
+                    </label>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+
           <div className="message-preset-save-row">
             <div className="message-preset-save-status">
               {feedback ? <span className="reply-form-saved">{feedback}</span> : null}
               {error ? <span className="reply-form-error">{error}</span> : null}
             </div>
-            <button type="button" className="reply-form-submit message-preset-save" onClick={save} disabled={isPending}>
+            <button
+              type="button"
+              className="reply-form-submit message-preset-save"
+              onClick={save}
+              disabled={isPending}
+            >
               {isPending ? "Saving..." : "Save Preset"}
             </button>
           </div>

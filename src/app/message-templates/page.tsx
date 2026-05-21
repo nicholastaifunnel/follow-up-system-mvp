@@ -1,5 +1,10 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import {
+  BASE_MESSAGE_STAGES,
+  MESSAGE_TEMPLATE_VARIANT_STAGES,
+  messageStageForVariant,
+} from "@/messageTemplatePresetStages";
 import { CreateMessageTemplatePresetForm } from "./preset-form";
 import { MessageTemplateRow } from "./MessageTemplateRow";
 
@@ -41,12 +46,24 @@ export default async function MessageTemplateSettingsPage({
             name={preset.name}
             isActive={preset.isActive}
             defaultExpanded={preset.isActive || expanded === preset.id}
-            templates={Object.fromEntries(
-              preset.templates.map((template) => [
-                template.messageStage,
-                template.body,
-              ]),
-            )}
+            templates={(() => {
+              const byStage = Object.fromEntries(
+                preset.templates.map((template) => [
+                  template.messageStage,
+                  template.body,
+                ]),
+              );
+              for (const baseStage of BASE_MESSAGE_STAGES) {
+                const v1Stage = messageStageForVariant(baseStage, 1);
+                if (!byStage[v1Stage] && byStage[baseStage]) {
+                  byStage[v1Stage] = byStage[baseStage];
+                }
+              }
+              for (const stage of MESSAGE_TEMPLATE_VARIANT_STAGES) {
+                byStage[stage] = byStage[stage] ?? "";
+              }
+              return byStage;
+            })()}
           />
         ))}
       </div>

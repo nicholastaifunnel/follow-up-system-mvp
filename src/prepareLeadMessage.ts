@@ -1,5 +1,11 @@
 import type { Lead, MessageTemplate, PrismaClient } from "@prisma/client";
 import {
+  type BaseMessageStage,
+  type MessageTemplateVariant,
+  messageStageForVariant,
+  normalizeBaseMessageStage,
+} from "./messageTemplatePresetStages";
+import {
   MESSAGE_STATUS_NOT_PREPARED,
   MESSAGE_STATUS_PREPARED,
 } from "./statusConstants";
@@ -77,10 +83,9 @@ function renderTemplateBody(template: string, lead: Lead): string {
     .replaceAll("{googleRating}", googleRating);
 }
 
-async function findActivePresetTemplate(
+async function findActivePreset(
   db: PrismaClient,
-  messageStage: string,
-): Promise<MessageTemplate> {
+): Promise<{ id: string; name: string }> {
   const activePreset = await db.messageTemplatePreset.findFirst({
     where: { isActive: true },
     select: { id: true, name: true },
@@ -88,21 +93,53 @@ async function findActivePresetTemplate(
   if (!activePreset) {
     throw new Error("No active message template preset found.");
   }
+  return activePreset;
+}
 
-  const template = await db.messageTemplate.findFirst({
-    where: {
-      presetId: activePreset.id,
-      messageStage,
-      isActive: true,
-    },
-    orderBy: { createdAt: "asc" },
-  });
-  if (!template) {
-    throw new Error(
-      `Active preset "${activePreset.name}" is missing template stage: ${messageStage}.`,
+function chooseTemplateByFallbackOrder(
+  templates: MessageTemplate[],
+  baseStage: BaseMessageStage,
+  variant: MessageTemplateVariant,
+): MessageTemplate | null {
+  const fallbackOrder = [
+    messageStageForVariant(baseStage, variant),
+    messageStageForVariant(baseStage, 1),
+    baseStage,
+  ];
+
+  for (const stage of fallbackOrder) {
+    const template = templates.find(
+      (item) => item.messageStage === stage && item.body.trim(),
     );
+    if (template) return template;
   }
-  return template;
+
+  return null;
+}
+
+async function getLeadSequenceIndex(
+  db: PrismaClient,
+  lead: Lead,
+): Promise<number> {
+  const campaignFilter =
+    lead.campaignId === null ? { campaignId: null } : { campaignId: lead.campaignId };
+
+  const earlierCount = await db.lead.count({
+    where: {
+      ...campaignFilter,
+      outreachReadiness: "Ready",
+      isArchived: false,
+      OR: [
+        { createdAt: { lt: lead.createdAt } },
+        {
+          createdAt: lead.createdAt,
+          id: { lte: lead.id },
+        },
+      ],
+    },
+  });
+
+  return Math.max(0, earlierCount - 1);
 }
 
 /**
@@ -113,7 +150,7 @@ export async function prepareLeadMessage(
   db: PrismaClient,
   input: PrepareLeadMessageInput,
 ): Promise<PrepareLeadMessageResult> {
-  const messageStage = input.messageStage ?? "First Message";
+  const baseStage = normalizeBaseMessageStage(input.messageStage ?? "First Message");
 
   const lead = await db.lead.findUnique({ where: { id: input.leadId } });
   if (!lead) {
@@ -122,7 +159,28 @@ export async function prepareLeadMessage(
 
   assertCanPrepareLead(lead, input);
 
-  const template = await findActivePresetTemplate(db, messageStage);
+  const leadIndex = await getLeadSequenceIndex(db, lead);
+  const variant = ((leadIndex % 3) + 1) as MessageTemplateVariant;
+
+  const activePreset = await findActivePreset(db);
+
+  const variantStage = messageStageForVariant(baseStage, variant);
+  const fallbackStage = messageStageForVariant(baseStage, 1);
+  const candidates = await db.messageTemplate.findMany({
+    where: {
+      presetId: activePreset.id,
+      messageStage: { in: [variantStage, fallbackStage, baseStage] },
+      isActive: true,
+    },
+    orderBy: { createdAt: "asc" },
+  });
+
+  const template = chooseTemplateByFallbackOrder(candidates, baseStage, variant);
+  if (!template) {
+    throw new Error(
+      `Active preset "${activePreset.name}" is missing template stage: ${variantStage}.`,
+    );
+  }
 
   const preparedMessage = renderTemplateBody(template.body, lead);
 

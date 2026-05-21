@@ -2,12 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import {
+  BASE_MESSAGE_STAGES,
+  MESSAGE_TEMPLATE_VARIANT_STAGES,
+  messageStageForVariant,
+} from "@/messageTemplatePresetStages";
 
-const STAGES = [
-  "First Message",
-  "First Follow Up",
-  "Second Follow Up",
-] as const;
+const STAGES = MESSAGE_TEMPLATE_VARIANT_STAGES;
 
 export type MessagePresetActionResult =
   | { ok: true; presetId?: string }
@@ -59,9 +60,10 @@ export async function updateMessageTemplatePresetAction(
   const trimmedName = presetName.trim();
   if (!trimmedName) return { ok: false, error: "Preset name is required." };
 
-  for (const stage of STAGES) {
-    if (!(bodies[stage] ?? "").trim()) {
-      return { ok: false, error: `${stage} cannot be empty.` };
+  for (const baseStage of BASE_MESSAGE_STAGES) {
+    const variantOneStage = messageStageForVariant(baseStage, 1);
+    if (!(bodies[variantOneStage] ?? "").trim()) {
+      return { ok: false, error: `${variantOneStage} cannot be empty.` };
     }
   }
 
@@ -152,9 +154,18 @@ export async function duplicateMessageTemplatePresetAction(
           isActive: false,
           templates: {
             create: STAGES.map((stage) => {
-              const sourceTemplate = preset.templates.find(
-                (template) => template.messageStage === stage,
-              );
+              const sourceTemplate =
+                preset.templates.find((template) => template.messageStage === stage) ??
+                (() => {
+                  const baseStage = BASE_MESSAGE_STAGES.find((base) =>
+                    stage.startsWith(base),
+                  );
+                  return baseStage
+                    ? preset.templates.find(
+                        (template) => template.messageStage === baseStage,
+                      )
+                    : undefined;
+                })();
               return {
                 name: `${copyName} - ${stage}`,
                 messageStage: stage,

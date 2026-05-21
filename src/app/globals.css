@@ -1722,7 +1722,7 @@ html[data-theme="dark"] .prepare-message-btn:hover:not(:disabled) {
 
 .message-template-body-textarea {
   width: 100%;
-  min-height: 8.5rem;
+  min-height: 7.5rem;
   margin-top: 0.35rem;
   margin-bottom: 0;
   padding-block: 0.55rem;
@@ -1859,6 +1859,50 @@ html[data-theme="dark"] .prepare-message-btn:hover:not(:disabled) {
   margin-bottom: 0;
 }
 
+.message-template-fallback-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.message-preset-stage-groups {
+  display: grid;
+  gap: 1rem;
+}
+
+.message-preset-stage-group {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--card-muted) 78%, transparent);
+}
+
+.message-preset-stage-group-header {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.message-preset-stage-group-header h3 {
+  margin: 0;
+  font-size: 0.98rem;
+}
+
+.message-preset-stage-group-header p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.message-preset-variant-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .message-preset-stage-label {
   display: block;
   font-weight: 600;
@@ -1954,6 +1998,10 @@ html[data-theme="dark"] .prepare-message-btn:hover:not(:disabled) {
 }
 
 @media (max-width: 520px) {
+  .message-preset-variant-grid {
+    grid-template-columns: 1fr;
+  }
+
   .message-template-variable-chip {
     width: 100%;
     justify-content: flex-start;
