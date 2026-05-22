@@ -1,6 +1,5 @@
-import Link from "next/link";
 import type { DailyActivityResult } from "@/getDailyActivity";
-import { formatDateTimeMYT } from "@/formatMalaysiaTime";
+import { DailyActivityDetails } from "./DailyActivityDetails";
 
 type PreserveParams = {
   limit: 10 | 20 | 50;
@@ -15,106 +14,23 @@ type Props = {
   preserve: PreserveParams;
 };
 
-function fmtText(v: string | null | undefined): string {
-  if (v === null || v === undefined || v === "") return "—";
-  return v;
-}
-
-function PhoneCell({
-  phone,
-  internationalPhone,
-  whatsappPhone,
-}: {
-  phone: string | null;
-  internationalPhone: string | null;
-  whatsappPhone: string | null;
-}) {
-  return (
-    <>
-      {whatsappPhone ? (
-        <>
-          <span className="phone-search-whatsapp">WhatsApp: {fmtText(whatsappPhone)}</span>
-          <br />
-        </>
-      ) : null}
-      {fmtText(phone)}
-      {internationalPhone ? (
-        <>
-          <br />
-          <span className="phone-search-intl">{fmtText(internationalPhone)}</span>
-        </>
-      ) : null}
-    </>
-  );
-}
-
-function ActivityLeadsTable({
-  leads,
-  timeLabel,
-}: {
-  leads: DailyActivityResult["sentLeads"];
-  timeLabel: string;
-}) {
-  return (
-    <div className="table-wrap queue-work-table-wrap">
-      <table className="queue queue-work-table daily-activity-table">
-        <thead>
-          <tr>
-            <th>Business</th>
-            <th>Phone</th>
-            <th>Message status</th>
-            <th>Reply status</th>
-            <th>{timeLabel}</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {leads.map((row) => (
-            <tr key={row.id}>
-              <td className="queue-td-clip">{fmtText(row.businessName)}</td>
-              <td className="queue-td-phone">
-                <PhoneCell
-                  phone={row.phone}
-                  internationalPhone={row.internationalPhone}
-                  whatsappPhone={row.whatsappPhone}
-                />
-              </td>
-              <td>{fmtText(row.messageStatus)}</td>
-              <td>{fmtText(row.replyStatus)}</td>
-              <td>{formatDateTimeMYT(row.activityAt)}</td>
-              <td>
-                <Link href={`/leads/${row.id}`}>View Lead</Link>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
 export function DailyActivitySection({ activity, preserve }: Props) {
   const phoneTrim = preserve.phone.trim();
-  const hiddenPreserve = {
-    limit: preserve.limit,
-    ...(phoneTrim ? { phone: phoneTrim } : {}),
-    angle: preserve.angle,
-    ...(preserve.reviewMax !== undefined ? { reviewMax: preserve.reviewMax } : {}),
-  };
 
   return (
     <section className="section daily-activity-section">
       <div className="daily-activity-card">
         <h2 className="daily-activity-heading">Daily Activity</h2>
         <p className="sub daily-activity-note">
-          Track sent messages and customer replies by date.
+          Track leads by first message sent date. Replies are counted back to the
+          original sent date.
         </p>
 
         <form
           method="get"
           action="/queues"
           className="daily-activity-form"
-          aria-label="Select activity date"
+          aria-label="Select first message sent date"
         >
           <input type="hidden" name="limit" value={preserve.limit} />
           <input type="hidden" name="angle" value={preserve.angle} />
@@ -123,7 +39,7 @@ export function DailyActivitySection({ activity, preserve }: Props) {
             <input type="hidden" name="reviewMax" value={String(preserve.reviewMax)} />
           ) : null}
           <label className="daily-activity-date-label" htmlFor="activityDate">
-            Date (MYT)
+            Sent date (MYT)
           </label>
           <input
             id="activityDate"
@@ -143,7 +59,7 @@ export function DailyActivitySection({ activity, preserve }: Props) {
             <span className="daily-activity-stat-value">{activity.sentCount}</span>
           </div>
           <div className="daily-activity-stat">
-            <span className="daily-activity-stat-label">Customers Replied</span>
+            <span className="daily-activity-stat-label">Replied From This Sent Group</span>
             <span className="daily-activity-stat-value">{activity.repliedCount}</span>
           </div>
           <div className="daily-activity-stat">
@@ -152,29 +68,15 @@ export function DailyActivitySection({ activity, preserve }: Props) {
           </div>
         </div>
 
-        {activity.replyUsesUpdatedAtFallback ? (
-          <p className="sub daily-activity-fallback-note">
-            Reply count uses updatedAt as fallback when no reply timestamp exists.
-          </p>
-        ) : null}
+        <p className="sub daily-activity-cohort-note">
+          Replies are counted under the date the first message was sent, even if the
+          customer replied later.
+        </p>
 
-        <div className="daily-activity-list-block">
-          <h3 className="daily-activity-list-heading">Sent on selected date</h3>
-          {activity.sentLeads.length === 0 ? (
-            <p className="empty">No sent messages for this date.</p>
-          ) : (
-            <ActivityLeadsTable leads={activity.sentLeads} timeLabel="Sent at" />
-          )}
-        </div>
-
-        <div className="daily-activity-list-block">
-          <h3 className="daily-activity-list-heading">Replied on selected date</h3>
-          {activity.repliedLeads.length === 0 ? (
-            <p className="empty">No customer replies for this date.</p>
-          ) : (
-            <ActivityLeadsTable leads={activity.repliedLeads} timeLabel="Replied at" />
-          )}
-        </div>
+        <DailyActivityDetails
+          sentLeads={activity.sentLeads}
+          repliedLeads={activity.repliedLeads}
+        />
       </div>
     </section>
   );

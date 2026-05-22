@@ -342,9 +342,34 @@ html[data-theme="dark"] select:focus-visible {
   color: var(--text-heading);
 }
 
-.daily-activity-fallback-note {
+.daily-activity-cohort-note {
   margin: 0 0 0.75rem;
   font-size: 0.75rem;
+}
+
+.daily-activity-details {
+  margin-top: 0.25rem;
+}
+
+.daily-activity-details-toggle {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--border-input);
+  border-radius: 4px;
+  background: var(--card);
+  color: var(--text-heading);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.daily-activity-details-toggle:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.daily-activity-details-panel {
+  margin-top: 0.75rem;
 }
 
 .daily-activity-list-block {

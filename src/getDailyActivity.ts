@@ -29,8 +29,6 @@ export type DailyActivityLeadRow = {
   replyStatus: string | null;
   contactStatus: string | null;
   activityAt: Date;
-  /** Replied rows only: counted via updatedAt because lastInboundMessageAt is missing. */
-  usesReplyFallback: boolean;
 };
 
 export type DailyActivityResult = {
@@ -38,8 +36,6 @@ export type DailyActivityResult = {
   sentCount: number;
   repliedCount: number;
   replyRate: string;
-  /** True when any replied row used updatedAt fallback. */
-  replyUsesUpdatedAtFallback: boolean;
   sentLeads: DailyActivityLeadRow[];
   repliedLeads: DailyActivityLeadRow[];
 };
@@ -62,40 +58,12 @@ function mapSentRow(lead: DailyActivityLeadRecord): DailyActivityLeadRow {
     replyStatus: lead.replyStatus,
     contactStatus: lead.contactStatus,
     activityAt: lead.firstMessageSentAt!,
-    usesReplyFallback: false,
   };
 }
 
-function mapRepliedRow(
-  lead: DailyActivityLeadRecord,
-  range: { start: Date; endExclusive: Date },
-): DailyActivityLeadRow | null {
-  const inbound = lead.lastInboundMessageAt;
-  if (
-    inbound &&
-    inbound >= range.start &&
-    inbound < range.endExclusive
-  ) {
-    return {
-      id: lead.id,
-      businessName: lead.businessName,
-      phone: lead.phone,
-      internationalPhone: lead.internationalPhone,
-      whatsappPhone: lead.whatsappPhone,
-      messageStatus: lead.messageStatus,
-      replyStatus: lead.replyStatus,
-      contactStatus: lead.contactStatus,
-      activityAt: inbound,
-      usesReplyFallback: false,
-    };
-  }
-
-  if (lead.replyStatus !== "Replied") return null;
-  if (inbound) return null;
-
-  const updated = lead.updatedAt;
-  if (updated < range.start || updated >= range.endExclusive) return null;
-
+/** Cohort replied row: first sent on selected date; display latest reply time when known. */
+function mapCohortRepliedRow(lead: DailyActivityLeadRecord): DailyActivityLeadRow {
+  const repliedAt = lead.lastInboundMessageAt ?? lead.updatedAt;
   return {
     id: lead.id,
     businessName: lead.businessName,
@@ -105,13 +73,13 @@ function mapRepliedRow(
     messageStatus: lead.messageStatus,
     replyStatus: lead.replyStatus,
     contactStatus: lead.contactStatus,
-    activityAt: updated,
-    usesReplyFallback: true,
+    activityAt: repliedAt,
   };
 }
 
 /**
- * Daily sent/replied stats for /queues (read-only). Calendar day is Asia/Kuala_Lumpur.
+ * Daily cohort stats for /queues (read-only).
+ * Selected date = first message sent date (MYT). Replies count back to that send cohort.
  */
 export async function getDailyActivity(
   db: PrismaClient,
@@ -119,57 +87,23 @@ export async function getDailyActivity(
 ): Promise<DailyActivityResult> {
   const range = mytCalendarDayUtcRange(activityDateIso);
 
-  const sentWhere: Prisma.LeadWhereInput = {
-    firstMessageSentAt: {
-      gte: range.start,
-      lt: range.endExclusive,
-    },
-  };
-
-  const [sentRecords, repliedCandidates] = await Promise.all([
-    db.lead.findMany({
-      where: sentWhere,
-      select: DAILY_ACTIVITY_LEAD_SELECT,
-      orderBy: { firstMessageSentAt: "desc" },
-    }),
-    db.lead.findMany({
-      where: {
-        OR: [
-          {
-            lastInboundMessageAt: {
-              gte: range.start,
-              lt: range.endExclusive,
-            },
-          },
-          {
-            AND: [
-              { replyStatus: "Replied" },
-              { lastInboundMessageAt: null },
-              {
-                updatedAt: {
-                  gte: range.start,
-                  lt: range.endExclusive,
-                },
-              },
-            ],
-          },
-        ],
+  const sentRecords = await db.lead.findMany({
+    where: {
+      firstMessageSentAt: {
+        gte: range.start,
+        lt: range.endExclusive,
       },
-      select: DAILY_ACTIVITY_LEAD_SELECT,
-      orderBy: { updatedAt: "desc" },
-    }),
-  ]);
+    },
+    select: DAILY_ACTIVITY_LEAD_SELECT,
+    orderBy: { firstMessageSentAt: "desc" },
+  });
 
   const sentLeads = sentRecords.map(mapSentRow);
 
-  const repliedById = new Map<string, DailyActivityLeadRow>();
-  for (const lead of repliedCandidates) {
-    const row = mapRepliedRow(lead, range);
-    if (row) repliedById.set(row.id, row);
-  }
-  const repliedLeads = [...repliedById.values()].sort(
-    (a, b) => b.activityAt.getTime() - a.activityAt.getTime(),
-  );
+  const repliedLeads = sentRecords
+    .filter((lead) => lead.replyStatus === "Replied")
+    .map(mapCohortRepliedRow)
+    .sort((a, b) => b.activityAt.getTime() - a.activityAt.getTime());
 
   const sentCount = sentLeads.length;
   const repliedCount = repliedLeads.length;
@@ -179,7 +113,6 @@ export async function getDailyActivity(
     sentCount,
     repliedCount,
     replyRate: formatReplyRate(sentCount, repliedCount),
-    replyUsesUpdatedAtFallback: repliedLeads.some((r) => r.usesReplyFallback),
     sentLeads,
     repliedLeads,
   };
