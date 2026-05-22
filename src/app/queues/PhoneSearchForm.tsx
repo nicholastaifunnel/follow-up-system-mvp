@@ -25,7 +25,11 @@ export function PhoneSearchForm({
 
   return (
     <div className="phone-search-card">
-      <h2 className="phone-search-heading">Search by phone</h2>
+      <h2 className="phone-search-heading">Find any lead by phone</h2>
+      <p className="sub phone-search-results-note">
+        Search all leads, including sent, replied, follow-up, skipped, and trial
+        leads.
+      </p>
       <form
         method="get"
         action="/queues"

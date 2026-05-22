@@ -229,11 +229,18 @@ function PhoneSearchResultsTable({ leads }: { leads: PhoneSearchLeadRow[] }) {
             <th>Reviews</th>
             <th>Message status</th>
             <th>Reply status</th>
+            <th>Contact status</th>
             <th className="queue-th-wrap">
               Next
               <br />
               follow-up
             </th>
+            <th className="queue-th-wrap">
+              Next
+              <br />
+              check
+            </th>
+            <th>Note / remark</th>
             <th>Next Action</th>
             <th></th>
           </tr>
@@ -261,10 +268,21 @@ function PhoneSearchResultsTable({ leads }: { leads: PhoneSearchLeadRow[] }) {
               </td>
               <td>{fmtText(row.messageStatus)}</td>
               <td>{fmtText(row.replyStatus)}</td>
+              <td>{fmtText(row.contactStatus)}</td>
               <td>{fmtDate(row.nextFollowUpAt)}</td>
+              <td>{fmtDate(row.nextCheckAt)}</td>
+              <td className="queue-td-clip">
+                {fmtText(
+                  row.handoffReason ??
+                    row.replyNotes ??
+                    row.manualNotes ??
+                    row.conversationSummary ??
+                    row.lastInboundMessage,
+                )}
+              </td>
               <td className="queue-td-clip">{fmtText(row.nextAction)}</td>
               <td>
-                <Link href={`/leads/${row.id}`}>View</Link>
+                <Link href={`/leads/${row.id}`}>Open Lead</Link>
               </td>
             </tr>
           ))}
@@ -412,27 +430,30 @@ export default async function QueuesPage({
 
   const isFilteredMode =
     angle !== "all" ||
-    reviewMax !== undefined ||
-    (hasPhoneQuery && phoneSearchOk);
+    reviewMax !== undefined;
 
   let filteredLeads: FilteredMessageLeadRow[] | null = null;
   let messageQueue: MessageQueueResult | null = null;
   let followUpQueue: FollowUpQueueResult | null = null;
   let phoneSearchRows: PhoneSearchLeadRow[] = [];
 
+  const phoneSearchPromise = phoneSearchOk
+    ? searchLeadsByPhone(prisma, phoneQuery, { limit })
+    : Promise.resolve([] as PhoneSearchLeadRow[]);
+
   if (isFilteredMode) {
-    filteredLeads = await getFilteredMessageLeads(prisma, {
-      limit,
-      listExtraWhere,
-      phoneQuery: phoneSearchOk ? phoneQuery : undefined,
-    });
+    [filteredLeads, phoneSearchRows] = await Promise.all([
+      getFilteredMessageLeads(prisma, {
+        limit,
+        listExtraWhere,
+      }),
+      phoneSearchPromise,
+    ]);
   } else {
     const [mq, fq, ps] = await Promise.all([
       getMessageQueue(prisma, { limit, listExtraWhere }),
       getFollowUpQueue(prisma, { limit }),
-      phoneSearchOk
-        ? searchLeadsByPhone(prisma, phoneQuery, { limit, listExtraWhere })
-        : Promise.resolve([] as PhoneSearchLeadRow[]),
+      phoneSearchPromise,
     ]);
     messageQueue = mq;
     followUpQueue = fq;
@@ -465,8 +486,8 @@ export default async function QueuesPage({
       <h1>Queues</h1>
       <p className="sub">
         {isFilteredMode
-          ? "Filtered Message Queue: one compact list of queue-eligible leads. Follow-up Queue is hidden until you clear filters. Read-only — no writes."
-          : "Work list: filters only apply to Message Queue. Follow-up Queue always shows all follow-up leads. Phone search uses the same filters to match Message Queue leads. Read-only — no writes."}
+          ? "Filtered Message Queue: one compact list of queue-eligible leads. Follow-up Queue is hidden until you clear filters. Phone lookup remains global. Read-only — no writes."
+          : "Work list: filters only apply to Message Queue. Follow-up Queue always shows all follow-up leads. Phone lookup searches all leads independently. Read-only — no writes."}
       </p>
 
       <div className="queues-toolbar">
@@ -488,6 +509,21 @@ export default async function QueuesPage({
         <p className="empty">Enter at least 4 digits to search.</p>
       ) : null}
 
+      {hasPhoneQuery && phoneSearchOk ? (
+        <div className="section phone-search-results-section">
+          <h2>Phone Lookup Results</h2>
+          <p className="sub phone-search-results-note">
+            Global lookup across all leads. These results do not change the queue
+            below.
+          </p>
+          {phoneSearchRows.length === 0 ? (
+            <p className="empty">No leads found for this phone number.</p>
+          ) : (
+            <PhoneSearchResultsTable leads={phoneSearchRows} />
+          )}
+        </div>
+      ) : null}
+
       {isFilteredMode && filteredLeads ? (
         <div className="section message-queue-work-section">
           <p className="phone-search-clear-wrap">
@@ -504,7 +540,7 @@ export default async function QueuesPage({
           <h2>Filtered Message Leads</h2>
           <p className="sub">
             Showing up to {limit} leads not yet first-sent (Not Prepared or Prepared
-            only), with angle / reviews / phone filters (single query).
+            only), with angle / reviews filters.
           </p>
           {filteredLeads.length === 0 ? (
             <p className="empty">No leads match these filters.</p>
@@ -516,23 +552,6 @@ export default async function QueuesPage({
 
       {!isFilteredMode && messageQueue && followUpQueue ? (
         <>
-          {hasPhoneQuery && phoneSearchOk ? (
-            <div className="section phone-search-results-section">
-              <h2>Phone Search Results</h2>
-              <p className="sub phone-search-results-note">
-                Same filters as Message Queue (angle / max reviews). Follow-up Queue is
-                unchanged.
-              </p>
-              {phoneSearchRows.length === 0 ? (
-                <p className="empty">
-                  No leads found for this phone (with current filters).
-                </p>
-              ) : (
-                <PhoneSearchResultsTable leads={phoneSearchRows} />
-              )}
-            </div>
-          ) : null}
-
           <div className="section message-queue-work-section">
             <QueuesFilterBar
               limit={limit}
@@ -601,3 +620,4 @@ export default async function QueuesPage({
     </div>
   );
 }
+

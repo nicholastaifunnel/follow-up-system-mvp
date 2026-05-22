@@ -1,5 +1,4 @@
-import type { Prisma, PrismaClient } from "@prisma/client";
-import { mergeQueueListWhere } from "./queueListFilter";
+import type { PrismaClient } from "@prisma/client";
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 50;
@@ -25,6 +24,11 @@ export type PhoneSearchLeadRow = {
   replyOutcome: string | null;
   contactStatus: string;
   handoffRequired: boolean;
+  manualNotes: string | null;
+  replyNotes: string | null;
+  handoffReason: string | null;
+  conversationSummary: string | null;
+  lastInboundMessage: string | null;
   nextAction: string | null;
   nextCheckAt: Date | null;
   nextFollowUpAt: Date | null;
@@ -38,7 +42,7 @@ export type PhoneSearchLeadRow = {
 export async function searchLeadsByPhone(
   prisma: PrismaClient,
   input: string,
-  options?: { limit?: number; listExtraWhere?: Prisma.LeadWhereInput },
+  options?: { limit?: number },
 ): Promise<PhoneSearchLeadRow[]> {
   const trimmed = input.trim();
   const digits = normalizePhoneDigits(trimmed);
@@ -49,35 +53,13 @@ export async function searchLeadsByPhone(
   const rawLimit = options?.limit ?? DEFAULT_LIMIT;
   const limit = Math.min(Math.max(1, rawLimit), MAX_LIMIT);
 
-  const rawForContains = trimmed.length > 0 ? trimmed : digits;
-  const useRawContains =
-    rawForContains.length > 0 && rawForContains !== digits;
-
-  const orClauses = [
-    { phone: { contains: digits } },
-    { internationalPhone: { contains: digits } },
-    { whatsappPhoneId: { contains: digits } },
-  ];
-
-  if (useRawContains) {
-    orClauses.push(
-      { phone: { contains: rawForContains } },
-      { internationalPhone: { contains: rawForContains } },
-      { whatsappPhoneId: { contains: rawForContains } },
-    );
-  }
-
-  const phoneMatch: Prisma.LeadWhereInput = {
-    AND: [{ OR: orClauses }, { isArchived: false }, { skippedAt: null }],
-  };
-
   const rows = await prisma.lead.findMany({
-    where: mergeQueueListWhere(phoneMatch, options?.listExtraWhere),
     select: {
       id: true,
       businessName: true,
       phone: true,
       internationalPhone: true,
+      whatsappPhoneId: true,
       area: true,
       assignedIndustry: true,
       leadLevel: true,
@@ -89,17 +71,49 @@ export async function searchLeadsByPhone(
       replyOutcome: true,
       contactStatus: true,
       handoffRequired: true,
+      manualNotes: true,
+      replyNotes: true,
+      handoffReason: true,
+      conversationSummary: true,
+      lastInboundMessage: true,
       nextAction: true,
       nextCheckAt: true,
       nextFollowUpAt: true,
       campaign: { select: { name: true } },
     },
     orderBy: { updatedAt: "desc" },
-    take: limit,
   });
 
-  return rows.map(({ campaign, ...rest }) => ({
-    ...rest,
-    campaignName: campaign?.name ?? null,
-  }));
+  return rows
+    .filter((row) => {
+      const candidates = [
+        row.phone,
+        row.internationalPhone,
+        row.whatsappPhoneId,
+      ].map((value) => normalizePhoneDigits(value ?? ""));
+
+      return candidates.some((candidate) => {
+        if (!candidate) return false;
+        if (candidate.includes(digits)) return true;
+
+        if (digits.startsWith("60")) {
+          const local = `0${digits.slice(2)}`;
+          if (local.length >= 4 && candidate.includes(local)) return true;
+        }
+
+        if (digits.startsWith("0")) {
+          const international = `60${digits.slice(1)}`;
+          if (international.length >= 4 && candidate.includes(international)) {
+            return true;
+          }
+        }
+
+        return false;
+      });
+    })
+    .slice(0, limit)
+    .map(({ campaign, whatsappPhoneId, ...rest }) => ({
+      ...rest,
+      campaignName: campaign?.name ?? null,
+    }));
 }
