@@ -9,9 +9,17 @@ type Props = {
   canPrepare: boolean;
   /** Shown when `canPrepare` is false (UI hint only). */
   reason: string;
+  label?: string;
+  messageStage?: string;
 };
 
-export function PrepareMessageButton({ leadId, canPrepare, reason }: Props) {
+export function PrepareMessageButton({
+  leadId,
+  canPrepare,
+  reason,
+  label = "Prepare Message",
+  messageStage,
+}: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +35,7 @@ export function PrepareMessageButton({ leadId, canPrepare, reason }: Props) {
   function onClick() {
     setError(null);
     startTransition(() => {
-      void prepareLeadMessageAction(leadId).then((result) => {
+      void prepareLeadMessageAction(leadId, messageStage).then((result) => {
         if (result.ok) {
           router.refresh();
         } else {
@@ -45,7 +53,7 @@ export function PrepareMessageButton({ leadId, canPrepare, reason }: Props) {
         onClick={onClick}
         disabled={isPending}
       >
-        {isPending ? "Preparing..." : "Prepare Message"}
+        {isPending ? "Preparing..." : label}
       </button>
       {error ? <p className="prepare-error">{error}</p> : null}
     </div>

@@ -1170,6 +1170,24 @@ html[data-theme="dark"] .import-page .import-form input[type="file"]::file-selec
   margin: 0;
 }
 
+.message-workspace-scheduled-note {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-heading);
+}
+
+.message-workspace-readonly-preview {
+  margin: 0.35rem 0 0;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--border-light);
+  border-radius: 4px;
+  background: var(--card-muted);
+  font-size: 0.875rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .message-wa-tip {
   margin: 0;
   font-size: 0.75rem;

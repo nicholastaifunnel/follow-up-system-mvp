@@ -38,7 +38,7 @@ export function DailyActivitySection({ activity, preserve }: Props) {
             <input type="hidden" name="reviewMax" value={String(preserve.reviewMax)} />
           ) : null}
           <label className="daily-activity-date-label" htmlFor="activityDate">
-            Sent date (MYT)
+            Date
           </label>
           <input
             id="activityDate"

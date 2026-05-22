@@ -6,6 +6,7 @@ import {
   normalizeBaseMessageStage,
 } from "./messageTemplatePresetStages";
 import {
+  MESSAGE_STATUS_FIRST_SENT,
   MESSAGE_STATUS_NOT_PREPARED,
   MESSAGE_STATUS_PREPARED,
 } from "./statusConstants";
@@ -20,9 +21,50 @@ export type PrepareLeadMessageInput = {
   force?: boolean;
 };
 
-function assertCanPrepareLead(lead: Lead, input: PrepareLeadMessageInput): void {
+function assertCanPrepareLead(
+  lead: Lead,
+  input: PrepareLeadMessageInput,
+  baseStage: BaseMessageStage,
+): void {
   if (lead.isArchived) {
     throw new Error("Lead cannot be prepared: lead is archived");
+  }
+
+  if (lead.replyStatus === "Replied" || lead.replyStatus === "Stopped") {
+    throw new Error(
+      `Lead cannot be prepared from current reply status: ${lead.replyStatus}`,
+    );
+  }
+
+  if (lead.handoffRequired) {
+    throw new Error("Lead cannot be prepared: handoff is required");
+  }
+
+  if (baseStage === "First Follow Up") {
+    if (lead.messageStatus !== MESSAGE_STATUS_FIRST_SENT) {
+      throw new Error(
+        `First follow-up can only be prepared after the first message is sent (current: ${lead.messageStatus ?? "(null)"}).`,
+      );
+    }
+    if (lead.followUp1SentAt) {
+      throw new Error("First follow-up was already marked as sent.");
+    }
+    return;
+  }
+
+  if (baseStage === "Second Follow Up") {
+    if (lead.messageStatus !== MESSAGE_STATUS_FIRST_SENT) {
+      throw new Error(
+        `Second follow-up can only be prepared after the first message is sent (current: ${lead.messageStatus ?? "(null)"}).`,
+      );
+    }
+    if (!lead.followUp1SentAt) {
+      throw new Error("Mark first follow-up sent before preparing the second.");
+    }
+    if (lead.followUp2SentAt) {
+      throw new Error("Second follow-up was already marked as sent.");
+    }
+    return;
   }
 
   const status = lead.messageStatus ?? "(null)";
@@ -35,16 +77,6 @@ function assertCanPrepareLead(lead: Lead, input: PrepareLeadMessageInput): void 
         `Lead cannot be prepared from current message status: ${status}`,
       );
     }
-  }
-
-  if (lead.replyStatus === "Replied" || lead.replyStatus === "Stopped") {
-    throw new Error(
-      `Lead cannot be prepared from current reply status: ${lead.replyStatus}`,
-    );
-  }
-
-  if (lead.handoffRequired) {
-    throw new Error("Lead cannot be prepared: handoff is required");
   }
 }
 
@@ -157,7 +189,7 @@ export async function prepareLeadMessage(
     throw new Error(`Lead not found: ${input.leadId}`);
   }
 
-  assertCanPrepareLead(lead, input);
+  assertCanPrepareLead(lead, input, baseStage);
 
   const leadIndex = await getLeadSequenceIndex(db, lead);
   const variant = ((leadIndex % 3) + 1) as MessageTemplateVariant;
@@ -184,14 +216,24 @@ export async function prepareLeadMessage(
 
   const preparedMessage = renderTemplateBody(template.body, lead);
 
+  const updateData: {
+    messageTemplateId: string;
+    preparedMessage: string;
+    preparedAt: Date;
+    messageStatus?: string;
+  } = {
+    messageTemplateId: template.id,
+    preparedMessage,
+    preparedAt: new Date(),
+  };
+
+  if (baseStage === "First Message") {
+    updateData.messageStatus = MESSAGE_STATUS_PREPARED;
+  }
+
   await db.lead.update({
     where: { id: lead.id },
-    data: {
-      messageTemplateId: template.id,
-      preparedMessage,
-      preparedAt: new Date(),
-      messageStatus: MESSAGE_STATUS_PREPARED,
-    },
+    data: updateData,
   });
 
   return {

@@ -150,10 +150,13 @@ export async function updatePreparedMessageDraftAction(
     };
   }
 
-  if (snapshot.messageStatus !== MESSAGE_STATUS_PREPARED) {
+  if (
+    snapshot.messageStatus !== MESSAGE_STATUS_PREPARED &&
+    snapshot.messageStatus !== MESSAGE_STATUS_FIRST_SENT
+  ) {
     return {
       ok: false,
-      error: `Draft editing is only available when message status is Prepared (current: ${snapshot.messageStatus ?? "(null)"}).`,
+      error: `Draft editing is only available when a message draft exists (current: ${snapshot.messageStatus ?? "(null)"}).`,
     };
   }
 
@@ -177,6 +180,7 @@ export async function updatePreparedMessageDraftAction(
 
 export async function prepareLeadMessageAction(
   leadId: string,
+  messageStage?: string,
 ): Promise<PrepareLeadMessageActionResult> {
   const snap = await prisma.lead.findUnique({
     where: { id: leadId },
@@ -191,7 +195,10 @@ export async function prepareLeadMessageAction(
   }
 
   try {
-    await prepareLeadMessage(prisma, { leadId });
+    await prepareLeadMessage(prisma, {
+      leadId,
+      ...(messageStage ? { messageStage } : {}),
+    });
     revalidatePath(`/leads/${leadId}`);
     revalidatePath(`/leads/${leadId}/reply-assistant`);
     revalidatePath("/queues");

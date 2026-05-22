@@ -19,17 +19,11 @@ import {
 import { formatDateOnlyMYT, formatDateTimeMYT } from "@/formatMalaysiaTime";
 import { formatRmFromCents } from "@/money";
 import { summarizePlanUsage } from "@/reviewPlanUsage";
+import { MESSAGE_STATUS_FIRST_SENT } from "@/statusConstants";
 import {
-  MESSAGE_STATUS_FIRST_SENT,
-  MESSAGE_STATUS_NOT_PREPARED,
-  MESSAGE_STATUS_PREPARED,
-} from "@/statusConstants";
-
-const PREPARE_BLOCKED_HINT =
-  "This lead cannot be prepared from the current status.";
-
-const PREPARE_SKIPPED_HINT =
-  "Skipped from Message Queue. Use Restore below to return this lead to the Message Queue.";
+  computeMessageWorkspaceState,
+  scheduledFollowUpNote,
+} from "./messageWorkspaceState";
 
 const MARK_SENT_HINT =
   "Mark sent is available after a message is prepared.";
@@ -43,41 +37,6 @@ function computeCanRecordReply(lead: {
 }): boolean {
   if (lead.isArchived) return false;
   return lead.messageStatus === MESSAGE_STATUS_FIRST_SENT;
-}
-
-function computeCanMarkSent(lead: {
-  isArchived: boolean;
-  skippedAt: Date | null;
-  messageStatus: string;
-  preparedTrimLength: number;
-}): boolean {
-  if (lead.isArchived) return false;
-  if (lead.skippedAt) return false;
-  if (lead.messageStatus !== MESSAGE_STATUS_PREPARED) return false;
-  if (lead.preparedTrimLength === 0) return false;
-  return true;
-}
-
-function computeCanPrepare(lead: {
-  isArchived: boolean;
-  skippedAt: Date | null;
-  messageStatus: string;
-  replyStatus: string | null;
-  handoffRequired: boolean;
-}): boolean {
-  if (lead.isArchived) return false;
-  if (lead.skippedAt) return false;
-  if (lead.replyStatus === "Replied" || lead.replyStatus === "Stopped") {
-    return false;
-  }
-  if (lead.handoffRequired) return false;
-  if (
-    lead.messageStatus !== MESSAGE_STATUS_NOT_PREPARED &&
-    lead.messageStatus !== MESSAGE_STATUS_PREPARED
-  ) {
-    return false;
-  }
-  return true;
 }
 
 export const dynamic = "force-dynamic";
@@ -180,6 +139,8 @@ export default async function LeadDetailPage({
       nextAction: true,
       nextCheckAt: true,
       nextFollowUpAt: true,
+      followUp1SentAt: true,
+      followUp2SentAt: true,
       preparedMessage: true,
       googleCategory: true,
       googleRating: true,
@@ -275,23 +236,24 @@ export default async function LeadDetailPage({
       lead.reviewMerchantUrl,
   );
 
-  const canPrepare = computeCanPrepare({
+  const workspace = computeMessageWorkspaceState({
     isArchived: lead.isArchived,
     skippedAt: lead.skippedAt,
     messageStatus: lead.messageStatus,
     replyStatus: lead.replyStatus,
     handoffRequired: lead.handoffRequired,
-  });
-
-  const prepareReasonHint =
-    lead.skippedAt && !lead.isArchived ? PREPARE_SKIPPED_HINT : PREPARE_BLOCKED_HINT;
-
-  const canMarkSent = computeCanMarkSent({
-    isArchived: lead.isArchived,
-    skippedAt: lead.skippedAt,
-    messageStatus: lead.messageStatus,
+    followUp1SentAt: lead.followUp1SentAt,
+    followUp2SentAt: lead.followUp2SentAt,
+    nextFollowUpAt: lead.nextFollowUpAt,
     preparedTrimLength: prepared.length,
   });
+
+  const scheduledNote =
+    workspace.mode === "first-follow-up-scheduled"
+      ? scheduledFollowUpNote(1, lead.nextFollowUpAt, formatDateTimeMYT)
+      : workspace.mode === "second-follow-up-scheduled"
+        ? scheduledFollowUpNote(2, lead.nextFollowUpAt, formatDateTimeMYT)
+        : null;
 
   const canRecordReply = computeCanRecordReply({
     isArchived: lead.isArchived,
@@ -413,10 +375,15 @@ export default async function LeadDetailPage({
             phone={lead.phone}
             internationalPhone={lead.internationalPhone}
             whatsappPhone={lead.whatsappPhone}
-            canPrepare={canPrepare}
-            prepareReason={prepareReasonHint}
-            canMarkSent={canMarkSent}
+            workspaceMode={workspace.mode}
+            statusNote={workspace.statusNote}
+            canPrepare={workspace.canPrepare}
+            prepareLabel={workspace.prepareLabel}
+            messageStage={workspace.messageStage}
+            canMarkSent={workspace.canMarkSent}
             markSentReason={MARK_SENT_HINT}
+            markFollowUpWhich={workspace.markFollowUpWhich}
+            scheduledNote={scheduledNote}
           />
         </section>
       ) : null}
