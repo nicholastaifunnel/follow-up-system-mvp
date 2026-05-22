@@ -1,18 +1,13 @@
 import Link from "next/link";
-import { getFollowUpQueue } from "@/getFollowUpQueue";
-import type {
-  FollowUpQueueLeadRow,
-  FollowUpQueueResult,
-} from "@/getFollowUpQueue";
 import {
   getFilteredMessageLeads,
   type FilteredMessageLeadRow,
 } from "@/getFilteredMessageLeads";
-import { getMessageQueue } from "@/getMessageQueue";
+import { getTodayActionQueue } from "@/getTodayActionQueue";
 import type {
-  MessageQueueLeadRow,
-  MessageQueueResult,
-} from "@/getMessageQueue";
+  TodayActionLeadRow,
+  TodayActionQueueResult,
+} from "@/getTodayActionQueue";
 import {
   parseQueueAngleParam,
   parseReviewMaxParam,
@@ -33,6 +28,7 @@ import { PhoneSearchForm } from "./PhoneSearchForm";
 import { QueueLimitSelector } from "./QueueLimitSelector";
 import { QueueSection } from "./QueueSection";
 import { QueuesFilterBar } from "./QueuesFilterBar";
+import { MarkFollowUpSentButton } from "./MarkFollowUpSentButton";
 
 export const dynamic = "force-dynamic";
 
@@ -154,23 +150,21 @@ function PhoneLines({
   );
 }
 
-const MESSAGE_SECTIONS: { key: keyof MessageQueueResult; title: string }[] = [
-  { key: "notPrepared", title: "Not Prepared" },
-  { key: "preparedNotSent", title: "Prepared Not Sent" },
-  { key: "firstMessageSent", title: "First Message Sent" },
-  { key: "waitingReply", title: "Waiting Reply" },
-  { key: "needHuman", title: "Need Human" },
+const ACTION_SECTIONS: { key: keyof TodayActionQueueResult; title: string }[] = [
+  { key: "prepareFirstMessage", title: "Prepare First Message" },
+  { key: "sendPreparedMessage", title: "Send Prepared Message" },
+  { key: "firstFollowUpDue", title: "First Follow-up Due" },
+  { key: "secondFollowUpDue", title: "Second Follow-up Due" },
+  { key: "needHumanReply", title: "Need Human Reply" },
 ];
 
-const FOLLOWUP_SECTIONS: { key: keyof FollowUpQueueResult; title: string }[] = [
-  { key: "dueToday", title: "Due Today" },
-  { key: "overdue", title: "Overdue" },
-  { key: "noReplyToCheck", title: "No Reply To Check" },
-  { key: "needHuman", title: "Need Human" },
-  { key: "followUpLater", title: "Follow Up Later" },
-];
-
-function MessageQueueTable({ leads }: { leads: MessageQueueLeadRow[] }) {
+function ActionQueueTable({
+  leads,
+  markFollowUp,
+}: {
+  leads: TodayActionLeadRow[];
+  markFollowUp?: 1 | 2;
+}) {
   return (
     <div className="table-wrap queue-work-table-wrap">
       <table className="queue queue-work-table">
@@ -190,6 +184,7 @@ function MessageQueueTable({ leads }: { leads: MessageQueueLeadRow[] }) {
             </th>
             <th>Next Action</th>
             <th></th>
+            {markFollowUp ? <th>Action</th> : null}
           </tr>
         </thead>
         <tbody>
@@ -222,6 +217,11 @@ function MessageQueueTable({ leads }: { leads: MessageQueueLeadRow[] }) {
               <td>
                 <Link href={`/leads/${row.id}`}>View</Link>
               </td>
+              {markFollowUp ? (
+                <td className="queue-td-action">
+                  <MarkFollowUpSentButton leadId={row.id} which={markFollowUp} />
+                </td>
+              ) : null}
             </tr>
           ))}
         </tbody>
@@ -368,63 +368,6 @@ function FilteredMessageLeadsTable({
   );
 }
 
-function FollowUpQueueTable({ leads }: { leads: FollowUpQueueLeadRow[] }) {
-  return (
-    <div className="table-wrap queue-work-table-wrap">
-      <table className="queue queue-work-table">
-        <thead>
-          <tr>
-            <th>Business</th>
-            <th>Phone</th>
-            <th>Area</th>
-            <th>Lead Angle</th>
-            <th>Reviews</th>
-            <th>Message status</th>
-            <th>Reply status</th>
-            <th className="queue-th-wrap">
-              Next
-              <br />
-              follow-up
-            </th>
-            <th>Next Action</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {leads.map((row) => (
-            <tr key={row.id}>
-              <td className="queue-td-clip">{fmtText(row.businessName)}</td>
-              <td className="queue-td-phone">
-                <PhoneLines phone={row.phone} internationalPhone={row.internationalPhone} />
-              </td>
-              <td>{fmtText(row.area)}</td>
-              <td>
-                <LeadAngleCell
-                  leadLevel={row.leadLevel}
-                  reviewCount={row.reviewCount}
-                />
-              </td>
-              <td>
-                <QueueReviewsCell
-                  reviewCount={row.reviewCount}
-                  googleRating={row.googleRating}
-                />
-              </td>
-              <td>{fmtText(row.messageStatus)}</td>
-              <td>{fmtText(row.replyStatus)}</td>
-              <td>{fmtDate(row.nextFollowUpAt)}</td>
-              <td className="queue-td-clip">{fmtText(row.nextAction)}</td>
-              <td>
-                <Link href={`/leads/${row.id}`}>View</Link>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
 export default async function QueuesPage({
   searchParams,
 }: {
@@ -453,8 +396,7 @@ export default async function QueuesPage({
     reviewMax !== undefined;
 
   let filteredLeads: FilteredMessageLeadRow[] | null = null;
-  let messageQueue: MessageQueueResult | null = null;
-  let followUpQueue: FollowUpQueueResult | null = null;
+  let actionQueue: TodayActionQueueResult | null = null;
   let phoneSearchRows: PhoneSearchLeadRow[] = [];
 
   const phoneSearchPromise = phoneSearchOk
@@ -475,14 +417,12 @@ export default async function QueuesPage({
       dailyActivityPromise,
     ]);
   } else {
-    const [mq, fq, ps, da] = await Promise.all([
-      getMessageQueue(prisma, { limit, listExtraWhere }),
-      getFollowUpQueue(prisma, { limit }),
+    const [aq, ps, da] = await Promise.all([
+      getTodayActionQueue(prisma, { limit, listExtraWhere }),
       phoneSearchPromise,
       dailyActivityPromise,
     ]);
-    messageQueue = mq;
-    followUpQueue = fq;
+    actionQueue = aq;
     phoneSearchRows = ps;
     dailyActivity = da;
   }
@@ -514,7 +454,7 @@ export default async function QueuesPage({
       <p className="sub">
         {isFilteredMode
           ? "Filtered Message Queue: one compact list of queue-eligible leads. Follow-up Queue is hidden until you clear filters. Phone lookup remains global. Read-only — no writes."
-          : "Work list: filters only apply to Message Queue. Follow-up Queue always shows all follow-up leads. Phone lookup searches all leads independently. Read-only — no writes."}
+          : "Today’s Action Queue: only leads that need action now. Phone lookup searches all leads independently. Read-only — no writes."}
       </p>
 
       <DailyActivitySection
@@ -585,7 +525,7 @@ export default async function QueuesPage({
         </div>
       ) : null}
 
-      {!isFilteredMode && messageQueue && followUpQueue ? (
+      {!isFilteredMode && actionQueue ? (
         <>
           <div className="section message-queue-work-section">
             <QueuesFilterBar
@@ -595,13 +535,20 @@ export default async function QueuesPage({
               reviewMax={reviewMax}
               activityDate={activityDate}
             />
-            <h2>Message Queue</h2>
-            {MESSAGE_SECTIONS.map(({ key, title }) => {
-              const group = messageQueue[key];
+            <h2>Today&apos;s Action Queue</h2>
+            <p className="sub">Only leads that need action now are shown.</p>
+            {ACTION_SECTIONS.map(({ key, title }) => {
+              const group = actionQueue[key];
+              const markFollowUp =
+                key === "firstFollowUpDue"
+                  ? 1
+                  : key === "secondFollowUpDue"
+                    ? 2
+                    : undefined;
               return (
                 <div className="group" key={key}>
                   <QueueSection
-                    key={`msg-${String(key)}-${limit}-${angle}-${reviewMax ?? "x"}`}
+                    key={`action-${String(key)}-${limit}-${angle}-${reviewMax ?? "x"}`}
                     title={title}
                     totalCount={group.count}
                     shownCount={group.leads.length}
@@ -610,31 +557,10 @@ export default async function QueuesPage({
                     {group.leads.length === 0 ? (
                       <p className="empty">No leads</p>
                     ) : (
-                      <MessageQueueTable leads={group.leads} />
-                    )}
-                  </QueueSection>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="section">
-            <h2>Follow-up Queue</h2>
-            {FOLLOWUP_SECTIONS.map(({ key, title }) => {
-              const group = followUpQueue[key];
-              return (
-                <div className="group" key={key}>
-                  <QueueSection
-                    key={`fu-${String(key)}-${limit}`}
-                    title={title}
-                    totalCount={group.count}
-                    shownCount={group.leads.length}
-                    defaultExpanded={group.count > 0}
-                  >
-                    {group.leads.length === 0 ? (
-                      <p className="empty">No leads</p>
-                    ) : (
-                      <FollowUpQueueTable leads={group.leads} />
+                      <ActionQueueTable
+                        leads={group.leads}
+                        markFollowUp={markFollowUp}
+                      />
                     )}
                   </QueueSection>
                 </div>
@@ -645,7 +571,7 @@ export default async function QueuesPage({
           <div className="section skipped-leads-cta-section">
             <h2>Skipped Leads</h2>
             <p className="sub">
-              Skipped leads are hidden from Message Queue and Follow-up Queue.
+              Skipped leads are hidden from Today&apos;s Action Queue.
             </p>
             <Link className="import-preview-btn" href={`/skipped-leads?limit=${limit}`}>
               Open Skipped Leads

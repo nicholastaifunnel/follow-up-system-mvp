@@ -414,6 +414,23 @@ html[data-theme="dark"] .daily-activity-overview-card {
   margin-top: 0.75rem;
 }
 
+.queue-follow-up-mark-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 10rem;
+}
+
+.queue-follow-up-mark-btn {
+  white-space: normal;
+  text-align: center;
+  line-height: 1.25;
+}
+
+.queue-td-action {
+  vertical-align: top;
+}
+
 .daily-activity-list-block {
   margin: 0 0 1rem;
 }
