@@ -22,6 +22,7 @@ type Props = {
   leadId: string;
   phone: string | null;
   internationalPhone: string | null;
+  whatsappPhone: string | null;
   reviewTrialStatus: string | null;
   reviewPlanType: string | null;
   reviewTrialStartAt: string | null;
@@ -158,6 +159,7 @@ function ReviewFollowUpWorkspace({
   leadId,
   phone,
   internationalPhone,
+  whatsappPhone,
   item,
   initialDraft,
   initialSentAt,
@@ -165,6 +167,7 @@ function ReviewFollowUpWorkspace({
   leadId: string;
   phone: string | null;
   internationalPhone: string | null;
+  whatsappPhone: string | null;
   item: ReviewFollowUpItem;
   initialDraft: string | null;
   initialSentAt: string | null;
@@ -311,6 +314,7 @@ function ReviewFollowUpWorkspace({
           <OpenWhatsAppButton
             phone={phone}
             internationalPhone={internationalPhone}
+            whatsappPhone={whatsappPhone}
             preparedMessage={savedDraftForWhatsApp || null}
             label="Open WhatsApp"
           />
@@ -373,6 +377,7 @@ export function ReviewFollowUpTracking(props: Props) {
               leadId={props.leadId}
               phone={props.phone}
               internationalPhone={props.internationalPhone}
+              whatsappPhone={props.whatsappPhone}
               item={dueItem}
               initialDraft={props[DRAFT_PROP_BY_KEY[dueItem.actionKey]]}
               initialSentAt={props[SENT_PROP_BY_KEY[dueItem.actionKey]]}

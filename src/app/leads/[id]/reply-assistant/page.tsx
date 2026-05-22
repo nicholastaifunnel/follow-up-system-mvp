@@ -31,6 +31,7 @@ export default async function ReplyAssistantPage({
       businessName: true,
       phone: true,
       internationalPhone: true,
+      whatsappPhone: true,
       area: true,
       assignedIndustry: true,
       leadLevel: true,
@@ -93,6 +94,7 @@ export default async function ReplyAssistantPage({
         businessName={lead.businessName}
         phone={lead.phone}
         internationalPhone={lead.internationalPhone}
+        whatsappPhone={lead.whatsappPhone}
         area={lead.area}
         assignedIndustry={lead.assignedIndustry}
         leadLevel={lead.leadLevel}

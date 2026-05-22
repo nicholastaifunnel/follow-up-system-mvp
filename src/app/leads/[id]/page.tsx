@@ -6,6 +6,7 @@ import { PlanUsageHistory } from "./PlanUsageHistory";
 import { ReviewTrialForm } from "./ReviewTrialForm";
 import { RestoreLeadButton } from "./RestoreLeadButton";
 import { SkipLeadPanel } from "./SkipLeadPanel";
+import { WhatsAppPhoneForm } from "./WhatsAppPhoneForm";
 import { prisma } from "@/lib/prisma";
 import { skipReasonLabel } from "@/skipLeadReasons";
 import {
@@ -163,6 +164,7 @@ export default async function LeadDetailPage({
       leadTemperature: true,
       phone: true,
       internationalPhone: true,
+      whatsappPhone: true,
       website: true,
       socialPlatform: true,
       socialLink: true,
@@ -347,6 +349,12 @@ export default async function LeadDetailPage({
         <div className="kv-list">
           <Row label="Phone">{fmtText(lead.phone)}</Row>
           <Row label="International Phone">{fmtText(lead.internationalPhone)}</Row>
+          <Row label="WhatsApp Phone">
+            <WhatsAppPhoneForm
+              leadId={id}
+              initialWhatsAppPhone={lead.whatsappPhone}
+            />
+          </Row>
           <Row label="Website">
             {lead.website ? (
               <a href={lead.website} target="_blank" rel="noopener noreferrer">
@@ -404,6 +412,7 @@ export default async function LeadDetailPage({
             initialPreparedMessage={lead.preparedMessage}
             phone={lead.phone}
             internationalPhone={lead.internationalPhone}
+            whatsappPhone={lead.whatsappPhone}
             canPrepare={canPrepare}
             prepareReason={prepareReasonHint}
             canMarkSent={canMarkSent}
@@ -497,6 +506,7 @@ export default async function LeadDetailPage({
           }
           phone={lead.phone}
           internationalPhone={lead.internationalPhone}
+          whatsappPhone={lead.whatsappPhone}
           checkInDraft={lead.reviewTrialCheckInDraft}
           renewalDraft={lead.reviewRenewalReminderDraft}
           expiredReminder1Draft={lead.reviewExpiredReminder1Draft}

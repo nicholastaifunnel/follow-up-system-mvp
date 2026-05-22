@@ -5,6 +5,7 @@ import { digitsForWaMe } from "@/lib/digitsForWaMe";
 type Props = {
   phone: string | null;
   internationalPhone: string | null;
+  whatsappPhone?: string | null;
   preparedMessage: string | null;
   label?: string;
 };
@@ -12,11 +13,12 @@ type Props = {
 export function OpenWhatsAppButton({
   phone,
   internationalPhone,
+  whatsappPhone,
   preparedMessage,
   label = "Open WhatsApp with draft",
 }: Props) {
   const prepared = (preparedMessage ?? "").trim();
-  const digits = digitsForWaMe(phone, internationalPhone);
+  const digits = digitsForWaMe(phone, internationalPhone, whatsappPhone);
 
   if (!prepared) {
     return (

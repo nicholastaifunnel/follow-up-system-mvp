@@ -79,6 +79,45 @@ export type UpdatePreparedMessageDraftActionResult =
   | { ok: true }
   | { ok: false; error: string };
 
+export type UpdateWhatsAppPhoneActionResult =
+  | { ok: true; whatsappPhone: string | null }
+  | { ok: false; error: string };
+
+export async function updateWhatsAppPhoneAction(
+  leadId: string,
+  whatsappPhone: string,
+): Promise<UpdateWhatsAppPhoneActionResult> {
+  const trimmed = whatsappPhone.trim();
+  const normalized = trimmed === "" ? null : trimmed;
+
+  const lead = await prisma.lead.findUnique({
+    where: { id: leadId },
+    select: { id: true },
+  });
+
+  if (!lead) {
+    return { ok: false, error: `Lead not found: ${leadId}` };
+  }
+
+  try {
+    const updated = await prisma.lead.update({
+      where: { id: leadId },
+      data: { whatsappPhone: normalized },
+      select: { whatsappPhone: true },
+    });
+    revalidatePath(`/leads/${leadId}`);
+    revalidatePath(`/leads/${leadId}/reply-assistant`);
+    revalidatePath("/queues");
+    return { ok: true, whatsappPhone: updated.whatsappPhone };
+  } catch (e) {
+    const message =
+      e instanceof Error
+        ? e.message
+        : "Failed to save WhatsApp phone. Please try again.";
+    return { ok: false, error: message };
+  }
+}
+
 export async function updatePreparedMessageDraftAction(
   leadId: string,
   body: string,

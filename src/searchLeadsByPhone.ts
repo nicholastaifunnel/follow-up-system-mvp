@@ -13,6 +13,7 @@ export type PhoneSearchLeadRow = {
   businessName: string;
   phone: string | null;
   internationalPhone: string | null;
+  whatsappPhone: string | null;
   area: string | null;
   assignedIndustry: string | null;
   leadLevel: string | null;
@@ -59,6 +60,7 @@ export async function searchLeadsByPhone(
       businessName: true,
       phone: true,
       internationalPhone: true,
+      whatsappPhone: true,
       whatsappPhoneId: true,
       area: true,
       assignedIndustry: true,
@@ -89,6 +91,7 @@ export async function searchLeadsByPhone(
       const candidates = [
         row.phone,
         row.internationalPhone,
+        row.whatsappPhone,
         row.whatsappPhoneId,
       ].map((value) => normalizePhoneDigits(value ?? ""));
 

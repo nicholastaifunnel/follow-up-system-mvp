@@ -34,6 +34,7 @@ type Props = {
   businessName: string;
   phone: string | null;
   internationalPhone: string | null;
+  whatsappPhone: string | null;
   area: string | null;
   assignedIndustry: string | null;
   leadLevel: string | null;
@@ -54,6 +55,7 @@ export function ReplyAssistantClient(props: Props) {
     businessName,
     phone,
     internationalPhone,
+    whatsappPhone,
     area,
     assignedIndustry,
     leadLevel,
@@ -104,8 +106,8 @@ export function ReplyAssistantClient(props: Props) {
   );
 
   const waHref = useMemo(
-    () => buildWhatsAppMeUrl(phone, internationalPhone, sopReply),
-    [phone, internationalPhone, sopReply],
+    () => buildWhatsAppMeUrl(phone, internationalPhone, sopReply, whatsappPhone),
+    [phone, internationalPhone, whatsappPhone, sopReply],
   );
 
   const showFollowUpField = needsFollowUpDate(replyTypeId);
@@ -175,6 +177,10 @@ export function ReplyAssistantClient(props: Props) {
           <div className="kv-row">
             <span className="kv-label">International phone</span>
             <span className="kv-value">{fmt(internationalPhone)}</span>
+          </div>
+          <div className="kv-row">
+            <span className="kv-label">WhatsApp phone</span>
+            <span className="kv-value">{fmt(whatsappPhone)}</span>
           </div>
           <div className="kv-row">
             <span className="kv-label">Area</span>

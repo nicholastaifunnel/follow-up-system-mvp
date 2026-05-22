@@ -354,6 +354,12 @@ html[data-theme="dark"] select:focus-visible {
   color: var(--muted-2);
 }
 
+.phone-search-whatsapp {
+  font-size: 0.75rem;
+  color: var(--success);
+  font-weight: 700;
+}
+
 .queue-limit-bar {
   display: flex;
   flex-wrap: wrap;

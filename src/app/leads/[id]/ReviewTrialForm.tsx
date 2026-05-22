@@ -38,6 +38,7 @@ type Props = {
   notes: string | null;
   phone: string | null;
   internationalPhone: string | null;
+  whatsappPhone: string | null;
   checkInDraft: string | null;
   renewalDraft: string | null;
   expiredReminder1Draft: string | null;
@@ -79,6 +80,7 @@ export function ReviewTrialForm({
   notes,
   phone,
   internationalPhone,
+  whatsappPhone,
   checkInDraft,
   renewalDraft,
   expiredReminder1Draft,
@@ -416,6 +418,7 @@ export function ReviewTrialForm({
         leadId={leadId}
         phone={phone}
         internationalPhone={internationalPhone}
+        whatsappPhone={whatsappPhone}
         reviewTrialStatus={reviewTrialStatus}
         reviewPlanType={reviewPlanType || planType}
         reviewTrialStartAt={trialStartDate || null}

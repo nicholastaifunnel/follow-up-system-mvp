@@ -126,12 +126,20 @@ function QueueReviewsCell({
 function PhoneLines({
   phone,
   internationalPhone,
+  whatsappPhone,
 }: {
   phone: string | null;
   internationalPhone: string | null;
+  whatsappPhone?: string | null;
 }) {
   return (
     <>
+      {whatsappPhone ? (
+        <>
+          <span className="phone-search-whatsapp">WhatsApp: {fmtText(whatsappPhone)}</span>
+          <br />
+        </>
+      ) : null}
       {fmtText(phone)}
       {internationalPhone ? (
         <>
@@ -186,7 +194,10 @@ function MessageQueueTable({ leads }: { leads: MessageQueueLeadRow[] }) {
             <tr key={row.id}>
               <td className="queue-td-clip">{fmtText(row.businessName)}</td>
               <td className="queue-td-phone">
-                <PhoneLines phone={row.phone} internationalPhone={row.internationalPhone} />
+                <PhoneLines
+                  phone={row.phone}
+                  internationalPhone={row.internationalPhone}
+                />
               </td>
               <td>{fmtText(row.area)}</td>
               <td>
@@ -250,7 +261,11 @@ function PhoneSearchResultsTable({ leads }: { leads: PhoneSearchLeadRow[] }) {
             <tr key={row.id}>
               <td className="queue-td-clip">{fmtText(row.businessName)}</td>
               <td className="queue-td-phone">
-                <PhoneLines phone={row.phone} internationalPhone={row.internationalPhone} />
+                <PhoneLines
+                  phone={row.phone}
+                  internationalPhone={row.internationalPhone}
+                  whatsappPhone={row.whatsappPhone}
+                />
               </td>
               <td>{fmtText(row.area)}</td>
               <td>

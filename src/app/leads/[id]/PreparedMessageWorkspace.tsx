@@ -13,6 +13,7 @@ type Props = {
   initialPreparedMessage: string | null;
   phone: string | null;
   internationalPhone: string | null;
+  whatsappPhone: string | null;
   canPrepare: boolean;
   prepareReason: string;
   canMarkSent: boolean;
@@ -56,6 +57,7 @@ export function PreparedMessageWorkspace({
   initialPreparedMessage,
   phone,
   internationalPhone,
+  whatsappPhone,
   canPrepare,
   prepareReason,
   canMarkSent,
@@ -114,6 +116,7 @@ export function PreparedMessageWorkspace({
           <OpenWhatsAppButton
             phone={phone}
             internationalPhone={internationalPhone}
+            whatsappPhone={whatsappPhone}
             preparedMessage={draft}
           />
           <MarkAsSentButton
