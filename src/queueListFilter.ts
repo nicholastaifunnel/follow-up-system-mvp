@@ -39,7 +39,7 @@ export function parseReviewMaxParam(
   if (v === undefined || v === "") return undefined;
   const n = Number.parseInt(String(v), 10);
   if (!Number.isFinite(n)) return undefined;
-  if (n === 50 || n === 100) return n;
+  if (n === 50 || n === 100 || n === 200) return n;
   return undefined;
 }
 

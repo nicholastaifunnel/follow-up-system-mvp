@@ -12,7 +12,7 @@ const ANGLE_OPTIONS: { value: QueueAngleParam; label: string }[] = [
   { value: "no-phone", label: "No Phone" },
 ];
 
-const REVIEW_MAX_OPTIONS = [50, 100] as const;
+const REVIEW_MAX_OPTIONS = [50, 100, 200] as const;
 
 type Props = {
   limit: 10 | 20 | 50;
