@@ -22,8 +22,7 @@ export function DailyActivitySection({ activity, preserve }: Props) {
       <div className="daily-activity-card">
         <h2 className="daily-activity-heading">Daily Activity</h2>
         <p className="sub daily-activity-note">
-          Track leads by first message sent date. Replies are counted back to the
-          original sent date.
+          Track leads by first message sent date.
         </p>
 
         <form
@@ -53,24 +52,27 @@ export function DailyActivitySection({ activity, preserve }: Props) {
           </button>
         </form>
 
-        <div className="daily-activity-stats">
-          <div className="daily-activity-stat">
-            <span className="daily-activity-stat-label">Messages Sent</span>
-            <span className="daily-activity-stat-value">{activity.sentCount}</span>
-          </div>
-          <div className="daily-activity-stat">
-            <span className="daily-activity-stat-label">Replied From This Sent Group</span>
-            <span className="daily-activity-stat-value">{activity.repliedCount}</span>
-          </div>
-          <div className="daily-activity-stat">
-            <span className="daily-activity-stat-label">Reply Rate</span>
-            <span className="daily-activity-stat-value">{activity.replyRate}</span>
-          </div>
+        <div
+          className="daily-activity-overview-grid"
+          role="group"
+          aria-label="Daily activity summary"
+        >
+          <article className="daily-activity-overview-card daily-activity-overview-card--sent">
+            <span className="daily-activity-overview-label">Sent</span>
+            <span className="daily-activity-overview-count">{activity.sentCount}</span>
+          </article>
+          <article className="daily-activity-overview-card daily-activity-overview-card--replies">
+            <span className="daily-activity-overview-label">Replies</span>
+            <span className="daily-activity-overview-count">{activity.repliedCount}</span>
+          </article>
+          <article className="daily-activity-overview-card daily-activity-overview-card--rate">
+            <span className="daily-activity-overview-label">Rate</span>
+            <span className="daily-activity-overview-count">{activity.replyRate}</span>
+          </article>
         </div>
 
         <p className="sub daily-activity-cohort-note">
-          Replies are counted under the date the first message was sent, even if the
-          customer replied later.
+          Replies are counted under the original sent date.
         </p>
 
         <DailyActivityDetails
