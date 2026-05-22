@@ -11,6 +11,7 @@ type Props = {
   currentPhone?: string;
   currentAngle: string;
   reviewMax?: number;
+  activityDate?: string;
 };
 
 function limitHref(
@@ -18,12 +19,14 @@ function limitHref(
   phone: string | undefined,
   angle: string,
   reviewMax: number | undefined,
+  activityDate: string | undefined,
 ): string {
   return queuesPath({
     limit,
     ...(phone?.trim() ? { phone: phone.trim() } : {}),
     angle,
     ...(reviewMax !== undefined ? { reviewMax } : {}),
+    ...(activityDate ? { activityDate } : {}),
   });
 }
 
@@ -32,6 +35,7 @@ export function QueueLimitSelector({
   currentPhone,
   currentAngle,
   reviewMax,
+  activityDate,
 }: Props) {
   return (
     <div className="queue-limit-bar" role="navigation" aria-label="Rows per section">
@@ -39,7 +43,7 @@ export function QueueLimitSelector({
       {OPTIONS.map((n) => (
         <Link
           key={n}
-          href={limitHref(n, currentPhone, currentAngle, reviewMax)}
+          href={limitHref(n, currentPhone, currentAngle, reviewMax, activityDate)}
           className={
             currentLimit === n ? "queue-limit-pill queue-limit-pill-active" : "queue-limit-pill"
           }

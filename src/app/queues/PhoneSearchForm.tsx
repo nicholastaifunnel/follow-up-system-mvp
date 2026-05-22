@@ -8,6 +8,7 @@ type Props = {
   initialPhone: string;
   currentAngle: string;
   reviewMax?: number;
+  activityDate?: string;
 };
 
 export function PhoneSearchForm({
@@ -15,11 +16,13 @@ export function PhoneSearchForm({
   initialPhone,
   currentAngle,
   reviewMax,
+  activityDate,
 }: Props) {
   const clearHref = queuesPath({
     limit: currentLimit,
     angle: currentAngle,
     ...(reviewMax !== undefined ? { reviewMax } : {}),
+    ...(activityDate ? { activityDate } : {}),
   });
   const hasPhoneQuery = initialPhone.trim().length > 0;
 
@@ -41,6 +44,9 @@ export function PhoneSearchForm({
         <input type="hidden" name="angle" value={currentAngle} />
         {reviewMax !== undefined ? (
           <input type="hidden" name="reviewMax" value={String(reviewMax)} />
+        ) : null}
+        {activityDate ? (
+          <input type="hidden" name="activityDate" value={activityDate} />
         ) : null}
         <input
           type="search"

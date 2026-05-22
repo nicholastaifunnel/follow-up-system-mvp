@@ -19,13 +19,15 @@ type Props = {
   phone: string;
   angle: QueueAngleParam;
   reviewMax?: number;
+  activityDate?: string;
 };
 
-export function QueuesFilterBar({ limit, phone, angle, reviewMax }: Props) {
+export function QueuesFilterBar({ limit, phone, angle, reviewMax, activityDate }: Props) {
   const phoneTrim = phone.trim();
   const base = {
     limit,
     ...(phoneTrim ? { phone: phoneTrim } : {}),
+    ...(activityDate ? { activityDate } : {}),
   };
 
   return (

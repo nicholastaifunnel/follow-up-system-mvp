@@ -78,3 +78,52 @@ export function formatDateOnlyMYT(value: Date | null | undefined): string {
     year: "numeric",
   }).format(value);
 }
+
+/** Today’s calendar date in Malaysia (YYYY-MM-DD). */
+export function getMalaysiaTodayIsoDate(): string {
+  const { year, month, day } = getMalaysiaDateParts(new Date());
+  return `${year}-${pad2(month)}-${pad2(day)}`;
+}
+
+const ISO_DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+function isValidIsoCalendarDate(iso: string): boolean {
+  const m = ISO_DATE_RE.exec(iso);
+  if (!m) return false;
+  const year = Number(m[1]);
+  const month = Number(m[2]);
+  const day = Number(m[3]);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return false;
+  const probe = new Date(
+    `${year}-${pad2(month)}-${pad2(day)}T12:00:00+08:00`,
+  );
+  const parts = getMalaysiaDateParts(probe);
+  return parts.year === year && parts.month === month && parts.day === day;
+}
+
+/** Parse `activityDate=YYYY-MM-DD`; invalid/missing → today MYT. */
+export function parseActivityDateParam(
+  raw: string | string[] | undefined,
+): string {
+  const v = Array.isArray(raw) ? raw[0] : raw;
+  if (v === undefined || v === "") return getMalaysiaTodayIsoDate();
+  const trimmed = String(v).trim();
+  if (!isValidIsoCalendarDate(trimmed)) return getMalaysiaTodayIsoDate();
+  return trimmed;
+}
+
+/** MYT calendar day as UTC instants: [00:00:00, next day 00:00:00). */
+export function mytCalendarDayUtcRange(isoDate: string): {
+  start: Date;
+  endExclusive: Date;
+} {
+  const date = isValidIsoCalendarDate(isoDate)
+    ? isoDate
+    : getMalaysiaTodayIsoDate();
+  const m = ISO_DATE_RE.exec(date)!;
+  const start = new Date(
+    `${m[1]}-${m[2]}-${m[3]}T00:00:00+08:00`,
+  );
+  const endExclusive = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+  return { start, endExclusive };
+}

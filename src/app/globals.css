@@ -269,6 +269,99 @@ html[data-theme="dark"] select:focus-visible {
   color: var(--muted-2);
 }
 
+.daily-activity-section {
+  margin: 0 0 1.25rem;
+}
+
+.daily-activity-card {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  background: var(--card-muted);
+}
+
+.daily-activity-heading {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-heading);
+}
+
+.daily-activity-note {
+  margin: 0 0 0.75rem;
+}
+
+.daily-activity-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+}
+
+.daily-activity-date-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--muted-5);
+}
+
+.daily-activity-date-input {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border-input);
+  border-radius: 4px;
+  font: inherit;
+  font-size: 0.875rem;
+  background: var(--card);
+  color: inherit;
+}
+
+.daily-activity-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2rem;
+  margin: 0 0 0.75rem;
+}
+
+.daily-activity-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.daily-activity-stat-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--muted-4);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.daily-activity-stat-value {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--text-heading);
+}
+
+.daily-activity-fallback-note {
+  margin: 0 0 0.75rem;
+  font-size: 0.75rem;
+}
+
+.daily-activity-list-block {
+  margin: 0 0 1rem;
+}
+
+.daily-activity-list-block:last-child {
+  margin-bottom: 0;
+}
+
+.daily-activity-list-heading {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-heading);
+}
+
 .queues-toolbar {
   display: flex;
   flex-wrap: wrap;

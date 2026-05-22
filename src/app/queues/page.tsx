@@ -26,6 +26,9 @@ import {
   searchLeadsByPhone,
   type PhoneSearchLeadRow,
 } from "@/searchLeadsByPhone";
+import { getDailyActivity } from "@/getDailyActivity";
+import { parseActivityDateParam } from "@/formatMalaysiaTime";
+import { DailyActivitySection } from "./DailyActivitySection";
 import { PhoneSearchForm } from "./PhoneSearchForm";
 import { QueueLimitSelector } from "./QueueLimitSelector";
 import { QueueSection } from "./QueueSection";
@@ -430,10 +433,12 @@ export default async function QueuesPage({
     phone?: string | string[];
     angle?: string | string[];
     reviewMax?: string | string[];
+    activityDate?: string | string[];
   }>;
 }) {
   const sp = await searchParams;
   const limit = resolveQueueDisplayLimit(sp.limit);
+  const activityDate = parseActivityDateParam(sp.activityDate);
   const phoneQuery = resolvePhoneQuery(sp.phone);
   const phoneDigits = normalizePhoneDigits(phoneQuery);
   const hasPhoneQuery = phoneQuery.length > 0;
@@ -456,23 +461,30 @@ export default async function QueuesPage({
     ? searchLeadsByPhone(prisma, phoneQuery, { limit })
     : Promise.resolve([] as PhoneSearchLeadRow[]);
 
+  const dailyActivityPromise = getDailyActivity(prisma, activityDate);
+
+  let dailyActivity: Awaited<ReturnType<typeof getDailyActivity>>;
+
   if (isFilteredMode) {
-    [filteredLeads, phoneSearchRows] = await Promise.all([
+    [filteredLeads, phoneSearchRows, dailyActivity] = await Promise.all([
       getFilteredMessageLeads(prisma, {
         limit,
         listExtraWhere,
       }),
       phoneSearchPromise,
+      dailyActivityPromise,
     ]);
   } else {
-    const [mq, fq, ps] = await Promise.all([
+    const [mq, fq, ps, da] = await Promise.all([
       getMessageQueue(prisma, { limit, listExtraWhere }),
       getFollowUpQueue(prisma, { limit }),
       phoneSearchPromise,
+      dailyActivityPromise,
     ]);
     messageQueue = mq;
     followUpQueue = fq;
     phoneSearchRows = ps;
+    dailyActivity = da;
   }
 
   return (
@@ -505,18 +517,25 @@ export default async function QueuesPage({
           : "Work list: filters only apply to Message Queue. Follow-up Queue always shows all follow-up leads. Phone lookup searches all leads independently. Read-only — no writes."}
       </p>
 
+      <DailyActivitySection
+        activity={dailyActivity}
+        preserve={{ limit, phone: phoneQuery, angle, reviewMax, activityDate }}
+      />
+
       <div className="queues-toolbar">
         <PhoneSearchForm
           currentLimit={limit}
           initialPhone={phoneQuery}
           currentAngle={angle}
           reviewMax={reviewMax}
+          activityDate={activityDate}
         />
         <QueueLimitSelector
           currentLimit={limit}
           currentPhone={phoneQuery}
           currentAngle={angle}
           reviewMax={reviewMax}
+          activityDate={activityDate}
         />
       </div>
 
@@ -551,6 +570,7 @@ export default async function QueuesPage({
             phone={phoneQuery}
             angle={angle}
             reviewMax={reviewMax}
+            activityDate={activityDate}
           />
           <h2>Filtered Message Leads</h2>
           <p className="sub">
@@ -573,6 +593,7 @@ export default async function QueuesPage({
               phone={phoneQuery}
               angle={angle}
               reviewMax={reviewMax}
+              activityDate={activityDate}
             />
             <h2>Message Queue</h2>
             {MESSAGE_SECTIONS.map(({ key, title }) => {
