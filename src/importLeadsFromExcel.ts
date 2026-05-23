@@ -10,6 +10,10 @@ import {
   parseExcelBufferForImport,
   parseExcelForImport,
 } from "./excelImportPreview";
+import {
+  LEAD_REVIEW_NEEDS_REVIEW,
+  isLeadReviewStatus,
+} from "./leadReviewStatus";
 
 export type ImportLeadsResult = {
   campaignId: string;
@@ -207,7 +211,7 @@ function buildInsertData(
     suggestedIndustry: p.suggestedIndustry,
     assignedIndustry: p.suggestedIndustry,
     leadLevel: p.leadLevel,
-    outreachReadiness: p.outreachReadiness,
+    outreachReadiness: LEAD_REVIEW_NEEDS_REVIEW,
     priority: pickPriority(p),
     messageStatus: "Not Prepared",
     replyStatus: null,
@@ -237,9 +241,13 @@ function buildUpdateData(
     lastImportedAt: now,
     rawRowJson: row.rawRowJson,
     leadLevel: p.leadLevel,
-    outreachReadiness: p.outreachReadiness,
     priority: pickPriority(p),
   };
+
+  const existingReviewStatus = (existing.outreachReadiness ?? "").trim();
+  if (!isLeadReviewStatus(existingReviewStatus)) {
+    data.outreachReadiness = p.outreachReadiness;
+  }
 
   if (!existing.campaignId) {
     data.campaign = { connect: { id: campaignId } };
@@ -458,8 +466,8 @@ async function importLeadsFromParsedWorkbook(
 
         bumpIndustry(industryCounts, p.suggestedIndustry);
         leadLevelCounts[p.leadLevel] = (leadLevelCounts[p.leadLevel] ?? 0) + 1;
-        outreachReadinessCounts[p.outreachReadiness] =
-          (outreachReadinessCounts[p.outreachReadiness] ?? 0) + 1;
+        outreachReadinessCounts[LEAD_REVIEW_NEEDS_REVIEW] =
+          (outreachReadinessCounts[LEAD_REVIEW_NEEDS_REVIEW] ?? 0) + 1;
 
         try {
           const existing = await findExistingLead(tx, p);

@@ -5,8 +5,7 @@ import {
   MESSAGE_STATUS_NOT_PREPARED,
   MESSAGE_STATUS_PREPARED,
 } from "./statusConstants";
-
-const OUTREACH_READY = "Ready";
+import { LEAD_REVIEW_APPROVED } from "./leadReviewStatus";
 
 export type FilteredMessageLeadRow = {
   id: string;
@@ -41,9 +40,12 @@ function coldOutreachFilteredWhere(): Prisma.LeadWhereInput {
         OR: [
           {
             messageStatus: MESSAGE_STATUS_NOT_PREPARED,
-            outreachReadiness: OUTREACH_READY,
+            outreachReadiness: LEAD_REVIEW_APPROVED,
           },
-          { messageStatus: MESSAGE_STATUS_PREPARED },
+          {
+            messageStatus: MESSAGE_STATUS_PREPARED,
+            outreachReadiness: LEAD_REVIEW_APPROVED,
+          },
         ],
       },
       // Allow-list: SQLite/Prisma `NOT: { replyStatus: "…" }` wrongly drops null rows.

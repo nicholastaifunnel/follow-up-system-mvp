@@ -3137,3 +3137,103 @@ html[data-theme="dark"] .review-row-limit-btn--active {
   font-size: 0.82rem;
   color: var(--muted);
 }
+
+.lead-review-card {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.lead-review-form {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.lead-review-status-line,
+.lead-review-save-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.lead-review-status-label {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.lead-review-status-pill {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.18rem 0.6rem;
+  background: var(--card-muted);
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.lead-review-status-pill--approved {
+  border-color: var(--success-border);
+  background: var(--success-soft-bg);
+}
+
+.lead-review-status-pill--more-info {
+  border-color: color-mix(in srgb, var(--warning-text) 42%, var(--border));
+  background: color-mix(in srgb, var(--warning-text) 12%, var(--card-muted));
+}
+
+.lead-review-status-pill--rejected {
+  border-color: var(--danger-border);
+  background: var(--danger-bg);
+}
+
+.lead-review-actions,
+.lead-review-checklist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.lead-review-action-btn {
+  min-height: 2.2rem;
+}
+
+.lead-review-action-btn--approve {
+  border-color: var(--success-border);
+  background: var(--success-soft-bg);
+}
+
+.lead-review-checklist {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.lead-review-checklist span {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  background: var(--card-muted);
+}
+
+.lead-review-notes-label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.lead-review-notes {
+  min-height: 5.5rem;
+}
+
+.lead-review-save-btn {
+  min-height: 2.2rem;
+}
+
+.lead-review-inbox-section {
+  border-color: color-mix(in srgb, var(--border) 75%, var(--success-border));
+}
+
+.lead-review-inbox-table td {
+  vertical-align: top;
+}

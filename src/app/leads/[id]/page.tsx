@@ -4,6 +4,7 @@ import { PreparedMessageWorkspace } from "./PreparedMessageWorkspace";
 import { ReplyOutcomeForm } from "./ReplyOutcomeForm";
 import { PlanUsageHistory } from "./PlanUsageHistory";
 import { ReviewTrialForm } from "./ReviewTrialForm";
+import { LeadReviewForm } from "./LeadReviewForm";
 import { RestoreLeadButton } from "./RestoreLeadButton";
 import { SkipLeadPanel } from "./SkipLeadPanel";
 import { WhatsAppPhoneForm } from "./WhatsAppPhoneForm";
@@ -24,6 +25,7 @@ import {
   computeMessageWorkspaceState,
   scheduledFollowUpNote,
 } from "./messageWorkspaceState";
+import { canEnterFirstOutreach } from "@/leadReviewStatus";
 
 const MARK_SENT_HINT =
   "Mark sent is available after a message is prepared.";
@@ -121,6 +123,7 @@ export default async function LeadDetailPage({
       leadLevel: true,
       outreachReadiness: true,
       leadTemperature: true,
+      manualNotes: true,
       phone: true,
       internationalPhone: true,
       whatsappPhone: true,
@@ -247,6 +250,17 @@ export default async function LeadDetailPage({
     nextFollowUpAt: lead.nextFollowUpAt,
     preparedTrimLength: prepared.length,
   });
+  const firstOutreachNeedsApproval =
+    workspace.mode === "first-message" &&
+    !canEnterFirstOutreach(lead.outreachReadiness);
+  const messageWorkspaceState = firstOutreachNeedsApproval
+    ? {
+        ...workspace,
+        statusNote: "Approve this lead before preparing outreach.",
+        canPrepare: false,
+        canMarkSent: false,
+      }
+    : workspace;
 
   const scheduledNote =
     workspace.mode === "first-follow-up-scheduled"
@@ -305,6 +319,21 @@ export default async function LeadDetailPage({
           </div>
         </section>
       )}
+
+      {!isReviewCustomer ? (
+        <section className="detail-card lead-review-card">
+          <h2>Lead Review</h2>
+          <p className="sub">
+            Check this lead before sending WhatsApp. Only approved leads appear
+            in Today&apos;s Action Queue.
+          </p>
+          <LeadReviewForm
+            leadId={id}
+            currentStatus={lead.outreachReadiness}
+            initialNotes={lead.manualNotes}
+          />
+        </section>
+      ) : null}
 
       <section className="detail-card">
         <h2>Contact</h2>
@@ -375,14 +404,14 @@ export default async function LeadDetailPage({
             phone={lead.phone}
             internationalPhone={lead.internationalPhone}
             whatsappPhone={lead.whatsappPhone}
-            workspaceMode={workspace.mode}
-            statusNote={workspace.statusNote}
-            canPrepare={workspace.canPrepare}
-            prepareLabel={workspace.prepareLabel}
-            messageStage={workspace.messageStage}
-            canMarkSent={workspace.canMarkSent}
+            workspaceMode={messageWorkspaceState.mode}
+            statusNote={messageWorkspaceState.statusNote}
+            canPrepare={messageWorkspaceState.canPrepare}
+            prepareLabel={messageWorkspaceState.prepareLabel}
+            messageStage={messageWorkspaceState.messageStage}
+            canMarkSent={messageWorkspaceState.canMarkSent}
             markSentReason={MARK_SENT_HINT}
-            markFollowUpWhich={workspace.markFollowUpWhich}
+            markFollowUpWhich={messageWorkspaceState.markFollowUpWhich}
             scheduledNote={scheduledNote}
           />
         </section>

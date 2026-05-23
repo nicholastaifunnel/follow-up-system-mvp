@@ -5,8 +5,7 @@ import {
   MESSAGE_STATUS_NOT_PREPARED,
   MESSAGE_STATUS_PREPARED,
 } from "./statusConstants";
-
-const OUTREACH_READY = "Ready";
+import { LEAD_REVIEW_APPROVED } from "./leadReviewStatus";
 
 export type TodayActionLeadRow = {
   id: string;
@@ -160,7 +159,7 @@ export async function getTodayActionQueue(
       {
         ...archivedFalse,
         messageStatus: MESSAGE_STATUS_NOT_PREPARED,
-        outreachReadiness: OUTREACH_READY,
+        outreachReadiness: LEAD_REVIEW_APPROVED,
       },
       limit,
       extra,
@@ -170,6 +169,7 @@ export async function getTodayActionQueue(
       {
         ...archivedFalse,
         messageStatus: MESSAGE_STATUS_PREPARED,
+        outreachReadiness: LEAD_REVIEW_APPROVED,
       },
       limit,
       extra,

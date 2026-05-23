@@ -6,8 +6,7 @@ import {
   MESSAGE_STATUS_PREPARED,
   REPLY_STATUS_WAITING,
 } from "./statusConstants";
-
-const OUTREACH_READY = "Ready";
+import { LEAD_REVIEW_APPROVED } from "./leadReviewStatus";
 
 export type MessageQueueLeadRow = {
   id: string;
@@ -150,7 +149,7 @@ export async function getMessageQueue(
       {
         ...archivedFalse,
         messageStatus: MESSAGE_STATUS_NOT_PREPARED,
-        outreachReadiness: OUTREACH_READY,
+        outreachReadiness: LEAD_REVIEW_APPROVED,
       },
       limit,
       extra,
@@ -160,6 +159,7 @@ export async function getMessageQueue(
       {
         ...archivedFalse,
         messageStatus: MESSAGE_STATUS_PREPARED,
+        outreachReadiness: LEAD_REVIEW_APPROVED,
       },
       limit,
       extra,

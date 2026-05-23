@@ -21,6 +21,12 @@ import {
   searchLeadsByPhone,
   type PhoneSearchLeadRow,
 } from "@/searchLeadsByPhone";
+import {
+  getLeadReviewInbox,
+  type LeadReviewInboxRow,
+  type LeadReviewInboxResult,
+} from "@/getLeadReviewInbox";
+import { leadReviewStatusLabel } from "@/leadReviewStatus";
 import { getDailyActivity } from "@/getDailyActivity";
 import { parseActivityDateParam } from "@/formatMalaysiaTime";
 import { DailyActivitySection } from "./DailyActivitySection";
@@ -310,6 +316,121 @@ function PhoneSearchResultsTable({ leads }: { leads: PhoneSearchLeadRow[] }) {
   );
 }
 
+function LeadReviewInboxTable({ leads }: { leads: LeadReviewInboxRow[] }) {
+  return (
+    <div className="table-wrap queue-work-table-wrap">
+      <table className="queue queue-work-table lead-review-inbox-table">
+        <thead>
+          <tr>
+            <th>Business</th>
+            <th>Phone</th>
+            <th>Area / Source</th>
+            <th>Reviews</th>
+            <th>Review status</th>
+            <th>Notes</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {leads.map((row) => (
+            <tr key={row.id}>
+              <td className="queue-td-clip">{fmtText(row.businessName)}</td>
+              <td className="queue-td-phone">
+                <PhoneLines
+                  phone={row.phone}
+                  internationalPhone={row.internationalPhone}
+                  whatsappPhone={row.whatsappPhone}
+                />
+              </td>
+              <td className="queue-td-clip">
+                {fmtText(row.area)}
+                {row.sourceKeyword ? (
+                  <>
+                    <br />
+                    <span className="queue-muted">{row.sourceKeyword}</span>
+                  </>
+                ) : null}
+              </td>
+              <td>
+                <QueueReviewsCell
+                  reviewCount={row.reviewCount}
+                  googleRating={row.googleRating}
+                />
+              </td>
+              <td>{leadReviewStatusLabel(row.outreachReadiness)}</td>
+              <td className="queue-td-clip">{fmtText(row.manualNotes)}</td>
+              <td>
+                <Link href={`/leads/${row.id}`}>Review Lead</Link>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function LeadReviewInboxSection({
+  inbox,
+}: {
+  inbox: LeadReviewInboxResult;
+}) {
+  const hasVisibleLeads =
+    inbox.needsReview.count > 0 || inbox.needMoreInfo.count > 0;
+
+  return (
+    <div className="section lead-review-inbox-section">
+      <h2>Lead Review Inbox</h2>
+      <p className="sub">
+        Review imported leads before sending WhatsApp outreach.
+      </p>
+
+      {!hasVisibleLeads ? (
+        <p className="empty">No leads waiting for review.</p>
+      ) : null}
+
+      {inbox.needsReview.count > 0 ? (
+        <div className="group">
+          <QueueSection
+            title="Unreviewed / Needs Review"
+            totalCount={inbox.needsReview.count}
+            shownCount={inbox.needsReview.leads.length}
+            defaultExpanded
+          >
+            <LeadReviewInboxTable leads={inbox.needsReview.leads} />
+          </QueueSection>
+        </div>
+      ) : null}
+
+      {inbox.needMoreInfo.count > 0 ? (
+        <div className="group">
+          <QueueSection
+            title="Need More Info"
+            totalCount={inbox.needMoreInfo.count}
+            shownCount={inbox.needMoreInfo.leads.length}
+            defaultExpanded
+          >
+            <LeadReviewInboxTable leads={inbox.needMoreInfo.leads} />
+          </QueueSection>
+        </div>
+      ) : null}
+
+      {inbox.rejected.count > 0 ? (
+        <div className="group">
+          <QueueSection
+            title="Rejected / Not Suitable"
+            totalCount={inbox.rejected.count}
+            shownCount={inbox.rejected.leads.length}
+            defaultExpanded={false}
+          >
+            <LeadReviewInboxTable leads={inbox.rejected.leads} />
+          </QueueSection>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function fmtReviewShort(
   reviewCount: number | null,
   googleRating: number | null,
@@ -398,33 +519,38 @@ export default async function QueuesPage({
   let filteredLeads: FilteredMessageLeadRow[] | null = null;
   let actionQueue: TodayActionQueueResult | null = null;
   let phoneSearchRows: PhoneSearchLeadRow[] = [];
+  let leadReviewInbox: LeadReviewInboxResult;
 
   const phoneSearchPromise = phoneSearchOk
     ? searchLeadsByPhone(prisma, phoneQuery, { limit })
     : Promise.resolve([] as PhoneSearchLeadRow[]);
 
   const dailyActivityPromise = getDailyActivity(prisma, activityDate);
+  const leadReviewInboxPromise = getLeadReviewInbox(prisma, { limit });
 
   let dailyActivity: Awaited<ReturnType<typeof getDailyActivity>>;
 
   if (isFilteredMode) {
-    [filteredLeads, phoneSearchRows, dailyActivity] = await Promise.all([
+    [filteredLeads, phoneSearchRows, dailyActivity, leadReviewInbox] = await Promise.all([
       getFilteredMessageLeads(prisma, {
         limit,
         listExtraWhere,
       }),
       phoneSearchPromise,
       dailyActivityPromise,
+      leadReviewInboxPromise,
     ]);
   } else {
-    const [aq, ps, da] = await Promise.all([
+    const [aq, ps, da, lri] = await Promise.all([
       getTodayActionQueue(prisma, { limit, listExtraWhere }),
       phoneSearchPromise,
       dailyActivityPromise,
+      leadReviewInboxPromise,
     ]);
     actionQueue = aq;
     phoneSearchRows = ps;
     dailyActivity = da;
+    leadReviewInbox = lri;
   }
 
   return (
@@ -527,6 +653,8 @@ export default async function QueuesPage({
 
       {!isFilteredMode && actionQueue ? (
         <>
+          <LeadReviewInboxSection inbox={leadReviewInbox} />
+
           <div className="section message-queue-work-section">
             <QueuesFilterBar
               limit={limit}

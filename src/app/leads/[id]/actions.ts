@@ -38,6 +38,10 @@ import {
   computeReviewFollowUpReason,
   type ReviewPlanLeadFields,
 } from "../../../reviewPlanFollowUp";
+import {
+  canEnterFirstOutreach,
+  isLeadReviewStatus,
+} from "../../../leadReviewStatus";
 
 const reviewPlanLeadSelect = {
   reviewTrialStatus: true,
@@ -82,6 +86,59 @@ export type UpdatePreparedMessageDraftActionResult =
 export type UpdateWhatsAppPhoneActionResult =
   | { ok: true; whatsappPhone: string | null }
   | { ok: false; error: string };
+
+export type UpdateLeadReviewActionResult =
+  | { ok: true; outreachReadiness: string; manualNotes: string | null }
+  | { ok: false; error: string };
+
+export async function updateLeadReviewAction(input: {
+  leadId: string;
+  reviewStatus: string;
+  reviewNotes?: string | null;
+}): Promise<UpdateLeadReviewActionResult> {
+  const status = input.reviewStatus.trim();
+  if (!isLeadReviewStatus(status)) {
+    return { ok: false, error: "Invalid lead review status." };
+  }
+
+  const lead = await prisma.lead.findUnique({
+    where: { id: input.leadId },
+    select: { id: true },
+  });
+
+  if (!lead) {
+    return { ok: false, error: `Lead not found: ${input.leadId}` };
+  }
+
+  const notes = nullableTrimmed(input.reviewNotes);
+
+  try {
+    const updated = await prisma.lead.update({
+      where: { id: input.leadId },
+      data: {
+        outreachReadiness: status,
+        manualNotes: notes,
+      },
+      select: {
+        outreachReadiness: true,
+        manualNotes: true,
+      },
+    });
+    revalidatePath(`/leads/${input.leadId}`);
+    revalidatePath("/queues");
+    return {
+      ok: true,
+      outreachReadiness: updated.outreachReadiness ?? status,
+      manualNotes: updated.manualNotes,
+    };
+  } catch (e) {
+    const message =
+      e instanceof Error
+        ? e.message
+        : "Failed to save lead review. Please try again.";
+    return { ok: false, error: message };
+  }
+}
 
 export async function updateWhatsAppPhoneAction(
   leadId: string,
@@ -182,15 +239,28 @@ export async function prepareLeadMessageAction(
   leadId: string,
   messageStage?: string,
 ): Promise<PrepareLeadMessageActionResult> {
+  const requestedStage = messageStage ?? "First Message";
   const snap = await prisma.lead.findUnique({
     where: { id: leadId },
-    select: { skippedAt: true },
+    select: { skippedAt: true, outreachReadiness: true },
   });
+  if (!snap) {
+    return { ok: false, error: `Lead not found: ${leadId}` };
+  }
   if (snap?.skippedAt) {
     return {
       ok: false,
       error:
         "This lead is skipped from the Message Queue. Restore it on the Queues page before preparing.",
+    };
+  }
+  if (
+    requestedStage === "First Message" &&
+    !canEnterFirstOutreach(snap?.outreachReadiness)
+  ) {
+    return {
+      ok: false,
+      error: "Approve this lead before preparing outreach.",
     };
   }
 
