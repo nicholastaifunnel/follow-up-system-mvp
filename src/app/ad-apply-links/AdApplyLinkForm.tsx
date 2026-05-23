@@ -24,68 +24,102 @@ export function AdApplyLinkForm({ link, onSaved }: Props) {
       }}
     >
       {link ? <input type="hidden" name="id" value={link.id} /> : null}
-      <div className="ad-form-grid">
-        <label>
-          Name *
-          <input name="name" required defaultValue={link?.name ?? ""} />
-        </label>
-        <label>
-          Slug {link ? "" : "(optional)"}
-          <input
-            name="slug"
-            placeholder="auto-generated if empty"
-            defaultValue={link?.slug ?? ""}
-          />
-        </label>
-        <label>
-          Industry
-          <input name="industry" defaultValue={link?.industry ?? ""} />
-        </label>
-        <label>
-          Landing page name
-          <input name="landingPageName" defaultValue={link?.landingPageName ?? ""} />
-        </label>
-        <label>
-          Landing page URL
-          <input name="landingPageUrl" type="url" defaultValue={link?.landingPageUrl ?? ""} />
-        </label>
-        <label>
-          LP version
-          <input name="landingPageVersion" placeholder="V1" defaultValue={link?.landingPageVersion ?? ""} />
-        </label>
-        <label>
-          Source channel
-          <input name="sourceChannel" defaultValue={link?.sourceChannel ?? "Facebook Ads"} />
-        </label>
-        <label>
-          Placement page
-          <input name="placementPage" defaultValue={link?.placementPage ?? ""} />
-        </label>
-        <label>
-          Campaign name
-          <input name="campaignName" defaultValue={link?.campaignName ?? ""} />
-        </label>
-        <label>
-          Campaign ID
-          <input name="campaignId" defaultValue={link?.campaignId ?? ""} />
-        </label>
-        <label>
-          Ad set name
-          <input name="adSetName" defaultValue={link?.adSetName ?? ""} />
-        </label>
-        <label>
-          Ad set ID
-          <input name="adSetId" defaultValue={link?.adSetId ?? ""} />
-        </label>
-        <label>
-          Ad name
-          <input name="adName" defaultValue={link?.adName ?? ""} />
-        </label>
-        <label>
-          Ad ID
-          <input name="adId" defaultValue={link?.adId ?? ""} />
-        </label>
-      </div>
+      <fieldset className="ad-form-fieldset">
+        <legend>Link identity</legend>
+        <div className="ad-form-grid">
+          <label>
+            Link name *
+            <input
+              name="name"
+              required
+              placeholder="e.g. Beauty LP V1 - Pain Point"
+              defaultValue={link?.name ?? ""}
+            />
+          </label>
+          <label>
+            Slug {link ? "" : "(optional)"}
+            <input
+              name="slug"
+              placeholder="auto-generated if empty"
+              defaultValue={link?.slug ?? ""}
+            />
+          </label>
+        </div>
+      </fieldset>
+      <fieldset className="ad-form-fieldset">
+        <legend>Landing page (optional — can fill later)</legend>
+        <div className="ad-form-grid">
+          <label>
+            Industry
+            <input name="industry" placeholder="e.g. Beauty" defaultValue={link?.industry ?? ""} />
+          </label>
+          <label>
+            Landing page name
+            <input
+              name="landingPageName"
+              placeholder="Full landing page title"
+              defaultValue={link?.landingPageName ?? ""}
+            />
+          </label>
+          <label>
+            Landing page URL
+            <input
+              name="landingPageUrl"
+              placeholder="https://…"
+              defaultValue={link?.landingPageUrl ?? ""}
+            />
+          </label>
+          <label>
+            Landing page version
+            <input
+              name="landingPageVersion"
+              placeholder="V1 / V2 / V3"
+              defaultValue={link?.landingPageVersion ?? ""}
+            />
+          </label>
+          <label className="ad-form-grid-span2">
+            Placement page
+            <input
+              name="placementPage"
+              placeholder="Which page / funnel step hosts this form"
+              defaultValue={link?.placementPage ?? ""}
+            />
+          </label>
+        </div>
+      </fieldset>
+      <fieldset className="ad-form-fieldset">
+        <legend>Facebook Ads (optional — can fill later)</legend>
+        <div className="ad-form-grid">
+          <label>
+            Source channel
+            <input name="sourceChannel" defaultValue={link?.sourceChannel ?? "Facebook Ads"} />
+          </label>
+          <label>
+            Campaign name
+            <input name="campaignName" defaultValue={link?.campaignName ?? ""} />
+          </label>
+          <label>
+            Campaign ID
+            <input name="campaignId" defaultValue={link?.campaignId ?? ""} />
+          </label>
+          <label>
+            Ad set name
+            <input name="adSetName" defaultValue={link?.adSetName ?? ""} />
+          </label>
+          <label>
+            Ad set ID
+            <input name="adSetId" defaultValue={link?.adSetId ?? ""} />
+          </label>
+          <label>
+            Ad name
+            <input name="adName" defaultValue={link?.adName ?? ""} />
+          </label>
+          <label>
+            Ad ID
+            <input name="adId" defaultValue={link?.adId ?? ""} />
+          </label>
+        </div>
+      </fieldset>
       <label className="ad-form-notes">
         Notes
         <textarea name="notes" rows={2} defaultValue={link?.notes ?? ""} />

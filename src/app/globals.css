@@ -3595,10 +3595,36 @@ html[data-theme="dark"] .review-row-limit-btn--active {
   font-weight: 600;
 }
 
+.ad-form-fieldset {
+  margin: 0 0 0.85rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+}
+
+.ad-form-fieldset legend {
+  padding: 0 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.ad-form-grid-span2 {
+  grid-column: 1 / -1;
+}
+
 .ad-form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
   gap: 0.65rem 0.85rem;
+}
+
+.ad-apply-status-pill {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.ad-apply-status-pill--inactive {
+  color: var(--muted);
 }
 
 .ad-form-grid label,

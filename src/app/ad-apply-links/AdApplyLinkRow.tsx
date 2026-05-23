@@ -9,6 +9,10 @@ type Props = {
   link: AdApplyLink;
 };
 
+function dash(v: string | null | undefined): string {
+  return v && v.trim() ? v.trim() : "—";
+}
+
 export function AdApplyLinkRow({ link }: Props) {
   const [editing, setEditing] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -20,10 +24,15 @@ export function AdApplyLinkRow({ link }: Props) {
         <div>
           <h3 className="ad-apply-link-name">{link.name}</h3>
           <p className="sub ad-apply-link-meta">
-            {link.industry ? `${link.industry} · ` : ""}
-            {link.landingPageVersion ? `LP ${link.landingPageVersion} · ` : ""}
-            {link.sourceChannel}
-            {!link.isActive ? " · Inactive" : ""}
+            <span className={`ad-apply-status-pill${link.isActive ? "" : " ad-apply-status-pill--inactive"}`}>
+              {link.isActive ? "Active" : "Inactive"}
+            </span>
+            {" · "}
+            Industry: {dash(link.industry)}
+            {" · "}
+            LP: {dash(link.landingPageVersion)}
+            {" · "}
+            Campaign: {dash(link.campaignName)}
           </p>
         </div>
         <div className="ad-apply-link-actions">
@@ -49,18 +58,20 @@ export function AdApplyLinkRow({ link }: Props) {
         </div>
       </div>
       <p className="ad-apply-public-url">
+        Slug: <code>{link.slug}</code>
+        {" · "}
         Form:{" "}
         <a href={publicUrl} target="_blank" rel="noopener noreferrer">
           {publicUrl}
         </a>
       </p>
-      {link.campaignName || link.adName ? (
+      {link.landingPageName || link.placementPage ? (
         <p className="sub ad-apply-campaign-hint">
-          {[link.campaignName, link.adName].filter(Boolean).join(" · ")}
+          {[link.landingPageName, link.placementPage ? `Placement: ${link.placementPage}` : null]
+            .filter(Boolean)
+            .join(" · ")}
         </p>
-      ) : (
-        <p className="sub ad-apply-campaign-hint">Campaign / ad details not set yet.</p>
-      )}
+      ) : null}
       {editing ? (
         <AdApplyLinkForm link={link} onSaved={() => setEditing(false)} />
       ) : null}

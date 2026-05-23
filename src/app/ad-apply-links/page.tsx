@@ -23,8 +23,8 @@ export default async function AdApplyLinksPage() {
       </p>
       <h1>Ad Apply Links</h1>
       <p className="sub">
-        Manage landing page / ad test form links. Campaign fields can be filled in
-        later.
+        Create one apply link per landing page or funnel step. Link name is required;
+        landing page and Facebook Ads fields can stay empty until campaigns are ready.
       </p>
 
       <section className="section ad-apply-new-section">
