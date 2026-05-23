@@ -606,6 +606,14 @@ export default async function QueuesPage({
         <Link className="top-link" href="/system-health">
           System Health
         </Link>
+        <span className="top-links-sep">·</span>
+        <Link className="top-link" href="/ad-apply-links">
+          Ad Apply Links
+        </Link>
+        <span className="top-links-sep">·</span>
+        <Link className="top-link" href="/ad-leads">
+          Ad Leads
+        </Link>
       </p>
       <h1>Queues</h1>
       <p className="sub">

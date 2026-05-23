@@ -15,6 +15,12 @@ export type ReviewTrialsTableLead = {
   businessName: string;
   phone: string | null;
   internationalPhone: string | null;
+  whatsappPhone?: string | null;
+  contactPerson?: string | null;
+  inboundSourceChannel?: string | null;
+  adCampaignName?: string | null;
+  landingPageVersion?: string | null;
+  applyLinkName?: string | null;
   reviewTrialStatus: string | null;
   reviewTrialStartAt: Date | null;
   reviewTrialEndAt: Date | null;
@@ -53,7 +59,9 @@ export function ReviewTrialsTable({
         <thead>
           <tr>
             <th>Business</th>
-            <th>Phone</th>
+            <th>WhatsApp</th>
+            <th>Campaign</th>
+            <th>LP ver.</th>
             <th>Plan Type</th>
             <th>Status</th>
             <th>Plan End</th>
@@ -75,15 +83,25 @@ export function ReviewTrialsTable({
             return (
               <tr key={lead.id}>
                 <td>{lead.businessName}</td>
-                <td>
-                  {fmtText(lead.phone)}
-                  {lead.internationalPhone ? (
+                <td className="queue-td-phone">
+                  {fmtText(lead.whatsappPhone ?? lead.phone ?? null)}
+                  {lead.contactPerson ? (
                     <>
                       <br />
-                      <span className="queue-muted">{lead.internationalPhone}</span>
+                      <span className="queue-muted">{lead.contactPerson}</span>
                     </>
                   ) : null}
                 </td>
+                <td className="queue-td-clip">
+                  {fmtText(lead.adCampaignName ?? null)}
+                  {lead.inboundSourceChannel ? (
+                    <>
+                      <br />
+                      <span className="queue-muted">{lead.inboundSourceChannel}</span>
+                    </>
+                  ) : null}
+                </td>
+                <td>{fmtText(lead.landingPageVersion ?? lead.applyLinkName ?? null)}</td>
                 <td>
                   <div className="review-trials-plan-type-cell">
                     <span>{planType}</span>

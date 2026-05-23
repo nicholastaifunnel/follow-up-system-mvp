@@ -17,6 +17,15 @@ import {
   LEAD_REVIEW_REJECTED,
 } from "./leadReviewStatus";
 import {
+  AD_LEAD_APPROVED,
+  AD_LEAD_PENDING,
+  AD_LEAD_REJECTED,
+} from "./adLeadStatus";
+import {
+  getMalaysiaTodayIsoDate,
+  mytCalendarDayUtcRange,
+} from "./formatMalaysiaTime";
+import {
   MESSAGE_STATUS_FIRST_SENT,
   MESSAGE_STATUS_NOT_PREPARED,
   MESSAGE_STATUS_PREPARED,
@@ -60,6 +69,12 @@ export type SystemHealthSummary = {
     rejected: number;
     skipped: number;
     needHumanReply: number;
+  };
+  adLeads: {
+    trialRequestsToday: number;
+    pendingAdLeads: number;
+    approvedAdLeads: number;
+    rejectedAdLeads: number;
   };
 };
 
@@ -150,6 +165,10 @@ export async function getSystemHealthSummary(
     missingAnyPhone,
     missingWhatsappPhone,
     actionQueue,
+    trialRequestsToday,
+    pendingAdLeads,
+    approvedAdLeads,
+    rejectedAdLeads,
   ] = await Promise.all([
     count(db, {
       OR: [{ outreachReadiness: null }, { outreachReadiness: LEAD_REVIEW_NEEDS_REVIEW }],
@@ -178,6 +197,15 @@ export async function getSystemHealthSummary(
     count(db, missingAnyPhoneWhere()),
     count(db, missingWhatsappPhoneWhere()),
     getTodayActionQueue(db, { limit: 1, firstOutreachBatchLimit: 1 }),
+    (() => {
+      const range = mytCalendarDayUtcRange(getMalaysiaTodayIsoDate());
+      return count(db, {
+        trialRequestedAt: { gte: range.start, lt: range.endExclusive },
+      });
+    })(),
+    count(db, { trialRequestedAt: { not: null }, adLeadStatus: AD_LEAD_PENDING }),
+    count(db, { trialRequestedAt: { not: null }, adLeadStatus: AD_LEAD_APPROVED }),
+    count(db, { trialRequestedAt: { not: null }, adLeadStatus: AD_LEAD_REJECTED }),
   ]);
 
   const firstFollowUpDue = actionQueue.firstFollowUpDue.count;
@@ -217,6 +245,12 @@ export async function getSystemHealthSummary(
       rejected,
       skipped,
       needHumanReply,
+    },
+    adLeads: {
+      trialRequestsToday,
+      pendingAdLeads,
+      approvedAdLeads,
+      rejectedAdLeads,
     },
   };
 }

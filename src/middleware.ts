@@ -35,5 +35,9 @@ export const config = {
     "/message-templates/:path*",
     "/review-trials/:path*",
     "/skipped-leads/:path*",
+    "/system-health/:path*",
+    "/ad-apply-links/:path*",
+    "/ad-leads/:path*",
+    "/ad-leads/export",
   ],
 };

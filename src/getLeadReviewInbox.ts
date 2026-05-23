@@ -98,6 +98,7 @@ export async function getLeadReviewInbox(
     skippedAt: null,
     handoffRequired: false,
     messageStatus: MESSAGE_STATUS_NOT_PREPARED,
+    trialRequestedAt: null,
   };
 
   const [needsReview, needMoreInfo, rejected] = await Promise.all([

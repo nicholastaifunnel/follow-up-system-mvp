@@ -6,6 +6,7 @@ import {
   MESSAGE_STATUS_PREPARED,
   REPLY_STATUS_WAITING,
 } from "./statusConstants";
+import { adTrialColdExclusionWhere } from "./adLeadPhone";
 import { LEAD_REVIEW_APPROVED } from "./leadReviewStatus";
 import { withActiveOutreachWhere } from "./doNotContact";
 
@@ -133,6 +134,7 @@ export async function getMessageQueue(
     : 10;
 
   const extra = options?.listExtraWhere;
+  const coldEligible = adTrialColdExclusionWhere();
 
   const [
     notPrepared,
@@ -144,8 +146,13 @@ export async function getMessageQueue(
     loadGroup(
       db,
       withActiveOutreachWhere({
-        messageStatus: MESSAGE_STATUS_NOT_PREPARED,
-        outreachReadiness: LEAD_REVIEW_APPROVED,
+        AND: [
+          coldEligible,
+          {
+            messageStatus: MESSAGE_STATUS_NOT_PREPARED,
+            outreachReadiness: LEAD_REVIEW_APPROVED,
+          },
+        ],
       }),
       limit,
       extra,
@@ -153,8 +160,13 @@ export async function getMessageQueue(
     loadGroup(
       db,
       withActiveOutreachWhere({
-        messageStatus: MESSAGE_STATUS_PREPARED,
-        outreachReadiness: LEAD_REVIEW_APPROVED,
+        AND: [
+          coldEligible,
+          {
+            messageStatus: MESSAGE_STATUS_PREPARED,
+            outreachReadiness: LEAD_REVIEW_APPROVED,
+          },
+        ],
       }),
       limit,
       extra,

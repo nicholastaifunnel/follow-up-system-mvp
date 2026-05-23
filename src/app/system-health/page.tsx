@@ -206,6 +206,18 @@ export default async function SystemHealthPage() {
               },
             ]}
           />
+          <h3 className="system-health-details-heading">Ad trial intake</h3>
+          <FlagList
+            items={[
+              {
+                label: "Ad trial requests today (MYT)",
+                value: health.adLeads.trialRequestsToday,
+              },
+              { label: "Pending ad leads", value: health.adLeads.pendingAdLeads },
+              { label: "Approved ad leads", value: health.adLeads.approvedAdLeads },
+              { label: "Rejected ad leads", value: health.adLeads.rejectedAdLeads },
+            ]}
+          />
           <p className="sub system-health-more-hint">
             Manual WhatsApp Phone is optional — phone or international phone can still
             be used for outreach.

@@ -14,6 +14,8 @@ import {
   LEAD_REVIEW_NEEDS_REVIEW,
   isLeadReviewStatus,
 } from "./leadReviewStatus";
+import { isProtectedCustomerLead } from "./adLeadProtection";
+import { isAdTrialIntakeLead } from "./adLeadStatus";
 import { isDoNotContactLead } from "./doNotContact";
 
 export type ImportLeadsResult = {
@@ -246,7 +248,10 @@ function buildUpdateData(
   };
 
   const existingReviewStatus = (existing.outreachReadiness ?? "").trim();
+  const importProtected =
+    isAdTrialIntakeLead(existing) || isProtectedCustomerLead(existing);
   if (
+    !importProtected &&
     !isDoNotContactLead(existing) &&
     !isLeadReviewStatus(existingReviewStatus)
   ) {

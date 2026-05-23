@@ -34,6 +34,7 @@ export type GetFilteredMessageLeadsOptions = {
 function coldOutreachFilteredWhere(): Prisma.LeadWhereInput {
   return withActiveOutreachWhere({
     handoffRequired: false,
+    trialRequestedAt: null,
     AND: [
       {
         OR: [

@@ -199,9 +199,28 @@ model Lead {
   skippedAt  DateTime?
   skipReason String?
 
+  /** Landing page / ad form free trial intake (not cold outreach). */
+  adApplyLinkId      String?
+  trialRequestedAt   DateTime?
+  adApprovedAt       DateTime?
+  adLeadStatus       String?
+  contactPerson      String?
+  googleMapName      String?
+  facebookPage       String?
+  adCampaignName     String?
+  adCampaignId       String?
+  adSetName          String?
+  adSetId            String?
+  adName             String?
+  adId               String?
+  landingPageVersion String?
+  applyLinkName      String?
+  inboundSourceChannel String?
+
   campaign          Campaign?          @relation(fields: [campaignId], references: [id])
   importBatch       ImportBatch?       @relation(fields: [importBatchId], references: [id])
   messageTemplate   MessageTemplate?   @relation(fields: [messageTemplateId], references: [id])
+  adApplyLink       AdApplyLink?       @relation(fields: [adApplyLinkId], references: [id])
   reviewPlanPeriods ReviewPlanPeriod[]
 
   @@unique([placeId])
@@ -224,6 +243,34 @@ model Lead {
   @@index([campaignId])
   @@index([importBatchId])
   @@index([skippedAt])
+  @@index([adApplyLinkId])
+  @@index([trialRequestedAt])
+  @@index([adLeadStatus])
+  @@index([adApprovedAt])
+}
+
+model AdApplyLink {
+  id                 String   @id @default(cuid())
+  slug               String   @unique
+  name               String
+  industry           String?
+  landingPageName    String?
+  landingPageUrl     String?
+  landingPageVersion String?
+  campaignName       String?
+  campaignId         String?
+  adSetName          String?
+  adSetId            String?
+  adName             String?
+  adId               String?
+  placementPage      String?
+  sourceChannel      String   @default("Facebook Ads")
+  notes              String?
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  leads Lead[]
 }
 
 model ReviewPlanPeriod {

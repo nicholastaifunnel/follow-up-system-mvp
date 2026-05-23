@@ -7,6 +7,7 @@ import {
   MESSAGE_STATUS_PREPARED,
 } from "./statusConstants";
 import { LEAD_REVIEW_APPROVED } from "./leadReviewStatus";
+import { adTrialColdExclusionWhere } from "./adLeadPhone";
 import { withActiveOutreachWhere } from "./doNotContact";
 
 export type TodayActionLeadRow = {
@@ -150,6 +151,7 @@ export async function getTodayActionQueue(
     : DEFAULT_FIRST_OUTREACH_BATCH;
 
   const extra = options?.listExtraWhere;
+  const coldEligible = adTrialColdExclusionWhere();
   const now = new Date();
 
   const [
@@ -162,8 +164,13 @@ export async function getTodayActionQueue(
     loadGroup(
       db,
       withActiveOutreachWhere({
-        messageStatus: MESSAGE_STATUS_NOT_PREPARED,
-        outreachReadiness: LEAD_REVIEW_APPROVED,
+        AND: [
+          coldEligible,
+          {
+            messageStatus: MESSAGE_STATUS_NOT_PREPARED,
+            outreachReadiness: LEAD_REVIEW_APPROVED,
+          },
+        ],
       }),
       firstOutreachBatchLimit,
       extra,
@@ -171,8 +178,13 @@ export async function getTodayActionQueue(
     loadGroup(
       db,
       withActiveOutreachWhere({
-        messageStatus: MESSAGE_STATUS_PREPARED,
-        outreachReadiness: LEAD_REVIEW_APPROVED,
+        AND: [
+          coldEligible,
+          {
+            messageStatus: MESSAGE_STATUS_PREPARED,
+            outreachReadiness: LEAD_REVIEW_APPROVED,
+          },
+        ],
       }),
       firstOutreachBatchLimit,
       extra,
