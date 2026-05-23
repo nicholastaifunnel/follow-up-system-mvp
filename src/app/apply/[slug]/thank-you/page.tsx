@@ -2,6 +2,14 @@ import { buildWhatsAppMeUrl } from "@/lib/digitsForWaMe";
 
 export const dynamic = "force-dynamic";
 
+function buildThankYouWhatsAppMessage(businessName: string): string {
+  const intro = "你好，我已经申请 Review QR System 1个月免费试用。";
+  if (businessName) {
+    return `${intro}\n\n店铺：${businessName}\n\n请帮我确认开通。`;
+  }
+  return `${intro}\n\n请帮我确认开通。`;
+}
+
 export default async function ApplyThankYouPage({
   searchParams,
 }: {
@@ -12,9 +20,8 @@ export default async function ApplyThankYouPage({
   const businessName = (businessRaw ?? "").trim();
 
   const supportDigits = (process.env.AD_SUPPORT_WHATSAPP_DIGITS ?? "").replace(/\D/g, "");
-  const message = businessName
-    ? `你好，我已经提交免费试用申请。\n店名：${businessName}\n请帮我确认下一步设置，谢谢。`
-    : "你好，我已经提交免费试用申请。\n请帮我确认下一步设置，谢谢。";
+  const message = buildThankYouWhatsAppMessage(businessName);
+  // TODO: Track WhatsApp confirmation button click for ads funnel analysis.
   const waHref = supportDigits
     ? buildWhatsAppMeUrl(null, null, message, supportDigits)
     : null;
@@ -46,7 +53,7 @@ export default async function ApplyThankYouPage({
               target="_blank"
               rel="noopener noreferrer"
             >
-              WhatsApp 联系我们
+              WhatsApp 确认开通
             </a>
           ) : (
             <p className="public-apply-wa-fallback">

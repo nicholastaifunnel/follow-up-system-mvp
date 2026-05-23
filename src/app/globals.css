@@ -3960,6 +3960,10 @@ html[data-theme="dark"] .review-row-limit-btn--active {
   background: var(--public-cta-hover);
 }
 
+.public-apply-shell .public-apply-wa-btn {
+  padding: 0.82rem 1rem;
+}
+
 .public-apply-shell .public-apply-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
