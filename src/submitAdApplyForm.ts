@@ -42,10 +42,10 @@ export async function submitAdApplyForm(
   const contactPerson = input.contactPerson.trim();
   const businessName = input.businessName.trim();
   const googleMapName = input.googleMapName.trim();
-  const facebookPage = input.facebookPage.trim();
+  const facebookPage = input.facebookPage.trim() || null;
 
-  if (!contactPerson || !businessName || !googleMapName || !facebookPage) {
-    return { ok: false, error: "Please fill in all fields." };
+  if (!contactPerson || !businessName || !googleMapName) {
+    return { ok: false, error: "Please fill in all required fields." };
   }
 
   const phoneNorm = normalizeWhatsAppInput(input.whatsappNumber);
@@ -107,7 +107,7 @@ export async function submitAdApplyForm(
         ),
         contactPerson: contactPerson || existing.contactPerson,
         googleMapName: googleMapName || existing.googleMapName,
-        facebookPage: facebookPage || existing.facebookPage,
+        facebookPage: facebookPage ?? existing.facebookPage,
         trialRequestedAt: existing.trialRequestedAt ?? now,
         ...meta,
         updatedAt: now,

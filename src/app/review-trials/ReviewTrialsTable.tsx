@@ -60,8 +60,8 @@ export function ReviewTrialsTable({
           <tr>
             <th>Business</th>
             <th>WhatsApp</th>
-            <th>Campaign</th>
-            <th>LP ver.</th>
+            <th>Campaign / source</th>
+            <th>LP / apply link</th>
             <th>Plan Type</th>
             <th>Status</th>
             <th>Plan End</th>
@@ -101,7 +101,15 @@ export function ReviewTrialsTable({
                     </>
                   ) : null}
                 </td>
-                <td>{fmtText(lead.landingPageVersion ?? lead.applyLinkName ?? null)}</td>
+                <td className="queue-td-clip">
+                  {fmtText(lead.landingPageVersion ?? null)}
+                  {lead.applyLinkName ? (
+                    <>
+                      <br />
+                      <span className="queue-muted">{lead.applyLinkName}</span>
+                    </>
+                  ) : null}
+                </td>
                 <td>
                   <div className="review-trials-plan-type-cell">
                     <span>{planType}</span>
