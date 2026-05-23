@@ -3773,8 +3773,8 @@ html[data-theme="dark"] .review-row-limit-btn--active {
   --public-muted: #94a3b8;
   --public-input-bg: rgba(15, 23, 42, 0.75);
   --public-input-border: rgba(148, 163, 184, 0.32);
-  --public-cta: #1f9d63;
-  --public-cta-hover: #26b371;
+  --public-cta: #1a8f58;
+  --public-cta-hover: #219a62;
   min-height: 100vh;
   padding: 1rem 1rem 2rem;
   color: var(--public-text);
@@ -3834,41 +3834,57 @@ html[data-theme="dark"] .review-row-limit-btn--active {
   color: var(--public-text);
 }
 
+/* Dark inputs on mobile Safari / WhatsApp in-app browser (override global .public-apply-form input) */
+.public-apply-shell input,
+.public-apply-shell textarea,
+.public-apply-shell select,
 .public-apply-shell .public-apply-form input {
   min-height: 2.75rem;
   padding: 0.6rem 0.7rem;
-  border: 1px solid var(--public-input-border);
+  border: 1px solid rgba(148, 163, 184, 0.38) !important;
   border-radius: 10px;
   font: inherit;
   font-size: 1rem;
-  color: var(--public-text);
-  background-color: var(--public-input-bg);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+  background: rgba(15, 23, 42, 0.82) !important;
+  background-color: rgba(15, 23, 42, 0.82) !important;
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc;
+  color-scheme: dark;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease;
 }
 
+.public-apply-shell input::placeholder,
+.public-apply-shell textarea::placeholder,
 .public-apply-shell .public-apply-form input::placeholder {
-  color: var(--public-muted);
-  opacity: 0.75;
+  color: rgba(203, 213, 225, 0.72) !important;
+  opacity: 1;
 }
 
+.public-apply-shell input:focus-visible,
+.public-apply-shell textarea:focus-visible,
 .public-apply-shell .public-apply-form input:focus-visible {
   outline: none;
-  border-color: rgba(56, 189, 120, 0.55);
+  border-color: rgba(56, 189, 120, 0.5) !important;
   box-shadow:
-    inset 0 1px 2px rgba(0, 0, 0, 0.2),
-    0 0 0 3px rgba(31, 157, 99, 0.22);
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 0 0 3px rgba(31, 157, 99, 0.18);
 }
 
+.public-apply-shell input:-webkit-autofill,
+.public-apply-shell input:-webkit-autofill:hover,
+.public-apply-shell input:-webkit-autofill:focus,
+.public-apply-shell textarea:-webkit-autofill,
+.public-apply-shell textarea:-webkit-autofill:hover,
+.public-apply-shell textarea:-webkit-autofill:focus,
 .public-apply-shell .public-apply-form input:-webkit-autofill,
 .public-apply-shell .public-apply-form input:-webkit-autofill:hover,
 .public-apply-shell .public-apply-form input:-webkit-autofill:focus {
-  -webkit-text-fill-color: var(--public-text);
-  -webkit-box-shadow: 0 0 0 1000px rgba(15, 23, 42, 0.95) inset;
-  box-shadow: 0 0 0 1000px rgba(15, 23, 42, 0.95) inset;
-  border: 1px solid var(--public-input-border);
+  -webkit-text-fill-color: #f8fafc !important;
+  box-shadow: 0 0 0 1000px rgb(15, 23, 42) inset !important;
+  transition: background-color 9999s ease-in-out 0s;
 }
 
 .public-apply-shell .public-apply-footnote {
@@ -3911,7 +3927,7 @@ html[data-theme="dark"] .review-row-limit-btn--active {
   text-align: center;
   text-decoration: none;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(31, 157, 99, 0.18);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
   transition: background 0.15s ease;
 }
 

@@ -33,7 +33,7 @@ export function ApplyForm({ slug }: Props) {
           name="contactPerson"
           required
           autoComplete="name"
-          placeholder="例如：Ah Mei / Jason"
+          placeholder="Ah Mei / Jason"
         />
       </label>
       <label>
@@ -43,13 +43,13 @@ export function ApplyForm({ slug }: Props) {
           required
           type="tel"
           inputMode="tel"
-          placeholder="例如：011-1327 3706"
+          placeholder="011-1327 3706"
           autoComplete="tel"
         />
       </label>
       <label>
         店名 *
-        <input name="businessName" required placeholder="例如：ABC Beauty Studio" />
+        <input name="businessName" required placeholder="ABC Beauty Studio" />
       </label>
       <label>
         Google Maps 店名 / 链接 *
@@ -61,12 +61,10 @@ export function ApplyForm({ slug }: Props) {
       </label>
       <label>
         Facebook Page（可选）
-        <input name="facebookPage" placeholder="有的话才填写" />
+        <input name="facebookPage" placeholder="可选，可以不需要" />
       </label>
       <button type="submit" className="public-apply-button" disabled={pending}>
-        {pending
-          ? "提交中… / Submitting…"
-          : "提交免费试用申请 / Submit Free Trial Request"}
+        {pending ? "提交中…" : "提交免费试用申请"}
       </button>
       <p className="public-apply-footnote">
         提交后，请点击 WhatsApp 按钮联系我们完成确认。

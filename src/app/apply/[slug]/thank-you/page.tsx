@@ -23,7 +23,7 @@ export default async function ApplyThankYouPage({
     <div className="public-apply-shell">
       <div className="page public-apply-page">
         <div className="public-apply-card public-thank-you-card">
-          <h1>申请已收到 / Request Submitted</h1>
+          <h1>申请已收到</h1>
           <p className="public-apply-lead">
             我们已经收到你的资料。
             <br />
@@ -36,7 +36,7 @@ export default async function ApplyThankYouPage({
           </p>
           {businessName ? (
             <p className="public-apply-business-line">
-              店铺 / Business: <strong>{businessName}</strong>
+              店铺：<strong>{businessName}</strong>
             </p>
           ) : null}
           {waHref ? (
@@ -46,7 +46,7 @@ export default async function ApplyThankYouPage({
               target="_blank"
               rel="noopener noreferrer"
             >
-              WhatsApp 联系我们 / WhatsApp Us Now
+              WhatsApp 联系我们
             </a>
           ) : (
             <p className="public-apply-wa-fallback">
@@ -54,10 +54,8 @@ export default async function ApplyThankYouPage({
             </p>
           )}
           <p className="public-apply-thankyou-note">
-            资料已记录，无需重复提交。
-            <span className="public-apply-footnote-en">
-              Your details have been recorded. No need to submit again.
-            </span>
+            资料已记录，不需要重复提交。
+            <span className="public-apply-footnote-en">No need to submit again.</span>
           </p>
         </div>
       </div>
