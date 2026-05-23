@@ -56,7 +56,6 @@ export type SystemHealthSummary = {
   };
   riskFlags: {
     missingPhone: number;
-    missingWhatsappPhone: number;
     needMoreInfo: number;
     rejected: number;
     skipped: number;
@@ -214,7 +213,6 @@ export async function getSystemHealthSummary(
     },
     riskFlags: {
       missingPhone: missingAnyPhone,
-      missingWhatsappPhone,
       needMoreInfo,
       rejected,
       skipped,

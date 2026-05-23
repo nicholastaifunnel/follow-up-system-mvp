@@ -57,24 +57,31 @@ export default async function SystemHealthPage() {
 
   const overviewCards: CountCard[] = [
     { label: "Needs Review", value: health.leadReview.needsReview, tone: "review" },
-    { label: "Ready", value: health.leadReview.ready, tone: "ready" },
     {
-      label: "Prepared Not Sent",
-      value: health.outreach.preparedNotSent,
+      label: "Prepare First Message",
+      value: health.queueHealth.prepareFirstMessage,
       tone: "prepared",
     },
-    { label: "Sent Today", value: health.outreach.sentToday, tone: "sent" },
+    {
+      label: "Send Prepared Message",
+      value: health.queueHealth.sendPreparedMessage,
+      tone: "sent",
+    },
     {
       label: "Follow-up Due",
       value: health.followUp.followUpDueTotal,
       tone: "followup",
+    },
+    {
+      label: "Need Human",
+      value: health.queueHealth.needHumanReply,
+      tone: "human",
     },
     { label: "DNC", value: health.safety.doNotContactStopped, tone: "dnc" },
   ];
 
   const riskFlags = [
     { label: "Missing phone", value: health.riskFlags.missingPhone },
-    { label: "Missing WhatsApp Phone", value: health.riskFlags.missingWhatsappPhone },
     { label: "Need More Info", value: health.riskFlags.needMoreInfo },
     { label: "Rejected", value: health.riskFlags.rejected },
     { label: "Skipped", value: health.riskFlags.skipped },
@@ -103,19 +110,22 @@ export default async function SystemHealthPage() {
 
       <h1>System Health</h1>
       <p className="sub system-health-subtitle">
-        Quick checks for import, review, outreach, follow-up, and safety. Read-only —
+        What needs action now — review, outreach, follow-up, and safety. Read-only —
         no data changes.
       </p>
 
       <section className="section system-health-section">
         <h2 className="system-health-section-heading">Overview</h2>
-        <CountGrid cards={overviewCards} ariaLabel="System health overview" />
+        <p className="sub system-health-section-note">
+          Action queue counts (matches Today&apos;s Action Queue where noted).
+        </p>
+        <CountGrid cards={overviewCards} ariaLabel="System health action overview" />
       </section>
 
       <section className="section system-health-section">
         <h2 className="system-health-section-heading">Risk Flags</h2>
         <p className="sub system-health-section-note">
-          Higher counts may need attention before outreach.
+          These items may need review before outreach.
         </p>
         <FlagList items={riskFlags} />
       </section>
@@ -143,11 +153,17 @@ export default async function SystemHealthPage() {
       <details className="system-health-details">
         <summary className="system-health-details-summary">More counts</summary>
         <div className="system-health-details-body">
+          <p className="sub system-health-more-note">
+            Reference totals — not all items need action today.
+          </p>
           <h3 className="system-health-details-heading">Lead Review</h3>
           <FlagList
             items={[
               { label: "Needs Review", value: health.leadReview.needsReview },
-              { label: "Ready / Approved", value: health.leadReview.ready },
+              {
+                label: "Approved Total",
+                value: health.leadReview.ready,
+              },
               { label: "Need More Info", value: health.leadReview.needMoreInfo },
               { label: "Rejected", value: health.leadReview.rejected },
             ]}
@@ -156,12 +172,12 @@ export default async function SystemHealthPage() {
           <FlagList
             items={[
               {
-                label: "Not Prepared but Ready",
+                label: "Not Prepared but Approved",
                 value: health.outreach.notPreparedReady,
               },
-              { label: "Prepared not sent", value: health.outreach.preparedNotSent },
+              { label: "Prepared Not Sent", value: health.outreach.preparedNotSent },
               { label: "First Message Sent", value: health.outreach.firstMessageSent },
-              { label: "Sent today (MYT)", value: health.outreach.sentToday },
+              { label: "Sent Today (MYT)", value: health.outreach.sentToday },
             ]}
           />
           <h3 className="system-health-details-heading">Follow-up</h3>
@@ -185,11 +201,15 @@ export default async function SystemHealthPage() {
               { label: "Skipped", value: health.safety.skipped },
               { label: "Missing any phone", value: health.safety.missingAnyPhone },
               {
-                label: "Missing WhatsApp Phone",
+                label: "Manual WhatsApp Phone not added",
                 value: health.safety.missingWhatsappPhone,
               },
             ]}
           />
+          <p className="sub system-health-more-hint">
+            Manual WhatsApp Phone is optional — phone or international phone can still
+            be used for outreach.
+          </p>
         </div>
       </details>
     </div>

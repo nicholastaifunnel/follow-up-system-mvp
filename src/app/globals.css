@@ -597,6 +597,22 @@ html[data-theme="dark"] .batch-safety-overview-card {
   background: color-mix(in srgb, #c44 8%, var(--card));
 }
 
+.system-health-overview-card--human {
+  border-color: color-mix(in srgb, var(--primary-border-alt) 45%, var(--border));
+  background: color-mix(in srgb, var(--primary-soft) 40%, var(--card));
+}
+
+.system-health-more-note {
+  margin: 0 0 0.65rem;
+  font-size: 0.8125rem;
+}
+
+.system-health-more-hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  max-width: 32rem;
+}
+
 .system-health-flag-list {
   margin: 0;
   padding: 0;
