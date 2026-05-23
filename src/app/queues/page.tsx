@@ -28,9 +28,16 @@ import {
 } from "@/getLeadReviewInbox";
 import { leadReviewStatusLabel } from "@/leadReviewStatus";
 import { getDailyActivity } from "@/getDailyActivity";
+import { getBatchSafetySummary } from "@/getBatchSafetySummary";
+import {
+  isFirstOutreachActionKey,
+  parseFirstOutreachBatchParam,
+} from "@/batchQueueParams";
 import { doNotContactReasonLabel } from "@/doNotContact";
 import { parseActivityDateParam } from "@/formatMalaysiaTime";
 import { DailyActivitySection } from "./DailyActivitySection";
+import { BatchSafetySection } from "./BatchSafetySection";
+import { BatchSizeSelector } from "./BatchSizeSelector";
 import { PhoneSearchForm } from "./PhoneSearchForm";
 import { QueueLimitSelector } from "./QueueLimitSelector";
 import { QueueSection } from "./QueueSection";
@@ -506,10 +513,12 @@ export default async function QueuesPage({
     angle?: string | string[];
     reviewMax?: string | string[];
     activityDate?: string | string[];
+    batch?: string | string[];
   }>;
 }) {
   const sp = await searchParams;
   const limit = resolveQueueDisplayLimit(sp.limit);
+  const firstOutreachBatch = parseFirstOutreachBatchParam(sp.batch);
   const activityDate = parseActivityDateParam(sp.activityDate);
   const phoneQuery = resolvePhoneQuery(sp.phone);
   const phoneDigits = normalizePhoneDigits(phoneQuery);
@@ -534,30 +543,40 @@ export default async function QueuesPage({
     : Promise.resolve([] as PhoneSearchLeadRow[]);
 
   const dailyActivityPromise = getDailyActivity(prisma, activityDate);
+  const batchSafetyPromise = getBatchSafetySummary(prisma, firstOutreachBatch);
   const leadReviewInboxPromise = getLeadReviewInbox(prisma, { limit });
 
   let dailyActivity: Awaited<ReturnType<typeof getDailyActivity>>;
+  let batchSafety: Awaited<ReturnType<typeof getBatchSafetySummary>>;
 
   if (isFilteredMode) {
-    [filteredLeads, phoneSearchRows, dailyActivity, leadReviewInbox] = await Promise.all([
+    [filteredLeads, phoneSearchRows, dailyActivity, batchSafety, leadReviewInbox] =
+      await Promise.all([
       getFilteredMessageLeads(prisma, {
         limit,
         listExtraWhere,
       }),
       phoneSearchPromise,
       dailyActivityPromise,
+      batchSafetyPromise,
       leadReviewInboxPromise,
     ]);
   } else {
-    const [aq, ps, da, lri] = await Promise.all([
-      getTodayActionQueue(prisma, { limit, listExtraWhere }),
+    const [aq, ps, da, bs, lri] = await Promise.all([
+      getTodayActionQueue(prisma, {
+        limit,
+        firstOutreachBatchLimit: firstOutreachBatch,
+        listExtraWhere,
+      }),
       phoneSearchPromise,
       dailyActivityPromise,
+      batchSafetyPromise,
       leadReviewInboxPromise,
     ]);
     actionQueue = aq;
     phoneSearchRows = ps;
     dailyActivity = da;
+    batchSafety = bs;
     leadReviewInbox = lri;
   }
 
@@ -593,8 +612,17 @@ export default async function QueuesPage({
 
       <DailyActivitySection
         activity={dailyActivity}
-        preserve={{ limit, phone: phoneQuery, angle, reviewMax, activityDate }}
+        preserve={{
+          limit,
+          phone: phoneQuery,
+          angle,
+          reviewMax,
+          activityDate,
+          batch: firstOutreachBatch,
+        }}
       />
+
+      <BatchSafetySection summary={batchSafety} />
 
       <div className="queues-toolbar">
         <PhoneSearchForm
@@ -603,8 +631,18 @@ export default async function QueuesPage({
           currentAngle={angle}
           reviewMax={reviewMax}
           activityDate={activityDate}
+          batch={firstOutreachBatch}
         />
         <QueueLimitSelector
+          currentLimit={limit}
+          currentPhone={phoneQuery}
+          currentAngle={angle}
+          reviewMax={reviewMax}
+          activityDate={activityDate}
+          batch={firstOutreachBatch}
+        />
+        <BatchSizeSelector
+          currentBatch={firstOutreachBatch}
           currentLimit={limit}
           currentPhone={phoneQuery}
           currentAngle={angle}
@@ -635,7 +673,7 @@ export default async function QueuesPage({
       {isFilteredMode && filteredLeads ? (
         <div className="section message-queue-work-section">
           <p className="phone-search-clear-wrap">
-            <Link className="top-link" href={queuesPath({ limit })} prefetch={false}>
+            <Link className="top-link" href={queuesPath({ limit, batch: firstOutreachBatch })} prefetch={false}>
               Clear filters — full Queues
             </Link>
           </p>
@@ -645,6 +683,7 @@ export default async function QueuesPage({
             angle={angle}
             reviewMax={reviewMax}
             activityDate={activityDate}
+            batch={firstOutreachBatch}
           />
           <h2>Filtered Message Leads</h2>
           <p className="sub">
@@ -670,11 +709,16 @@ export default async function QueuesPage({
               angle={angle}
               reviewMax={reviewMax}
               activityDate={activityDate}
+              batch={firstOutreachBatch}
             />
             <h2>Today&apos;s Action Queue</h2>
-            <p className="sub">Only leads that need action now are shown.</p>
+            <p className="sub queue-batch-scope-note">
+              Only first outreach is batch-limited. Follow-ups and human replies stay
+              visible.
+            </p>
             {ACTION_SECTIONS.map(({ key, title }) => {
               const group = actionQueue[key];
+              const isFirstOutreach = isFirstOutreachActionKey(key);
               const markFollowUp =
                 key === "firstFollowUpDue"
                   ? 1
@@ -684,12 +728,17 @@ export default async function QueuesPage({
               return (
                 <div className="group" key={key}>
                   <QueueSection
-                    key={`action-${String(key)}-${limit}-${angle}-${reviewMax ?? "x"}`}
+                    key={`action-${String(key)}-${limit}-${firstOutreachBatch}-${angle}-${reviewMax ?? "x"}`}
                     title={title}
                     totalCount={group.count}
                     shownCount={group.leads.length}
                     defaultExpanded={group.count > 0}
                   >
+                    {isFirstOutreach && group.leads.length > 0 ? (
+                      <p className="sub queue-batch-section-note">
+                        Showing first {group.leads.length} leads in this batch.
+                      </p>
+                    ) : null}
                     {group.leads.length === 0 ? (
                       <p className="empty">No leads</p>
                     ) : (

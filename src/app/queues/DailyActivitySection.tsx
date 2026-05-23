@@ -1,12 +1,16 @@
 import type { DailyActivityResult } from "@/getDailyActivity";
 import { DailyActivityDetails } from "./DailyActivityDetails";
 
+import type { FirstOutreachBatchSize } from "@/batchQueueParams";
+import { DEFAULT_FIRST_OUTREACH_BATCH } from "@/batchQueueParams";
+
 type PreserveParams = {
   limit: 10 | 20 | 50;
   phone: string;
   angle: string;
   reviewMax?: number;
   activityDate: string;
+  batch: FirstOutreachBatchSize;
 };
 
 type Props = {
@@ -36,6 +40,9 @@ export function DailyActivitySection({ activity, preserve }: Props) {
           {phoneTrim ? <input type="hidden" name="phone" value={phoneTrim} /> : null}
           {preserve.reviewMax !== undefined ? (
             <input type="hidden" name="reviewMax" value={String(preserve.reviewMax)} />
+          ) : null}
+          {preserve.batch !== DEFAULT_FIRST_OUTREACH_BATCH ? (
+            <input type="hidden" name="batch" value={String(preserve.batch)} />
           ) : null}
           <label className="daily-activity-date-label" htmlFor="activityDate">
             Date

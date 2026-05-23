@@ -1,6 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import {
+  DEFAULT_FIRST_OUTREACH_BATCH,
+  type FirstOutreachBatchSize,
+} from "@/batchQueueParams";
 import { queuesPath } from "@/queuesUrl";
 
 type Props = {
@@ -9,6 +13,7 @@ type Props = {
   currentAngle: string;
   reviewMax?: number;
   activityDate?: string;
+  batch?: FirstOutreachBatchSize;
 };
 
 export function PhoneSearchForm({
@@ -17,12 +22,14 @@ export function PhoneSearchForm({
   currentAngle,
   reviewMax,
   activityDate,
+  batch,
 }: Props) {
   const clearHref = queuesPath({
     limit: currentLimit,
     angle: currentAngle,
     ...(reviewMax !== undefined ? { reviewMax } : {}),
     ...(activityDate ? { activityDate } : {}),
+    ...(batch !== undefined && batch !== DEFAULT_FIRST_OUTREACH_BATCH ? { batch } : {}),
   });
   const hasPhoneQuery = initialPhone.trim().length > 0;
 
@@ -47,6 +54,9 @@ export function PhoneSearchForm({
         ) : null}
         {activityDate ? (
           <input type="hidden" name="activityDate" value={activityDate} />
+        ) : null}
+        {batch !== undefined && batch !== DEFAULT_FIRST_OUTREACH_BATCH ? (
+          <input type="hidden" name="batch" value={String(batch)} />
         ) : null}
         <input
           type="search"

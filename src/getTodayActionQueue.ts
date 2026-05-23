@@ -1,4 +1,5 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
+import { DEFAULT_FIRST_OUTREACH_BATCH } from "./batchQueueParams";
 import { mergeQueueListWhere } from "./queueListFilter";
 import {
   MESSAGE_STATUS_FIRST_SENT,
@@ -44,6 +45,8 @@ export type TodayActionQueueResult = {
 
 export type GetTodayActionQueueOptions = {
   limit?: number;
+  /** Batch cap for Prepare / Send first outreach only. */
+  firstOutreachBatchLimit?: number;
   listExtraWhere?: Prisma.LeadWhereInput;
 };
 
@@ -141,6 +144,11 @@ export async function getTodayActionQueue(
     ? Math.min(500, Math.max(1, Math.floor(raw)))
     : 10;
 
+  const rawBatch = options?.firstOutreachBatchLimit ?? DEFAULT_FIRST_OUTREACH_BATCH;
+  const firstOutreachBatchLimit = Number.isFinite(rawBatch)
+    ? Math.min(500, Math.max(1, Math.floor(rawBatch)))
+    : DEFAULT_FIRST_OUTREACH_BATCH;
+
   const extra = options?.listExtraWhere;
   const now = new Date();
 
@@ -157,7 +165,7 @@ export async function getTodayActionQueue(
         messageStatus: MESSAGE_STATUS_NOT_PREPARED,
         outreachReadiness: LEAD_REVIEW_APPROVED,
       }),
-      limit,
+      firstOutreachBatchLimit,
       extra,
     ),
     loadGroup(
@@ -166,7 +174,7 @@ export async function getTodayActionQueue(
         messageStatus: MESSAGE_STATUS_PREPARED,
         outreachReadiness: LEAD_REVIEW_APPROVED,
       }),
-      limit,
+      firstOutreachBatchLimit,
       extra,
     ),
     loadGroup(

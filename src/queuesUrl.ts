@@ -1,5 +1,10 @@
 /** Shared URL builder for /queues (no Prisma — safe for client components). */
 
+import {
+  DEFAULT_FIRST_OUTREACH_BATCH,
+  type FirstOutreachBatchSize,
+} from "./batchQueueParams";
+
 export type QueuesUrlParams = {
   limit: number;
   phone?: string;
@@ -7,6 +12,8 @@ export type QueuesUrlParams = {
   reviewMax?: number;
   /** YYYY-MM-DD in Malaysia time; omitted when default (today MYT). */
   activityDate?: string;
+  /** First outreach batch size; omitted when default (10). */
+  batch?: FirstOutreachBatchSize;
 };
 
 export function buildQueuesSearchString(params: QueuesUrlParams): string {
@@ -26,6 +33,12 @@ export function buildQueuesSearchString(params: QueuesUrlParams): string {
   const ad = params.activityDate?.trim();
   if (ad && /^\d{4}-\d{2}-\d{2}$/.test(ad)) {
     p.set("activityDate", ad);
+  }
+  if (
+    params.batch !== undefined &&
+    params.batch !== DEFAULT_FIRST_OUTREACH_BATCH
+  ) {
+    p.set("batch", String(params.batch));
   }
   return p.toString();
 }

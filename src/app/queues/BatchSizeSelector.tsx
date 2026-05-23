@@ -3,29 +3,27 @@
 import Link from "next/link";
 import {
   DEFAULT_FIRST_OUTREACH_BATCH,
+  FIRST_OUTREACH_BATCH_OPTIONS,
   type FirstOutreachBatchSize,
 } from "@/batchQueueParams";
 import { queuesPath } from "@/queuesUrl";
 
-const OPTIONS = [10, 20, 50] as const;
-
 type Props = {
-  currentLimit: (typeof OPTIONS)[number];
-  /** When set, limit links preserve `phone=` in the URL. */
+  currentBatch: FirstOutreachBatchSize;
+  currentLimit: 10 | 20 | 50;
   currentPhone?: string;
   currentAngle: string;
   reviewMax?: number;
   activityDate?: string;
-  batch?: FirstOutreachBatchSize;
 };
 
-function limitHref(
-  limit: number,
+function batchHref(
+  batch: FirstOutreachBatchSize,
+  limit: 10 | 20 | 50,
   phone: string | undefined,
   angle: string,
   reviewMax: number | undefined,
   activityDate: string | undefined,
-  batch: FirstOutreachBatchSize | undefined,
 ): string {
   return queuesPath({
     limit,
@@ -33,27 +31,27 @@ function limitHref(
     angle,
     ...(reviewMax !== undefined ? { reviewMax } : {}),
     ...(activityDate ? { activityDate } : {}),
-    ...(batch !== undefined && batch !== DEFAULT_FIRST_OUTREACH_BATCH ? { batch } : {}),
+    ...(batch !== DEFAULT_FIRST_OUTREACH_BATCH ? { batch } : {}),
   });
 }
 
-export function QueueLimitSelector({
+export function BatchSizeSelector({
+  currentBatch,
   currentLimit,
   currentPhone,
   currentAngle,
   reviewMax,
   activityDate,
-  batch,
 }: Props) {
   return (
-    <div className="queue-limit-bar" role="navigation" aria-label="Rows per section">
-      <span className="queue-limit-label">Rows per section:</span>
-      {OPTIONS.map((n) => (
+    <div className="queue-limit-bar batch-size-bar" role="navigation" aria-label="First outreach batch size">
+      <span className="queue-limit-label">First outreach batch:</span>
+      {FIRST_OUTREACH_BATCH_OPTIONS.map((n) => (
         <Link
           key={n}
-          href={limitHref(n, currentPhone, currentAngle, reviewMax, activityDate, batch)}
+          href={batchHref(n, currentLimit, currentPhone, currentAngle, reviewMax, activityDate)}
           className={
-            currentLimit === n ? "queue-limit-pill queue-limit-pill-active" : "queue-limit-pill"
+            currentBatch === n ? "queue-limit-pill queue-limit-pill-active" : "queue-limit-pill"
           }
           prefetch={false}
         >

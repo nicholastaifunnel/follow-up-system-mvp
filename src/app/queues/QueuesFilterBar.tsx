@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import type { QueueAngleParam } from "@/queueListFilter";
+import {
+  DEFAULT_FIRST_OUTREACH_BATCH,
+  type FirstOutreachBatchSize,
+} from "@/batchQueueParams";
 import { queuesPath } from "@/queuesUrl";
 
 const ANGLE_OPTIONS: { value: QueueAngleParam; label: string }[] = [
@@ -20,14 +24,23 @@ type Props = {
   angle: QueueAngleParam;
   reviewMax?: number;
   activityDate?: string;
+  batch?: FirstOutreachBatchSize;
 };
 
-export function QueuesFilterBar({ limit, phone, angle, reviewMax, activityDate }: Props) {
+export function QueuesFilterBar({
+  limit,
+  phone,
+  angle,
+  reviewMax,
+  activityDate,
+  batch,
+}: Props) {
   const phoneTrim = phone.trim();
   const base = {
     limit,
     ...(phoneTrim ? { phone: phoneTrim } : {}),
     ...(activityDate ? { activityDate } : {}),
+    ...(batch !== undefined && batch !== DEFAULT_FIRST_OUTREACH_BATCH ? { batch } : {}),
   };
 
   return (
