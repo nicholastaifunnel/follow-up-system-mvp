@@ -51,12 +51,19 @@ export function ApplyForm({ slug, linkName }: Props) {
         <input name="businessName" required />
       </label>
       <label>
-        Google Map name *
-        <input name="googleMapName" required placeholder="Name on Google Maps" />
+        Google Maps name or URL *
+        <input
+          name="googleMapName"
+          required
+          placeholder="Business name on Google Maps or Google Maps link"
+        />
       </label>
       <label>
-        Facebook page *
-        <input name="facebookPage" required placeholder="Page name or URL" />
+        Facebook page
+        <input
+          name="facebookPage"
+          placeholder="Optional: page name or URL"
+        />
       </label>
       <button type="submit" className="public-apply-submit" disabled={pending}>
         {pending ? "Submitting…" : "Submit free trial request"}

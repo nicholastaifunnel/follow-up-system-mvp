@@ -36,8 +36,8 @@ export function AdLeadsTable({ leads, showActions = true }: Props) {
             <th>Business</th>
             <th>Contact</th>
             <th>WhatsApp</th>
-            <th>Google Map</th>
-            <th>Facebook</th>
+            <th>Google Maps name / URL</th>
+            <th>Facebook page</th>
             <th>Campaign</th>
             <th>LP ver.</th>
             <th>Apply link</th>
