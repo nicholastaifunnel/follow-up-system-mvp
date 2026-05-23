@@ -46,7 +46,7 @@ export function ApplyForm({ slug }: Props) {
         <input name="businessName" required />
       </label>
       <label>
-        Google Maps 店名 / 链接 *
+        Google Maps 店名 / URL *
         <input name="googleMapName" required />
       </label>
       <label>
