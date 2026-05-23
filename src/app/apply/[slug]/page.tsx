@@ -36,11 +36,10 @@ export default async function PublicApplyPage({
         <div className="public-apply-card">
           <h1>申请免费试用 / Free Trial Request</h1>
           <p className="public-apply-lead">
-            留下店铺资料后，我们会通过 WhatsApp 跟你确认设置步骤。
+            填写资料后，我们会通过 WhatsApp 跟你确认设置。
           </p>
           <p className="public-apply-bilingual">
-            Submit your shop details and we&apos;ll confirm the setup steps by
-            WhatsApp.
+            Submit your details and we&apos;ll confirm the setup by WhatsApp.
           </p>
           <ApplyForm slug={slug} />
         </div>

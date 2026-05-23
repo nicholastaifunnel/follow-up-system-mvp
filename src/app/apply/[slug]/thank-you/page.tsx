@@ -13,8 +13,8 @@ export default async function ApplyThankYouPage({
 
   const supportDigits = (process.env.AD_SUPPORT_WHATSAPP_DIGITS ?? "").replace(/\D/g, "");
   const message = businessName
-    ? `你好，我已经提交免费试用申请。店名：${businessName}。请帮我确认下一步。`
-    : "你好，我已经提交免费试用申请，请帮我确认下一步。";
+    ? `你好，我已经提交免费试用申请。\n店名：${businessName}\n请帮我确认下一步设置，谢谢。`
+    : "你好，我已经提交免费试用申请。\n请帮我确认下一步设置，谢谢。";
   const waHref = supportDigits
     ? buildWhatsAppMeUrl(null, null, message, supportDigits)
     : null;
@@ -25,12 +25,14 @@ export default async function ApplyThankYouPage({
         <div className="public-apply-card public-thank-you-card">
           <h1>申请已收到 / Request Submitted</h1>
           <p className="public-apply-lead">
-            我们已经收到你的免费试用申请。请点击下面的 WhatsApp
-            按钮联系我们，我们会帮你确认设置资料和下一步。
+            我们已经收到你的资料。
+            <br />
+            请点击 WhatsApp 联系我们完成确认。
           </p>
           <p className="public-apply-bilingual">
-            We&apos;ve received your free trial request. Please WhatsApp us now so
-            we can confirm your setup details and next steps.
+            We&apos;ve received your details.
+            <br />
+            Please WhatsApp us to confirm your setup.
           </p>
           {businessName ? (
             <p className="public-apply-business-line">
@@ -52,11 +54,10 @@ export default async function ApplyThankYouPage({
             </p>
           )}
           <p className="public-apply-thankyou-note">
-            你的资料已经记录在系统里，不需要重复提交。
-          </p>
-          <p className="public-apply-thankyou-note">
-            Your details have been recorded. No need to submit again unless your
-            details are wrong.
+            资料已记录，无需重复提交。
+            <span className="public-apply-footnote-en">
+              Your details have been recorded. No need to submit again.
+            </span>
           </p>
         </div>
       </div>

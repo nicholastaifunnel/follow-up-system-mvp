@@ -28,7 +28,7 @@ export function ApplyForm({ slug }: Props) {
     >
       {error ? <p className="public-apply-error">{error}</p> : null}
       <label>
-        联系人 / Contact person *
+        联系人 *
         <input
           name="contactPerson"
           required
@@ -37,7 +37,7 @@ export function ApplyForm({ slug }: Props) {
         />
       </label>
       <label>
-        WhatsApp 号码 / WhatsApp number *
+        WhatsApp 号码 *
         <input
           name="whatsappNumber"
           required
@@ -48,23 +48,20 @@ export function ApplyForm({ slug }: Props) {
         />
       </label>
       <label>
-        店名 / Business name *
+        店名 *
         <input name="businessName" required placeholder="例如：ABC Beauty Studio" />
       </label>
       <label>
-        Google Maps 店名或链接 / Google Maps name or link *
+        Google Maps 店名 / 链接 *
         <input
           name="googleMapName"
           required
-          placeholder="可以填写 Google Maps 上的店名，或直接 paste Google Maps link"
+          placeholder="店名或 Google Maps link"
         />
       </label>
       <label>
-        Facebook Page（可选）/ Facebook Page (optional)
-        <input
-          name="facebookPage"
-          placeholder="如果有 Facebook Page，可以填写名称或链接"
-        />
+        Facebook Page（可选）
+        <input name="facebookPage" placeholder="有的话才填写" />
       </label>
       <button type="submit" className="public-apply-button" disabled={pending}>
         {pending
@@ -72,10 +69,10 @@ export function ApplyForm({ slug }: Props) {
           : "提交免费试用申请 / Submit Free Trial Request"}
       </button>
       <p className="public-apply-footnote">
-        提交后，你会看到 WhatsApp 按钮，请点击联系我们完成确认。
-      </p>
-      <p className="public-apply-footnote">
-        After submitting, tap the WhatsApp button to confirm your setup.
+        提交后，请点击 WhatsApp 按钮联系我们完成确认。
+        <span className="public-apply-footnote-en">
+          After submitting, tap WhatsApp to confirm your setup.
+        </span>
       </p>
     </form>
   );
