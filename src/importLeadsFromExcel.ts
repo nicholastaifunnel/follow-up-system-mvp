@@ -14,6 +14,7 @@ import {
   LEAD_REVIEW_NEEDS_REVIEW,
   isLeadReviewStatus,
 } from "./leadReviewStatus";
+import { isDoNotContactLead } from "./doNotContact";
 
 export type ImportLeadsResult = {
   campaignId: string;
@@ -245,7 +246,10 @@ function buildUpdateData(
   };
 
   const existingReviewStatus = (existing.outreachReadiness ?? "").trim();
-  if (!isLeadReviewStatus(existingReviewStatus)) {
+  if (
+    !isDoNotContactLead(existing) &&
+    !isLeadReviewStatus(existingReviewStatus)
+  ) {
     data.outreachReadiness = p.outreachReadiness;
   }
 

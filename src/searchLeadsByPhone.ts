@@ -24,6 +24,8 @@ export type PhoneSearchLeadRow = {
   replyStatus: string | null;
   replyOutcome: string | null;
   contactStatus: string;
+  isArchived: boolean;
+  archivedReason: string | null;
   handoffRequired: boolean;
   manualNotes: string | null;
   replyNotes: string | null;
@@ -72,6 +74,8 @@ export async function searchLeadsByPhone(
       replyStatus: true,
       replyOutcome: true,
       contactStatus: true,
+      isArchived: true,
+      archivedReason: true,
       handoffRequired: true,
       manualNotes: true,
       replyNotes: true,

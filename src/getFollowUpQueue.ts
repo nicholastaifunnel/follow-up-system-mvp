@@ -1,5 +1,6 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { REPLY_STATUS_WAITING } from "./statusConstants";
+import { withActiveOutreachWhere } from "./doNotContact";
 
 const REPLY_STATUS_NO_REPLY_YET = "No Reply Yet";
 
@@ -144,11 +145,6 @@ export async function getFollowUpQueue(
   const dayStart = startOfLocalDay(now);
   const dayEnd = endOfLocalDay(now);
 
-  const archivedFalse: Prisma.LeadWhereInput = {
-    isArchived: false,
-    skippedAt: null,
-  };
-
   const [
     dueToday,
     overdue,
@@ -158,53 +154,48 @@ export async function getFollowUpQueue(
   ] = await Promise.all([
     loadGroup(
       db,
-      {
-        ...archivedFalse,
+      withActiveOutreachWhere({
         AND: [
           { nextFollowUpAt: { not: null } },
           { nextFollowUpAt: { gte: dayStart, lte: dayEnd } },
         ],
-      },
+      }),
       limit,
       [{ nextFollowUpAt: "asc" }],
     ),
     loadGroup(
       db,
-      {
-        ...archivedFalse,
+      withActiveOutreachWhere({
         AND: [
           { nextFollowUpAt: { not: null } },
           { nextFollowUpAt: { lt: dayStart } },
         ],
-      },
+      }),
       limit,
       [{ nextFollowUpAt: "asc" }],
     ),
     loadGroup(
       db,
-      {
-        ...archivedFalse,
+      withActiveOutreachWhere({
         replyStatus: { in: [REPLY_STATUS_NO_REPLY_YET, REPLY_STATUS_WAITING] },
         AND: [{ nextCheckAt: { not: null } }, { nextCheckAt: { lte: now } }],
-      },
+      }),
       limit,
       [{ nextCheckAt: "asc" }],
     ),
     loadGroup(
       db,
-      {
-        ...archivedFalse,
+      withActiveOutreachWhere({
         handoffRequired: true,
-      },
+      }),
       limit,
       [{ updatedAt: "desc" }],
     ),
     loadGroup(
       db,
-      {
-        ...archivedFalse,
+      withActiveOutreachWhere({
         contactStatus: "Follow Up",
-      },
+      }),
       limit,
       [{ updatedAt: "desc" }],
     ),

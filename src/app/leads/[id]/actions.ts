@@ -42,6 +42,12 @@ import {
   canEnterFirstOutreach,
   isLeadReviewStatus,
 } from "../../../leadReviewStatus";
+import {
+  getDoNotContactAction,
+  isDoNotContactActionKey,
+  isDoNotContactLead,
+  type DoNotContactActionKey,
+} from "../../../doNotContact";
 
 const reviewPlanLeadSelect = {
   reviewTrialStatus: true,
@@ -90,6 +96,81 @@ export type UpdateWhatsAppPhoneActionResult =
 export type UpdateLeadReviewActionResult =
   | { ok: true; outreachReadiness: string; manualNotes: string | null }
   | { ok: false; error: string };
+
+export type MarkDoNotContactActionResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
+function appendStopNote(
+  current: string | null | undefined,
+  label: string,
+  note: string | null | undefined,
+): string | null {
+  const existing = current?.trim() ?? "";
+  const cleanNote = note?.trim() ?? "";
+  if (!cleanNote) return existing || null;
+
+  const date = new Date().toISOString().slice(0, 10);
+  const entry = `[${date} ${label}] ${cleanNote}`;
+  return existing ? `${existing}\n${entry}` : entry;
+}
+
+export async function markDoNotContactAction(input: {
+  leadId: string;
+  reason: string;
+  note?: string | null;
+}): Promise<MarkDoNotContactActionResult> {
+  if (!isDoNotContactActionKey(input.reason)) {
+    return { ok: false, error: "Invalid stop reason." };
+  }
+
+  const lead = await prisma.lead.findUnique({
+    where: { id: input.leadId },
+    select: {
+      id: true,
+      manualNotes: true,
+    },
+  });
+
+  if (!lead) {
+    return { ok: false, error: `Lead not found: ${input.leadId}` };
+  }
+
+  const reason = getDoNotContactAction(input.reason as DoNotContactActionKey);
+  const now = new Date();
+
+  try {
+    await prisma.lead.update({
+      where: { id: input.leadId },
+      data: {
+        replyStatus: "Stopped",
+        replyOutcome: reason.replyOutcome,
+        messageStatus: "Stopped",
+        contactStatus: reason.contactStatus,
+        leadTemperature: "Cold",
+        handoffRequired: false,
+        handoffReason: null,
+        nextAction: null,
+        nextCheckAt: null,
+        nextFollowUpAt: null,
+        isArchived: true,
+        archivedAt: now,
+        archivedReason: reason.archivedReason,
+        manualNotes: appendStopNote(lead.manualNotes, reason.label, input.note),
+      },
+    });
+    revalidatePath(`/leads/${input.leadId}`);
+    revalidatePath(`/leads/${input.leadId}/reply-assistant`);
+    revalidatePath("/queues");
+    return { ok: true };
+  } catch (e) {
+    const message =
+      e instanceof Error
+        ? e.message
+        : "Failed to mark this lead as do not contact.";
+    return { ok: false, error: message };
+  }
+}
 
 export async function updateLeadReviewAction(input: {
   leadId: string;
@@ -187,8 +268,12 @@ export async function updatePreparedMessageDraftAction(
     where: { id: leadId },
     select: {
       isArchived: true,
+      archivedReason: true,
       skippedAt: true,
       messageStatus: true,
+      replyStatus: true,
+      replyOutcome: true,
+      contactStatus: true,
     },
   });
 
@@ -198,6 +283,10 @@ export async function updatePreparedMessageDraftAction(
 
   if (snapshot.isArchived) {
     return { ok: false, error: "Archived leads cannot be edited." };
+  }
+
+  if (isDoNotContactLead(snapshot)) {
+    return { ok: false, error: "Do Not Contact leads cannot be edited." };
   }
 
   if (snapshot.skippedAt) {
@@ -242,7 +331,16 @@ export async function prepareLeadMessageAction(
   const requestedStage = messageStage ?? "First Message";
   const snap = await prisma.lead.findUnique({
     where: { id: leadId },
-    select: { skippedAt: true, outreachReadiness: true },
+    select: {
+      skippedAt: true,
+      outreachReadiness: true,
+      isArchived: true,
+      archivedReason: true,
+      messageStatus: true,
+      replyStatus: true,
+      replyOutcome: true,
+      contactStatus: true,
+    },
   });
   if (!snap) {
     return { ok: false, error: `Lead not found: ${leadId}` };
@@ -252,6 +350,12 @@ export async function prepareLeadMessageAction(
       ok: false,
       error:
         "This lead is skipped from the Message Queue. Restore it on the Queues page before preparing.",
+    };
+  }
+  if (isDoNotContactLead(snap)) {
+    return {
+      ok: false,
+      error: "Do Not Contact — this lead is blocked from outreach.",
     };
   }
   if (
@@ -293,7 +397,11 @@ export async function markLeadAsSentAction(
       messageStatus: true,
       preparedMessage: true,
       isArchived: true,
+      archivedReason: true,
       skippedAt: true,
+      replyStatus: true,
+      replyOutcome: true,
+      contactStatus: true,
     },
   });
 
@@ -305,6 +413,13 @@ export async function markLeadAsSentAction(
     return {
       ok: false,
       error: "Archived leads cannot be marked as sent.",
+    };
+  }
+
+  if (isDoNotContactLead(snapshot)) {
+    return {
+      ok: false,
+      error: "Do Not Contact leads cannot be marked as sent.",
     };
   }
 

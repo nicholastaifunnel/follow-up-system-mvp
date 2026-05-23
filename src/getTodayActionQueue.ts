@@ -6,6 +6,7 @@ import {
   MESSAGE_STATUS_PREPARED,
 } from "./statusConstants";
 import { LEAD_REVIEW_APPROVED } from "./leadReviewStatus";
+import { withActiveOutreachWhere } from "./doNotContact";
 
 export type TodayActionLeadRow = {
   id: string;
@@ -140,10 +141,6 @@ export async function getTodayActionQueue(
     ? Math.min(500, Math.max(1, Math.floor(raw)))
     : 10;
 
-  const archivedFalse: Prisma.LeadWhereInput = {
-    isArchived: false,
-    skippedAt: null,
-  };
   const extra = options?.listExtraWhere;
   const now = new Date();
 
@@ -156,53 +153,48 @@ export async function getTodayActionQueue(
   ] = await Promise.all([
     loadGroup(
       db,
-      {
-        ...archivedFalse,
+      withActiveOutreachWhere({
         messageStatus: MESSAGE_STATUS_NOT_PREPARED,
         outreachReadiness: LEAD_REVIEW_APPROVED,
-      },
+      }),
       limit,
       extra,
     ),
     loadGroup(
       db,
-      {
-        ...archivedFalse,
+      withActiveOutreachWhere({
         messageStatus: MESSAGE_STATUS_PREPARED,
         outreachReadiness: LEAD_REVIEW_APPROVED,
-      },
+      }),
       limit,
       extra,
     ),
     loadGroup(
       db,
-      {
-        ...archivedFalse,
+      withActiveOutreachWhere({
         ...followUpDueBase(now),
         followUp1SentAt: null,
-      },
+      }),
       limit,
       extra,
       [{ nextFollowUpAt: "asc" }],
     ),
     loadGroup(
       db,
-      {
-        ...archivedFalse,
+      withActiveOutreachWhere({
         ...followUpDueBase(now),
         followUp1SentAt: { not: null },
         followUp2SentAt: null,
-      },
+      }),
       limit,
       extra,
       [{ nextFollowUpAt: "asc" }],
     ),
     loadGroup(
       db,
-      {
-        ...archivedFalse,
+      withActiveOutreachWhere({
         handoffRequired: true,
-      },
+      }),
       limit,
       extra,
     ),

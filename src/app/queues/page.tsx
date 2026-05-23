@@ -28,6 +28,7 @@ import {
 } from "@/getLeadReviewInbox";
 import { leadReviewStatusLabel } from "@/leadReviewStatus";
 import { getDailyActivity } from "@/getDailyActivity";
+import { doNotContactReasonLabel } from "@/doNotContact";
 import { parseActivityDateParam } from "@/formatMalaysiaTime";
 import { DailyActivitySection } from "./DailyActivitySection";
 import { PhoneSearchForm } from "./PhoneSearchForm";
@@ -292,7 +293,14 @@ function PhoneSearchResultsTable({ leads }: { leads: PhoneSearchLeadRow[] }) {
               </td>
               <td>{fmtText(row.messageStatus)}</td>
               <td>{fmtText(row.replyStatus)}</td>
-              <td>{fmtText(row.contactStatus)}</td>
+              <td>
+                {fmtText(row.contactStatus)}
+                {doNotContactReasonLabel(row) ? (
+                  <div className="dnc-lookup-warning">
+                    Do Not Contact: {doNotContactReasonLabel(row)}
+                  </div>
+                ) : null}
+              </td>
               <td>{fmtDate(row.nextFollowUpAt)}</td>
               <td>{fmtDate(row.nextCheckAt)}</td>
               <td className="queue-td-clip">

@@ -6,6 +6,7 @@ import {
   MESSAGE_STATUS_PREPARED,
 } from "./statusConstants";
 import { LEAD_REVIEW_APPROVED } from "./leadReviewStatus";
+import { withActiveOutreachWhere } from "./doNotContact";
 
 export type FilteredMessageLeadRow = {
   id: string;
@@ -31,9 +32,7 @@ export type GetFilteredMessageLeadsOptions = {
  * Matches Not Prepared + Prepared Not Sent buckets — not sent / replied / handoff.
  */
 function coldOutreachFilteredWhere(): Prisma.LeadWhereInput {
-  return {
-    isArchived: false,
-    skippedAt: null,
+  return withActiveOutreachWhere({
     handoffRequired: false,
     AND: [
       {
@@ -53,7 +52,7 @@ function coldOutreachFilteredWhere(): Prisma.LeadWhereInput {
         OR: [{ replyStatus: null }, { replyStatus: "No Reply Yet" }],
       },
     ],
-  };
+  });
 }
 
 function phoneMatchWhere(input: string): Prisma.LeadWhereInput | undefined {

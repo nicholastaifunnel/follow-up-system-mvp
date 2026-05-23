@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { markFollowUpSent } from "@/markFollowUpSent";
 import { prisma } from "@/lib/prisma";
 import { MESSAGE_STATUS_FIRST_SENT } from "@/statusConstants";
+import { isDoNotContactLead } from "@/doNotContact";
 
 export type MarkFollowUpSentActionResult =
   | { ok: true }
@@ -20,7 +21,10 @@ export async function markFirstFollowUpSentAction(
       replyStatus: true,
       handoffRequired: true,
       isArchived: true,
+      archivedReason: true,
       skippedAt: true,
+      replyOutcome: true,
+      contactStatus: true,
     },
   });
 
@@ -30,6 +34,10 @@ export async function markFirstFollowUpSentAction(
 
   if (snapshot.isArchived) {
     return { ok: false, error: "Archived leads cannot be updated." };
+  }
+
+  if (isDoNotContactLead(snapshot)) {
+    return { ok: false, error: "Do Not Contact leads cannot be updated." };
   }
 
   if (snapshot.skippedAt) {
@@ -79,7 +87,10 @@ export async function markSecondFollowUpSentAction(
       replyStatus: true,
       handoffRequired: true,
       isArchived: true,
+      archivedReason: true,
       skippedAt: true,
+      replyOutcome: true,
+      contactStatus: true,
     },
   });
 
@@ -89,6 +100,10 @@ export async function markSecondFollowUpSentAction(
 
   if (snapshot.isArchived) {
     return { ok: false, error: "Archived leads cannot be updated." };
+  }
+
+  if (isDoNotContactLead(snapshot)) {
+    return { ok: false, error: "Do Not Contact leads cannot be updated." };
   }
 
   if (snapshot.skippedAt) {

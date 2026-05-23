@@ -3237,3 +3237,53 @@ html[data-theme="dark"] .review-row-limit-btn--active {
 .lead-review-inbox-table td {
   vertical-align: top;
 }
+
+.dnc-card {
+  border-color: var(--danger-border);
+}
+
+.dnc-form {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.dnc-warning,
+.dnc-lookup-warning {
+  border: 1px solid var(--danger-border);
+  border-radius: 0.65rem;
+  background: var(--danger-bg);
+  color: var(--danger-text-muted);
+}
+
+.dnc-warning {
+  padding: 0.7rem 0.85rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.dnc-lookup-warning {
+  display: inline-block;
+  margin-top: 0.3rem;
+  padding: 0.18rem 0.48rem;
+  font-size: 0.75rem;
+  font-weight: 650;
+}
+
+.dnc-note-label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.dnc-note {
+  min-height: 5rem;
+}
+
+.dnc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.dnc-action-btn {
+  min-height: 2.2rem;
+}

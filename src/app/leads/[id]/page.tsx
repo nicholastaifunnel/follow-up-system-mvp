@@ -5,6 +5,7 @@ import { ReplyOutcomeForm } from "./ReplyOutcomeForm";
 import { PlanUsageHistory } from "./PlanUsageHistory";
 import { ReviewTrialForm } from "./ReviewTrialForm";
 import { LeadReviewForm } from "./LeadReviewForm";
+import { DoNotContactForm } from "./DoNotContactForm";
 import { RestoreLeadButton } from "./RestoreLeadButton";
 import { SkipLeadPanel } from "./SkipLeadPanel";
 import { WhatsAppPhoneForm } from "./WhatsAppPhoneForm";
@@ -26,6 +27,9 @@ import {
   scheduledFollowUpNote,
 } from "./messageWorkspaceState";
 import { canEnterFirstOutreach } from "@/leadReviewStatus";
+import {
+  isDoNotContactLead,
+} from "@/doNotContact";
 
 const MARK_SENT_HINT =
   "Mark sent is available after a message is prepared.";
@@ -132,6 +136,7 @@ export default async function LeadDetailPage({
       socialLink: true,
       googleMapsLink: true,
       isArchived: true,
+      archivedReason: true,
       messageStatus: true,
       replyStatus: true,
       replyOutcome: true,
@@ -250,10 +255,20 @@ export default async function LeadDetailPage({
     nextFollowUpAt: lead.nextFollowUpAt,
     preparedTrimLength: prepared.length,
   });
+  const isDoNotContact = isDoNotContactLead(lead);
   const firstOutreachNeedsApproval =
     workspace.mode === "first-message" &&
     !canEnterFirstOutreach(lead.outreachReadiness);
-  const messageWorkspaceState = firstOutreachNeedsApproval
+  const messageWorkspaceState = isDoNotContact
+    ? {
+        ...workspace,
+        mode: "blocked" as const,
+        statusNote: "Do Not Contact — this lead is blocked from outreach.",
+        canPrepare: false,
+        canMarkSent: false,
+        markFollowUpWhich: null,
+      }
+    : firstOutreachNeedsApproval
     ? {
         ...workspace,
         statusNote: "Approve this lead before preparing outreach.",
@@ -374,6 +389,16 @@ export default async function LeadDetailPage({
             currentStatus={lead.outreachReadiness}
             initialNotes={lead.manualNotes}
           />
+        </section>
+      ) : null}
+
+      {!isReviewCustomer ? (
+        <section className="detail-card dnc-card">
+          <h2>Stop / Do Not Contact</h2>
+          <p className="sub">
+            Use this when the business should not receive more outreach.
+          </p>
+          <DoNotContactForm leadId={id} lead={lead} />
         </section>
       ) : null}
 

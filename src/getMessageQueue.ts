@@ -7,6 +7,7 @@ import {
   REPLY_STATUS_WAITING,
 } from "./statusConstants";
 import { LEAD_REVIEW_APPROVED } from "./leadReviewStatus";
+import { withActiveOutreachWhere } from "./doNotContact";
 
 export type MessageQueueLeadRow = {
   id: string;
@@ -131,10 +132,6 @@ export async function getMessageQueue(
     ? Math.min(500, Math.max(1, Math.floor(raw)))
     : 10;
 
-  const archivedFalse: Prisma.LeadWhereInput = {
-    isArchived: false,
-    skippedAt: null,
-  };
   const extra = options?.listExtraWhere;
 
   const [
@@ -146,48 +143,43 @@ export async function getMessageQueue(
   ] = await Promise.all([
     loadGroup(
       db,
-      {
-        ...archivedFalse,
+      withActiveOutreachWhere({
         messageStatus: MESSAGE_STATUS_NOT_PREPARED,
         outreachReadiness: LEAD_REVIEW_APPROVED,
-      },
+      }),
       limit,
       extra,
     ),
     loadGroup(
       db,
-      {
-        ...archivedFalse,
+      withActiveOutreachWhere({
         messageStatus: MESSAGE_STATUS_PREPARED,
         outreachReadiness: LEAD_REVIEW_APPROVED,
-      },
+      }),
       limit,
       extra,
     ),
     loadGroup(
       db,
-      {
-        ...archivedFalse,
+      withActiveOutreachWhere({
         messageStatus: MESSAGE_STATUS_FIRST_SENT,
-      },
+      }),
       limit,
       extra,
     ),
     loadGroup(
       db,
-      {
-        ...archivedFalse,
+      withActiveOutreachWhere({
         replyStatus: REPLY_STATUS_WAITING,
-      },
+      }),
       limit,
       extra,
     ),
     loadGroup(
       db,
-      {
-        ...archivedFalse,
+      withActiveOutreachWhere({
         handoffRequired: true,
-      },
+      }),
       limit,
       extra,
     ),
