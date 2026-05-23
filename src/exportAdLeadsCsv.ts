@@ -1,5 +1,9 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
-import { getMalaysiaTodayIsoDate, mytCalendarDayUtcRange } from "./formatMalaysiaTime";
+import {
+  getMalaysiaTodayIsoDate,
+  MYT_TIMEZONE,
+  mytCalendarDayUtcRange,
+} from "./formatMalaysiaTime";
 import { AD_LEAD_APPROVED } from "./adLeadStatus";
 
 export type AdLeadsExportFilters = {
@@ -20,9 +24,45 @@ function escapeCsvCell(value: string): string {
   return value;
 }
 
-function fmtIso(d: Date | null | undefined): string {
-  if (!d) return "";
-  return d.toISOString();
+/** CSV export: `YYYY-MM-DD HH:mm:ss MYT` (empty when null). */
+function formatCsvDateTimeMYT(value: Date | null | undefined): string {
+  if (!value) return "";
+
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: MYT_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(value);
+
+  const pick = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? "00";
+
+  return `${pick("year")}-${pick("month")}-${pick("day")} ${pick("hour")}:${pick("minute")}:${pick("second")} MYT`;
+}
+
+/** Excel text formula so leading zeros are preserved: ="601113273706" */
+function excelTextCell(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+
+  const digits = trimmed.replace(/\D/g, "");
+  if (!digits) return escapeCsvCell(trimmed);
+
+  return escapeCsvCell(`="${digits}"`);
+}
+
+function resolveWhatsAppForExport(row: {
+  whatsappPhone: string | null;
+  phone: string | null;
+  internationalPhone: string | null;
+}): string {
+  const raw = row.whatsappPhone ?? row.phone ?? row.internationalPhone ?? "";
+  return excelTextCell(raw);
 }
 
 function trialStatusLabel(lead: {
@@ -60,11 +100,11 @@ export function buildAdLeadsCsv(rows: Awaited<ReturnType<typeof fetchAdLeadsForE
   for (const row of rows) {
     lines.push(
       [
-        fmtIso(row.trialRequestedAt),
-        fmtIso(row.adApprovedAt),
+        formatCsvDateTimeMYT(row.trialRequestedAt),
+        formatCsvDateTimeMYT(row.adApprovedAt),
         row.businessName,
         row.contactPerson ?? "",
-        row.whatsappPhone ?? row.phone ?? row.internationalPhone ?? "",
+        resolveWhatsAppForExport(row),
         row.googleMapName ?? "",
         row.facebookPage ?? "",
         trialStatusLabel(row),
@@ -77,7 +117,7 @@ export function buildAdLeadsCsv(rows: Awaited<ReturnType<typeof fetchAdLeadsForE
         row.inboundSourceChannel ?? "",
         row.id,
       ]
-        .map((c) => escapeCsvCell(String(c)))
+        .map((c, i) => (i === 4 ? c : escapeCsvCell(String(c))))
         .join(","),
     );
   }
