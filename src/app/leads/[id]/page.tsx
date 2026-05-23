@@ -320,21 +320,6 @@ export default async function LeadDetailPage({
         </section>
       )}
 
-      {!isReviewCustomer ? (
-        <section className="detail-card lead-review-card">
-          <h2>Lead Review</h2>
-          <p className="sub">
-            Check this lead before sending WhatsApp. Only approved leads appear
-            in Today&apos;s Action Queue.
-          </p>
-          <LeadReviewForm
-            leadId={id}
-            currentStatus={lead.outreachReadiness}
-            initialNotes={lead.manualNotes}
-          />
-        </section>
-      ) : null}
-
       <section className="detail-card">
         <h2>Contact</h2>
         <div className="kv-list">
@@ -376,6 +361,21 @@ export default async function LeadDetailPage({
           </Row>
         </div>
       </section>
+
+      {!isReviewCustomer ? (
+        <section className="detail-card lead-review-card">
+          <h2>Lead Review</h2>
+          <p className="sub">
+            Check this lead before sending WhatsApp. Only approved leads appear
+            in Today&apos;s Action Queue.
+          </p>
+          <LeadReviewForm
+            leadId={id}
+            currentStatus={lead.outreachReadiness}
+            initialNotes={lead.manualNotes}
+          />
+        </section>
+      ) : null}
 
       {lead.skippedAt ? (
         <section className="detail-card skipped-lead-banner">
