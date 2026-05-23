@@ -602,6 +602,10 @@ export default async function QueuesPage({
         <Link className="top-link" href="/reply-sop">
           Reply SOP Settings
         </Link>
+        <span className="top-links-sep">·</span>
+        <Link className="top-link" href="/system-health">
+          System Health
+        </Link>
       </p>
       <h1>Queues</h1>
       <p className="sub">
