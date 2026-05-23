@@ -3858,8 +3858,23 @@ html[data-theme="dark"] .review-row-limit-btn--active {
 
 .public-apply-shell input::placeholder,
 .public-apply-shell textarea::placeholder,
+.public-apply-shell select::placeholder,
 .public-apply-shell .public-apply-form input::placeholder {
-  color: rgba(203, 213, 225, 0.72) !important;
+  color: rgba(148, 163, 184, 0.72) !important;
+  opacity: 1;
+}
+
+.public-apply-shell input::-webkit-input-placeholder,
+.public-apply-shell textarea::-webkit-input-placeholder,
+.public-apply-shell .public-apply-form input::-webkit-input-placeholder {
+  color: rgba(148, 163, 184, 0.72) !important;
+  opacity: 1;
+}
+
+.public-apply-shell input::-moz-placeholder,
+.public-apply-shell textarea::-moz-placeholder,
+.public-apply-shell .public-apply-form input::-moz-placeholder {
+  color: rgba(148, 163, 184, 0.72) !important;
   opacity: 1;
 }
 
