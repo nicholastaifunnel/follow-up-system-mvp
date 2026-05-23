@@ -3834,14 +3834,6 @@ html[data-theme="dark"] .review-row-limit-btn--active {
   color: var(--public-text);
 }
 
-.public-apply-shell .public-apply-field-hint {
-  margin: 0.25rem 0 0.45rem;
-  color: rgba(148, 163, 184, 0.78);
-  font-size: 0.88rem;
-  line-height: 1.35;
-  font-weight: 400;
-}
-
 /* Dark inputs on mobile Safari / WhatsApp in-app browser (override global .public-apply-form input) */
 .public-apply-shell input,
 .public-apply-shell textarea,

@@ -29,12 +29,10 @@ export function ApplyForm({ slug }: Props) {
       {error ? <p className="public-apply-error">{error}</p> : null}
       <label>
         联系人 *
-        <span className="public-apply-field-hint">Ah Mei / Jason</span>
         <input name="contactPerson" required autoComplete="name" />
       </label>
       <label>
         WhatsApp 号码 *
-        <span className="public-apply-field-hint">011-1327 3706</span>
         <input
           name="whatsappNumber"
           required
@@ -45,17 +43,14 @@ export function ApplyForm({ slug }: Props) {
       </label>
       <label>
         店名 *
-        <span className="public-apply-field-hint">ABC Beauty Studio</span>
         <input name="businessName" required />
       </label>
       <label>
         Google Maps 店名 / 链接 *
-        <span className="public-apply-field-hint">店名或 Google Maps link</span>
         <input name="googleMapName" required />
       </label>
       <label>
         Facebook Page（可选）
-        <span className="public-apply-field-hint">可选，可以不需要</span>
         <input name="facebookPage" />
       </label>
       <button type="submit" className="public-apply-button" disabled={pending}>
