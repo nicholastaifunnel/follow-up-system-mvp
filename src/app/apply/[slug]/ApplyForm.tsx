@@ -29,39 +29,34 @@ export function ApplyForm({ slug }: Props) {
       {error ? <p className="public-apply-error">{error}</p> : null}
       <label>
         联系人 *
-        <input
-          name="contactPerson"
-          required
-          autoComplete="name"
-          placeholder="Ah Mei / Jason"
-        />
+        <span className="public-apply-field-hint">Ah Mei / Jason</span>
+        <input name="contactPerson" required autoComplete="name" />
       </label>
       <label>
         WhatsApp 号码 *
+        <span className="public-apply-field-hint">011-1327 3706</span>
         <input
           name="whatsappNumber"
           required
           type="tel"
           inputMode="tel"
-          placeholder="011-1327 3706"
           autoComplete="tel"
         />
       </label>
       <label>
         店名 *
-        <input name="businessName" required placeholder="ABC Beauty Studio" />
+        <span className="public-apply-field-hint">ABC Beauty Studio</span>
+        <input name="businessName" required />
       </label>
       <label>
         Google Maps 店名 / 链接 *
-        <input
-          name="googleMapName"
-          required
-          placeholder="店名或 Google Maps link"
-        />
+        <span className="public-apply-field-hint">店名或 Google Maps link</span>
+        <input name="googleMapName" required />
       </label>
       <label>
         Facebook Page（可选）
-        <input name="facebookPage" placeholder="可选，可以不需要" />
+        <span className="public-apply-field-hint">可选，可以不需要</span>
+        <input name="facebookPage" />
       </label>
       <button type="submit" className="public-apply-button" disabled={pending}>
         {pending ? "提交中…" : "提交免费试用申请"}
