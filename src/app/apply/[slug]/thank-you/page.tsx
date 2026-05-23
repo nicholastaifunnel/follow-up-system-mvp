@@ -1,70 +1,64 @@
-import { prisma } from "@/lib/prisma";
 import { buildWhatsAppMeUrl } from "@/lib/digitsForWaMe";
 
 export const dynamic = "force-dynamic";
 
-function dash(v: string | null | undefined): string {
-  return v && v.trim() ? v.trim() : "";
-}
-
 export default async function ApplyThankYouPage({
-  params,
   searchParams,
 }: {
-  params: Promise<{ slug: string }>;
   searchParams: Promise<{ business?: string | string[] }>;
 }) {
-  const { slug } = await params;
   const sp = await searchParams;
   const businessRaw = Array.isArray(sp.business) ? sp.business[0] : sp.business;
-  const businessName = dash(businessRaw);
-
-  const link = await prisma.adApplyLink.findUnique({ where: { slug } });
+  const businessName = (businessRaw ?? "").trim();
 
   const supportDigits = (process.env.AD_SUPPORT_WHATSAPP_DIGITS ?? "").replace(/\D/g, "");
   const message = businessName
-    ? `Hi, I have submitted the free trial request form. My business name is ${businessName}.`
-    : "Hi, I have submitted the free trial request form.";
+    ? `你好，我已经提交免费试用申请。店名：${businessName}。请帮我确认下一步。`
+    : "你好，我已经提交免费试用申请，请帮我确认下一步。";
   const waHref = supportDigits
     ? buildWhatsAppMeUrl(null, null, message, supportDigits)
     : null;
 
-  const contextParts = [
-    link?.name,
-    dash(link?.industry) || null,
-    dash(link?.landingPageName) || null,
-    dash(link?.landingPageVersion) ? `LP ${link?.landingPageVersion}` : null,
-  ].filter(Boolean);
-
   return (
-    <div className="page public-apply-page">
-      <div className="public-apply-card public-apply-thankyou">
-        <h1>Your free trial request has been submitted</h1>
-        <p className="sub">
-          We received your details. Please WhatsApp us so we can confirm your setup
-          and next steps.
-        </p>
-        {contextParts.length > 0 ? (
-          <p className="sub public-apply-thankyou-context">{contextParts.join(" · ")}</p>
-        ) : null}
-        {waHref ? (
-          <a
-            className="public-apply-wa-btn"
-            href={waHref}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            WhatsApp us now
-          </a>
-        ) : (
-          <p className="sub public-apply-wa-fallback">
-            Please message us on WhatsApp to confirm your request.
+    <div className="public-apply-shell">
+      <div className="page public-apply-page">
+        <div className="public-apply-card public-thank-you-card">
+          <h1>申请已收到 / Request Submitted</h1>
+          <p className="public-apply-lead">
+            我们已经收到你的免费试用申请。请点击下面的 WhatsApp
+            按钮联系我们，我们会帮你确认设置资料和下一步。
           </p>
-        )}
-        <p className="sub public-apply-thankyou-note">
-          Your request has already been recorded. Please do not submit again unless
-          your details are wrong.
-        </p>
+          <p className="public-apply-bilingual">
+            We&apos;ve received your free trial request. Please WhatsApp us now so
+            we can confirm your setup details and next steps.
+          </p>
+          {businessName ? (
+            <p className="public-apply-business-line">
+              店铺 / Business: <strong>{businessName}</strong>
+            </p>
+          ) : null}
+          {waHref ? (
+            <a
+              className="public-apply-wa-btn"
+              href={waHref}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              WhatsApp 联系我们 / WhatsApp Us Now
+            </a>
+          ) : (
+            <p className="public-apply-wa-fallback">
+              WhatsApp button is not configured yet. Please contact us manually.
+            </p>
+          )}
+          <p className="public-apply-thankyou-note">
+            你的资料已经记录在系统里，不需要重复提交。
+          </p>
+          <p className="public-apply-thankyou-note">
+            Your details have been recorded. No need to submit again unless your
+            details are wrong.
+          </p>
+        </div>
       </div>
     </div>
   );

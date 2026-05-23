@@ -5,10 +5,9 @@ import { submitApplyFormAction } from "./actions";
 
 type Props = {
   slug: string;
-  linkName: string;
 };
 
-export function ApplyForm({ slug, linkName }: Props) {
+export function ApplyForm({ slug }: Props) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -27,47 +26,57 @@ export function ApplyForm({ slug, linkName }: Props) {
         });
       }}
     >
-      <p className="sub public-apply-intro">
-        Free trial request for <strong>{linkName}</strong>
-      </p>
       {error ? <p className="public-apply-error">{error}</p> : null}
       <label>
-        Contact person *
-        <input name="contactPerson" required autoComplete="name" />
+        联系人 / Contact person *
+        <input
+          name="contactPerson"
+          required
+          autoComplete="name"
+          placeholder="例如：Ah Mei / Jason"
+        />
       </label>
       <label>
-        WhatsApp number *
+        WhatsApp 号码 / WhatsApp number *
         <input
           name="whatsappNumber"
           required
           type="tel"
           inputMode="tel"
-          placeholder="e.g. 012-345 6789"
+          placeholder="例如：011-1327 3706"
           autoComplete="tel"
         />
       </label>
       <label>
-        Business name *
-        <input name="businessName" required />
+        店名 / Business name *
+        <input name="businessName" required placeholder="例如：ABC Beauty Studio" />
       </label>
       <label>
-        Google Maps name or URL *
+        Google Maps 店名或链接 / Google Maps name or link *
         <input
           name="googleMapName"
           required
-          placeholder="Business name on Google Maps or Google Maps link"
+          placeholder="可以填写 Google Maps 上的店名，或直接 paste Google Maps link"
         />
       </label>
       <label>
-        Facebook page
+        Facebook Page（可选）/ Facebook Page (optional)
         <input
           name="facebookPage"
-          placeholder="Optional: page name or URL"
+          placeholder="如果有 Facebook Page，可以填写名称或链接"
         />
       </label>
-      <button type="submit" className="public-apply-submit" disabled={pending}>
-        {pending ? "Submitting…" : "Submit free trial request"}
+      <button type="submit" className="public-apply-button" disabled={pending}>
+        {pending
+          ? "提交中… / Submitting…"
+          : "提交免费试用申请 / Submit Free Trial Request"}
       </button>
+      <p className="public-apply-footnote">
+        提交后，你会看到 WhatsApp 按钮，请点击联系我们完成确认。
+      </p>
+      <p className="public-apply-footnote">
+        After submitting, tap the WhatsApp button to confirm your setup.
+      </p>
     </form>
   );
 }

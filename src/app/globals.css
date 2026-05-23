@@ -3763,74 +3763,180 @@ html[data-theme="dark"] .review-row-limit-btn--active {
   word-break: break-all;
 }
 
-.public-apply-page {
-  max-width: 28rem;
+/* Public landing-page apply flow — scoped dark theme (does not affect admin UI) */
+.public-apply-shell {
+  --public-bg-top: #0b1220;
+  --public-bg-bottom: #141c2e;
+  --public-card: #1a2438;
+  --public-card-border: rgba(255, 255, 255, 0.1);
+  --public-text: #eef2f8;
+  --public-muted: #9aa8be;
+  --public-input-bg: #0f1728;
+  --public-input-border: rgba(255, 255, 255, 0.12);
+  --public-cta: #1f9d63;
+  --public-cta-hover: #26b371;
+  min-height: 100vh;
+  padding: 1rem 1rem 2rem;
+  color: var(--public-text);
+  background: linear-gradient(165deg, var(--public-bg-top) 0%, var(--public-bg-bottom) 55%, #0d1526 100%);
+}
+
+.public-apply-shell .public-apply-page {
+  max-width: 26rem;
   margin: 0 auto;
-  padding: 1rem;
+  padding: 0.5rem 0 0;
 }
 
-.public-apply-card {
-  padding: 1.25rem 1rem;
-  border: 1px solid var(--border-light);
-  border-radius: 12px;
-  background: var(--card);
-  box-shadow: 0 2px 8px var(--shadow);
+.public-apply-shell .public-apply-card,
+.public-apply-shell .public-thank-you-card {
+  padding: 1.35rem 1.15rem;
+  border: 1px solid var(--public-card-border);
+  border-radius: 16px;
+  background: var(--public-card);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
 }
 
-.public-apply-form {
+.public-apply-shell .public-apply-card h1,
+.public-apply-shell .public-thank-you-card h1 {
+  margin: 0 0 0.65rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--public-text);
+}
+
+.public-apply-shell .public-apply-lead,
+.public-apply-shell .public-apply-bilingual {
+  margin: 0 0 0.35rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--public-muted);
+}
+
+.public-apply-shell .public-apply-bilingual + .public-apply-bilingual {
+  margin-top: 0.15rem;
+}
+
+.public-apply-shell .public-apply-form {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.85rem;
+  margin-top: 1rem;
 }
 
-.public-apply-intro {
-  margin: 0 0 0.25rem;
+.public-apply-shell .public-apply-form label {
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--public-text);
 }
 
-.public-apply-error {
+.public-apply-shell .public-apply-form input {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--public-input-border);
+  border-radius: 10px;
+  font: inherit;
+  font-size: 1rem;
+  color: var(--public-text);
+  background: var(--public-input-bg);
+}
+
+.public-apply-shell .public-apply-form input::placeholder {
+  color: var(--public-muted);
+  opacity: 0.85;
+}
+
+.public-apply-shell .public-apply-form input:focus-visible {
+  outline: 2px solid rgba(31, 157, 99, 0.45);
+  outline-offset: 1px;
+  border-color: rgba(31, 157, 99, 0.5);
+}
+
+.public-apply-shell .public-apply-footnote {
+  margin: 0.85rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--public-muted);
+}
+
+.public-apply-shell .public-apply-error {
   margin: 0;
-  padding: 0.5rem 0.65rem;
-  border-radius: 6px;
-  background: var(--danger-bg);
-  color: var(--danger-text-muted);
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  background: rgba(220, 80, 80, 0.15);
+  border: 1px solid rgba(220, 80, 80, 0.35);
+  color: #f5b4b4;
   font-size: 0.875rem;
 }
 
-.public-apply-submit,
-.public-apply-wa-btn {
+.public-apply-shell .public-apply-button,
+.public-apply-shell .public-apply-wa-btn {
   display: block;
   width: 100%;
-  margin-top: 0.5rem;
-  padding: 0.65rem 1rem;
+  margin-top: 0.35rem;
+  padding: 0.72rem 1rem;
   border: none;
-  border-radius: 8px;
-  background: #25d366;
+  border-radius: 12px;
+  background: var(--public-cta);
   color: #fff;
   font: inherit;
   font-size: 1rem;
   font-weight: 600;
+  line-height: 1.3;
   text-align: center;
   text-decoration: none;
   cursor: pointer;
+  box-shadow: 0 4px 14px rgba(31, 157, 99, 0.25);
+  transition: background 0.15s ease;
 }
 
-.public-apply-submit:disabled {
-  opacity: 0.65;
+.public-apply-shell .public-apply-button:hover:not(:disabled),
+.public-apply-shell .public-apply-wa-btn:hover {
+  background: var(--public-cta-hover);
+}
+
+.public-apply-shell .public-apply-button:disabled {
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
-.public-apply-thankyou-context {
-  margin: 0.5rem 0 0;
+.public-apply-shell .public-apply-business-line {
+  margin: 0.75rem 0 0;
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
   font-size: 0.875rem;
+  color: var(--public-text);
 }
 
-.public-apply-thankyou-note {
+.public-apply-shell .public-apply-thankyou-note {
   margin-top: 1rem;
-  font-size: 0.8125rem;
-  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--public-muted);
 }
 
-.public-apply-wa-fallback {
+.public-apply-shell .public-apply-wa-fallback {
   margin-top: 0.75rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  background: rgba(255, 200, 80, 0.1);
+  border: 1px solid rgba(255, 200, 80, 0.25);
+  font-size: 0.875rem;
+  color: #e8d4a8;
+}
+
+@media (max-width: 380px) {
+  .public-apply-shell {
+    padding: 0.75rem 0.75rem 1.5rem;
+  }
+
+  .public-apply-shell .public-apply-card,
+  .public-apply-shell .public-thank-you-card {
+    padding: 1.1rem 0.9rem;
+  }
 }
 
 .ad-leads-table-wrap {

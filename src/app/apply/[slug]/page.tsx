@@ -13,20 +13,37 @@ export default async function PublicApplyPage({
 
   if (!link || !link.isActive) {
     return (
-      <div className="page public-apply-page">
-        <div className="public-apply-card">
-          <h1>Form unavailable</h1>
-          <p className="sub">This free trial form is not active or does not exist.</p>
+      <div className="public-apply-shell">
+        <div className="page public-apply-page">
+          <div className="public-apply-card">
+            <h1>表格暂时无法使用 / Form unavailable</h1>
+            <p className="public-apply-bilingual">
+              这个免费试用表格目前未开放，请稍后再试或联系我们。
+            </p>
+            <p className="public-apply-bilingual">
+              This free trial form is not available right now. Please try again later
+              or contact us.
+            </p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="page public-apply-page">
-      <div className="public-apply-card">
-        <h1>Free trial request</h1>
-        <ApplyForm slug={slug} linkName={link.name} />
+    <div className="public-apply-shell">
+      <div className="page public-apply-page">
+        <div className="public-apply-card">
+          <h1>申请免费试用 / Free Trial Request</h1>
+          <p className="public-apply-lead">
+            留下店铺资料后，我们会通过 WhatsApp 跟你确认设置步骤。
+          </p>
+          <p className="public-apply-bilingual">
+            Submit your shop details and we&apos;ll confirm the setup steps by
+            WhatsApp.
+          </p>
+          <ApplyForm slug={slug} />
+        </div>
       </div>
     </div>
   );
