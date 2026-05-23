@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { buildApplyFormUrl } from "@/appUrl";
 import { AdApplyLinkForm } from "./AdApplyLinkForm";
 import { AdApplyLinkRow } from "./AdApplyLinkRow";
 
@@ -26,6 +27,9 @@ export default async function AdApplyLinksPage() {
         Create one apply link per landing page or funnel step. Link name is required;
         landing page and Facebook Ads fields can stay empty until campaigns are ready.
       </p>
+      <p className="sub ad-apply-links-hint">
+        Use the full form link below as the button URL on your landing page.
+      </p>
 
       <section className="section ad-apply-new-section">
         <h2 className="ad-section-heading">New apply link</h2>
@@ -39,7 +43,11 @@ export default async function AdApplyLinksPage() {
         ) : (
           <div className="ad-apply-links-list">
             {links.map((link) => (
-              <AdApplyLinkRow key={link.id} link={link} />
+              <AdApplyLinkRow
+                key={link.id}
+                link={link}
+                fullFormLink={buildApplyFormUrl(link.slug)}
+              />
             ))}
           </div>
         )}

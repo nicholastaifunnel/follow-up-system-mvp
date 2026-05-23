@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import Link from "next/link";
 import Script from "next/script";
-import { ThemeToggle } from "./ThemeToggle";
+import { AppTopBar } from "./AppTopBar";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -21,12 +20,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{ __html: themeBootstrap }}
         />
-        <div className="app-top-bar">
-          <Link href="/logout" className="theme-toggle" prefetch={false}>
-            <span className="theme-toggle-label">Logout</span>
-          </Link>
-          <ThemeToggle />
-        </div>
+        <AppTopBar />
         {children}
       </body>
     </html>
