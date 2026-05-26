@@ -61,38 +61,26 @@ export function DemoExperienceModal({
         </button>
 
         <div className="review-qr-demo">
-          <h2 id="review-qr-demo-title">体验 Review QR 流程</h2>
+          <h2 id="review-qr-demo-title">先体验顾客评价流程</h2>
           <p className="review-qr-demo-sub">
-            你可以打开 Demo 页面，像真实顾客一样测试：
+            你可以先像真实顾客一样测试：
+            选择平台、生成评价、复制内容，再到 Facebook / Google 提交。
           </p>
 
-          <ol className="review-qr-demo-steps">
-            <li>选择平台</li>
-            <li>生成评价</li>
-            <li>复制内容</li>
-            <li>跳到 Facebook / Google 提交</li>
-          </ol>
-
-          <p className="review-qr-demo-note">
-            Demo 会在新页面打开。测试完成后，请回到这个页面继续了解免费试用。
+          <p className="review-qr-demo-hint">
+            打开 Demo 后会在新页面进行测试。
+            <br />
+            测试完成后，回到这个页面继续了解免费试用。
           </p>
 
           <div className="review-qr-demo-actions">
             <button
               type="button"
-              className="review-qr-cta review-qr-cta--wide"
+              className="review-qr-cta review-qr-cta--wide review-qr-cta--demo-open"
               onClick={openDemoPage}
             >
               打开 Demo 页面
             </button>
-            <a
-              className="review-qr-demo-fallback-link"
-              href={demoUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              如果 Demo 无法显示，请点击这里打开新页面
-            </a>
           </div>
 
           <p className="review-qr-demo-note">
@@ -103,4 +91,3 @@ export function DemoExperienceModal({
     </div>
   );
 }
-

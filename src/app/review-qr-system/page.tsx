@@ -4,7 +4,7 @@ import { ReviewQrLandingClient } from "./ReviewQrLandingClient";
 export const metadata: Metadata = {
   title: "Review QR System — 美容店 Google / Facebook 评价",
   description:
-    "Review QR System 帮美容店更轻松收集 Google Review 和 Facebook 评价。申请 1 个月免费试用。",
+    "很多美容店有满意顾客，但评价没有增加。Review QR System 帮顾客扫码后按步骤留下 Google / Facebook 真实评价。先免费试用 1 个月。",
 };
 
 export default function ReviewQrSystemLandingPage() {
