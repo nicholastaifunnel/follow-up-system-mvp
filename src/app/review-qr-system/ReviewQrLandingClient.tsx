@@ -197,10 +197,9 @@ function IconQr() {
   );
 }
 
-function SectionTag({ number, children }: { number: string; children: ReactNode }) {
+function SectionTag({ children }: { children: ReactNode }) {
   return (
     <div className="review-qr-tag">
-      <span className="review-qr-tag-num">{number}</span>
       <h2>{children}</h2>
     </div>
   );
@@ -360,7 +359,7 @@ export function ReviewQrLandingClient() {
 
       <section className="review-qr-section review-qr-section--light">
         <div className="review-qr-section-inner">
-          <SectionTag number="01">为什么满意顾客没有变成 Review？</SectionTag>
+          <SectionTag>为什么满意顾客没有变成 Review？</SectionTag>
           <p className="review-qr-copy">
             很多老板以为顾客满意就会自然写评价。
             <br />
@@ -384,7 +383,7 @@ export function ReviewQrLandingClient() {
 
       <section className="review-qr-section review-qr-section--trust">
         <div className="review-qr-section-inner">
-          <SectionTag number="02">这不是刷评价，也不是假评价</SectionTag>
+          <SectionTag>这不是刷评价，也不是假评价</SectionTag>
           <p className="review-qr-copy">
             系统不会代写假评价，也不会帮你刷 Google Review。AI 只是帮助顾客整理文字，
             最后还是由顾客自己复制并提交到 Google / Facebook。
@@ -403,7 +402,7 @@ export function ReviewQrLandingClient() {
 
       <section className="review-qr-section review-qr-section--dark">
         <div className="review-qr-section-inner">
-          <SectionTag number="03">Review QR System 怎么帮你</SectionTag>
+          <SectionTag>Review QR System 怎么帮你</SectionTag>
           <p className="review-qr-copy">
             它不是帮你刷评价。
             <br />
@@ -425,7 +424,7 @@ export function ReviewQrLandingClient() {
 
       <section className="review-qr-section review-qr-section--gradient">
         <div className="review-qr-section-inner">
-          <SectionTag number="04">顾客只需要 3 个步骤</SectionTag>
+          <SectionTag>顾客只需要 3 个步骤</SectionTag>
           <div className="review-qr-steps">
             {HOW_IT_WORKS.map((item) => (
               <article key={item.step} className="review-qr-step">
@@ -440,7 +439,7 @@ export function ReviewQrLandingClient() {
 
       <section className="review-qr-section review-qr-section--light">
         <div className="review-qr-section-inner">
-          <SectionTag number="05">为什么对美容店老板有帮助</SectionTag>
+          <SectionTag>为什么对美容店老板有帮助</SectionTag>
           <ul className="review-qr-why-list">
             {WHY_HELPS.map((item) => (
               <li key={item}>
@@ -484,7 +483,7 @@ export function ReviewQrLandingClient() {
 
       <section className="review-qr-section review-qr-section--offer">
         <div className="review-qr-section-inner">
-          <SectionTag number="06">先免费试用 1 个月</SectionTag>
+          <SectionTag>先免费试用 1 个月</SectionTag>
           <p className="review-qr-copy review-qr-offer-lead">
             先让顾客真实使用看看。
             <br />
@@ -496,7 +495,7 @@ export function ReviewQrLandingClient() {
 
           <div className="review-qr-price-card">
             <div className="review-qr-price-label">Early Bird 优惠价</div>
-            <div className="review-qr-price-main">RM199 / 年</div>
+            <div className="review-qr-price-main">RM199 / year</div>
             <p className="review-qr-price-limit">只限首50位商家</p>
             <p className="review-qr-price-intro">
               适合想持续增加 Google / Facebook 评价的美容店。
@@ -518,7 +517,7 @@ export function ReviewQrLandingClient() {
 
       <section className="review-qr-section">
         <div className="review-qr-section-inner">
-          <SectionTag number="07">常见问题</SectionTag>
+          <SectionTag>常见问题</SectionTag>
           <div className="review-qr-faq">
             {FAQ_ITEMS.map((item) => (
               <details key={item.q} className="review-qr-faq-item">
@@ -544,7 +543,9 @@ export function ReviewQrLandingClient() {
       </section>
 
       <section className="review-qr-final">
-        <h2>让满意顾客更容易留下真实 Review</h2>
+        <h2>
+          让满意顾客更容易留下真实 <span>Review</span>
+        </h2>
         <p>
           先试 1 个月，看看顾客是否愿意使用。
           <br />

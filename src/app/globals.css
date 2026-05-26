@@ -5780,6 +5780,12 @@ html[data-theme="dark"] .review-row-limit-btn--active {
   display: none;
 }
 
+.review-qr-final h2 span {
+  display: inline-block;
+  color: #e8c96a;
+  font-size: 1.08em;
+}
+
 @media (max-width: 760px) {
   .review-qr-hero {
     padding: 2.25rem 1rem 2.4rem;
@@ -5793,9 +5799,27 @@ html[data-theme="dark"] .review-row-limit-btn--active {
     margin-top: 1rem;
   }
 
+  .review-qr-cta-row .review-qr-cta-secondary {
+    border: 1px solid rgba(232, 201, 106, 0.42);
+    background:
+      linear-gradient(135deg, rgba(232, 201, 106, 0.14), rgba(255, 255, 255, 0.08)),
+      rgba(15, 23, 42, 0.88);
+    color: #fff7d6;
+    box-shadow:
+      0 14px 32px rgba(0, 0, 0, 0.28),
+      0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+  }
+
+  .review-qr-hero-proof {
+    position: relative;
+    z-index: 2;
+    margin-top: 0.9rem;
+    margin-bottom: 0.45rem;
+  }
+
   .review-qr-hero-visual {
     min-height: 18.25rem;
-    margin-top: 0.9rem;
+    margin-top: 1.25rem;
   }
 
   .review-qr-mock-qr {
