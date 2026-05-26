@@ -5454,6 +5454,326 @@ html[data-theme="dark"] .review-row-limit-btn--active {
   }
 }
 
+/* Mobile-first conversion polish for Review QR ads page */
+.review-qr-hero-copy {
+  position: relative;
+  z-index: 1;
+}
+
+.review-qr-hero-proof {
+  display: inline-flex;
+  margin-top: 1rem;
+  padding: 0.55rem 0.78rem;
+  border: 1px solid rgba(232, 201, 106, 0.3);
+  border-radius: 999px;
+  background: rgba(232, 201, 106, 0.1);
+  color: #fde68a;
+  font-size: 0.82rem;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.review-qr-scene-section {
+  padding: clamp(2.7rem, 6vw, 4.1rem) 1.25rem;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(32, 180, 107, 0.1), transparent 34%),
+    #0b1324;
+}
+
+.review-qr-scene-head {
+  max-width: 42rem;
+}
+
+.review-qr-scene-head span {
+  display: inline-flex;
+  margin-bottom: 0.7rem;
+  padding: 0.35rem 0.62rem;
+  border-radius: 999px;
+  background: rgba(124, 58, 237, 0.16);
+  color: #ddd6fe;
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
+.review-qr-scene-head h2 {
+  margin: 0;
+  max-width: 15ch;
+  color: #f8fafc;
+  font-size: clamp(1.75rem, 4.8vw, 2.7rem);
+  line-height: 1.06;
+  letter-spacing: 0;
+}
+
+.review-qr-scene-head p {
+  margin: 0.55rem 0 0;
+  color: var(--rqr-muted);
+  font-size: 1.02rem;
+}
+
+.review-qr-scene-grid {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 1.35rem;
+}
+
+.review-qr-scene-card {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.review-qr-scene-card span {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  border-radius: 999px;
+  background: rgba(32, 180, 107, 0.16);
+  color: #bbf7d0;
+  font-size: 0.86rem;
+  font-weight: 950;
+}
+
+.review-qr-scene-card p {
+  margin: 0;
+  color: rgba(241, 245, 249, 0.94);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.review-qr-section--offer .review-qr-section-inner {
+  display: block;
+}
+
+.review-qr-section--offer .review-qr-copy {
+  color: rgba(241, 245, 249, 0.9);
+}
+
+.review-qr-price-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.review-qr-price-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 12rem;
+  height: 12rem;
+  background: radial-gradient(circle, rgba(232, 201, 106, 0.14), transparent 64%);
+  pointer-events: none;
+}
+
+.review-qr-price-label,
+.review-qr-price-main,
+.review-qr-price-limit,
+.review-qr-price-intro,
+.review-qr-price-list,
+.review-qr-price-trial,
+.review-qr-price-note {
+  position: relative;
+}
+
+.review-qr-faq details:hover {
+  border-color: rgba(124, 58, 237, 0.28);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+@media (min-width: 761px) {
+  .review-qr-scene-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .review-qr-nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+
+  .review-qr-nav-inner {
+    min-height: 4rem;
+  }
+
+  .review-qr-nav-cta {
+    display: none;
+  }
+
+  .review-qr-hero {
+    padding: 3.5rem 1rem 2.75rem;
+  }
+
+  .review-qr-hero-grid {
+    gap: 1.7rem;
+  }
+
+  .review-qr-pill {
+    margin-bottom: 0.9rem;
+    font-size: 0.76rem;
+  }
+
+  .review-qr-hero-title {
+    max-width: 12ch;
+    font-size: clamp(2.55rem, 14vw, 3.45rem);
+    line-height: 0.96;
+  }
+
+  .review-qr-lead {
+    max-width: 100%;
+    margin-top: 0.9rem;
+    font-size: 1rem;
+    line-height: 1.55;
+  }
+
+  .review-qr-lead--main {
+    font-size: 1.08rem;
+  }
+
+  .review-qr-cta-row {
+    gap: 0.75rem;
+    margin-top: 1.2rem;
+  }
+
+  .review-qr-cta-row .review-qr-cta {
+    min-height: 3.2rem;
+    border-radius: 14px;
+    font-size: 0.98rem;
+  }
+
+  .review-qr-cta-secondary {
+    color: rgba(226, 232, 240, 0.94);
+  }
+
+  .review-qr-hero-proof {
+    width: 100%;
+    justify-content: center;
+    margin-top: 0.85rem;
+    border-radius: 12px;
+  }
+
+  .review-qr-hero-visual {
+    min-height: 20.5rem;
+    margin-top: 0.25rem;
+  }
+
+  .review-qr-mock-qr {
+    left: 0.8rem;
+    top: 0.9rem;
+    width: 46%;
+  }
+
+  .review-qr-mock-qr-title {
+    font-size: 0.98rem;
+  }
+
+  .review-qr-mock-qr-sub {
+    font-size: 0.78rem;
+  }
+
+  .review-qr-mock-qr-box {
+    padding: 0.7rem;
+  }
+
+  .review-qr-mock-phone {
+    right: 0.7rem;
+    bottom: 0.8rem;
+    width: 59%;
+    padding: 0.78rem 0.68rem 0.8rem;
+  }
+
+  .review-qr-phone-card,
+  .review-qr-copy-preview {
+    padding: 0.58rem;
+  }
+
+  .review-qr-phone-card strong {
+    font-size: 0.75rem;
+  }
+
+  .review-qr-mock-btns span {
+    font-size: 0.6rem;
+  }
+
+  .review-qr-phone-submit {
+    font-size: 0.64rem;
+  }
+
+  .review-qr-scene-section {
+    padding: 2.55rem 1rem;
+  }
+
+  .review-qr-scene-card {
+    align-items: flex-start;
+    padding: 1rem 0.95rem;
+  }
+
+  .review-qr-problem-list,
+  .review-qr-feature-list,
+  .review-qr-why-list {
+    gap: 0.85rem;
+    margin-top: 1.25rem;
+  }
+
+  .review-qr-problem-list li,
+  .review-qr-feature-list li,
+  .review-qr-why-list li,
+  .review-qr-trust-card,
+  .review-qr-fit-card {
+    border-radius: 16px;
+    padding: 1rem;
+  }
+
+  .review-qr-step {
+    min-height: auto;
+    padding: 1.15rem;
+  }
+
+  .review-qr-step-label {
+    font-size: 0.72rem;
+  }
+
+  .review-qr-price-card {
+    margin-top: 0.25rem;
+    border-radius: 20px;
+  }
+
+  .review-qr-price-main {
+    font-size: 2.45rem;
+  }
+
+  .review-qr-price-limit {
+    font-size: 0.84rem;
+  }
+
+  .review-qr-faq {
+    gap: 0.75rem;
+  }
+
+  .review-qr-faq details {
+    padding: 0.9rem 0.95rem;
+  }
+
+  .review-qr-faq summary {
+    min-height: 3rem;
+    font-size: 0.95rem;
+  }
+
+  .review-qr-faq p {
+    font-size: 0.9rem;
+    line-height: 1.65;
+  }
+
+  .review-qr-final h2 {
+    font-size: clamp(1.75rem, 9vw, 2.45rem);
+  }
+}
+
 .ad-leads-table-wrap {
   overflow-x: auto;
 }

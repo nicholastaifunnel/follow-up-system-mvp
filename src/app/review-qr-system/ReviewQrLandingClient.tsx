@@ -19,6 +19,12 @@ const PROBLEMS = [
   "老板想增加评价，但不想让顾客觉得被强迫",
 ];
 
+const REAL_SCENES = [
+  "顾客刚做完服务，满意度最高",
+  "员工不需要尴尬开口催评价",
+  "顾客扫码后，系统一步一步引导完成",
+];
+
 const TRUST_POINTS = [
   {
     title: "真实顾客",
@@ -37,11 +43,11 @@ const TRUST_POINTS = [
 const SOLUTION_POINTS = [
   {
     title: "顾客扫码",
-    desc: "顾客付款后扫描 QR，进入评价页面。",
+    desc: "顾客扫码进入专属评价页面。",
   },
   {
     title: "选择平台",
-    desc: "可以安排 Google Review 或 Facebook 评价入口。",
+    desc: "选择 Google Review 或 Facebook 评价。",
   },
   {
     title: "AI 协助整理文字",
@@ -53,14 +59,14 @@ const SOLUTION_POINTS = [
   },
   {
     title: "老板更容易持续累积评价",
-    desc: "不用每天硬开口，流程固定下来后更容易执行。",
+    desc: "老板更容易持续收集真实评价。",
   },
 ];
 
 const HOW_IT_WORKS = [
   {
     step: "Step 1",
-    title: "扫码进入页面",
+    title: "扫描进入页面",
     desc: "顾客付款后，扫描店里的 Review QR。",
   },
   {
@@ -84,19 +90,19 @@ const WHY_HELPS = [
 ];
 
 const FIT_FOR_ITEMS = [
-  "让满意顾客更容易留下真实评价",
-  "持续增加 Google / Facebook 评价",
-  "减少员工开口请评价的压力",
-  "用简单流程引导顾客完成评价",
-  "先免费试用，再决定是否继续",
+  "认真服务顾客，想累积真实评价",
+  "想增加 Google / Facebook 评价",
+  "员工开口请顾客评价会尴尬",
+  "用简单方式长期收集评价",
+  "美容店、美甲、美睫、纹眉、spa、养生馆",
 ];
 
 const NOT_FIT_FOR_ITEMS = [
   "买假评价",
-  "自动刷 Google Review",
-  "不经过顾客直接提交评价",
-  "一天内突然大量增加不真实评价",
-  "完全不参与设置和确认流程",
+  "想自动刷评价",
+  "不想让顾客自己提交评价",
+  "完全不想参与后续跟进",
+  "只想一次设置后完全不用理",
 ];
 
 const PRICE_INCLUDES = [
@@ -109,7 +115,7 @@ const PRICE_INCLUDES = [
 
 const FAQ_ITEMS = [
   {
-    q: "这个系统会不会拿来做假 Review？",
+    q: "这个系统会不会拿假 Review？",
     a: "不会。系统不会帮你写假评价，也不会帮你刷评价。顾客必须根据自己的真实体验确认内容，并自己提交到 Google 或 Facebook。",
   },
   {
@@ -125,12 +131,12 @@ const FAQ_ITEMS = [
     a: "顾客只需要输入简单体验，系统会协助整理成比较自然的评价文字。顾客确认后，再自己复制并提交。",
   },
   {
-    q: "需要安装 App 或登录账号吗？",
-    a: "不需要安装 App。顾客只需要用手机扫码打开页面，根据步骤操作。",
-  },
-  {
     q: "适合什么类型的店？",
     a: "适合美容店、facial、美甲、美睫、纹眉、spa、养生馆、美发等需要本地顾客信任的行业。",
+  },
+  {
+    q: "需要安装 App 或登录账号吗？",
+    a: "不需要安装 App。顾客只需要用手机扫码打开页面，根据步骤操作。",
   },
   {
     q: "免费试用后一定要继续吗？",
@@ -291,6 +297,9 @@ export function ReviewQrLandingClient() {
               <CtaButton onOpen={openApply} />
               <DemoButton onOpen={openDemo} />
             </div>
+            <div className="review-qr-hero-proof">
+              1 个月免费试用｜不满意可以不继续
+            </div>
           </div>
 
           <div className="review-qr-hero-visual" aria-hidden>
@@ -327,6 +336,24 @@ export function ReviewQrLandingClient() {
               </div>
               <div className="review-qr-phone-submit">复制并去平台提交</div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="review-qr-scene-section">
+        <div className="review-qr-section-inner">
+          <div className="review-qr-scene-head">
+            <span>真实门店场景</span>
+            <h2>很多顾客其实愿意给好评</h2>
+            <p>只是当下没人提醒</p>
+          </div>
+          <div className="review-qr-scene-grid">
+            {REAL_SCENES.map((item, index) => (
+              <article key={item} className="review-qr-scene-card">
+                <span>{index + 1}</span>
+                <p>{item}</p>
+              </article>
+            ))}
           </div>
         </div>
       </section>
