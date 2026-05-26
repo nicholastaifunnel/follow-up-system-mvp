@@ -19,50 +19,57 @@ const PROBLEMS = [
   "老板想增加评价，但不想让顾客觉得被强迫",
 ];
 
-const PRICE_INCLUDES = [
-  "专属 Review QR 页面",
-  "Google / Facebook 评价入口",
-  "AI 协助顾客整理评价文字",
-  "QR 立牌设计指导",
-  "基础设置协助",
+const TRUST_POINTS = [
+  {
+    title: "真实顾客",
+    desc: "只有真实消费或体验后的顾客，才适合留下评价。",
+  },
+  {
+    title: "真实体验",
+    desc: "评价内容来自顾客自己的体验，不是虚假内容。",
+  },
+  {
+    title: "顾客自己提交",
+    desc: "系统只是让流程更简单，最后由顾客自己提交到平台。",
+  },
 ];
 
 const SOLUTION_POINTS = [
   {
     title: "顾客扫码",
-    desc: "顾客付款后扫描 QR，直接进入评价页面。",
+    desc: "顾客付款后扫描 QR，进入评价页面。",
   },
   {
     title: "选择平台",
-    desc: "顾客可以选择 Google 或 Facebook。",
+    desc: "可以安排 Google Review 或 Facebook 评价入口。",
   },
   {
     title: "AI 协助整理文字",
-    desc: "系统根据顾客的真实体验，帮顾客整理成自然的评价文字。",
+    desc: "顾客输入简单体验，系统协助整理成自然的评价文字。",
   },
   {
     title: "顾客自己复制提交",
-    desc: "顾客确认内容后，自己复制并提交到对应平台。",
+    desc: "顾客确认内容后，自己复制并提交到平台。",
   },
   {
     title: "老板更容易持续累积评价",
-    desc: "不用每天硬开口，流程固定下来后更容易长期执行。",
+    desc: "不用每天硬开口，流程固定下来后更容易执行。",
   },
 ];
 
 const HOW_IT_WORKS = [
   {
-    step: "STEP 1",
+    step: "Step 1",
     title: "扫码进入页面",
     desc: "顾客付款后，扫描店里的 Review QR。",
   },
   {
-    step: "STEP 2",
+    step: "Step 2",
     title: "选择 Google / Facebook",
     desc: "顾客选择想留下评价的平台。",
   },
   {
-    step: "STEP 3",
+    step: "Step 3",
     title: "复制并提交评价",
     desc: "顾客确认文字后，复制到平台自己提交。",
   },
@@ -72,34 +79,42 @@ const WHY_HELPS = [
   "更容易在合适时机提醒顾客评价",
   "减少员工开口的尴尬和压力",
   "让顾客知道下一步该怎么做",
-  "帮 Google / Facebook 评价持续增加",
-  "适合 facial、美甲、美睫、纹眉、spa、养生馆",
+  "帮 Google / Facebook 评价持续累积",
+  "适合美容店、美甲、美睫、纹眉、spa、养生馆",
 ];
 
 const FIT_FOR_ITEMS = [
   "让满意顾客更容易留下真实评价",
   "持续增加 Google / Facebook 评价",
-  "减少员工开口请顾客评价的尴尬",
+  "减少员工开口请评价的压力",
   "用简单流程引导顾客完成评价",
-  "先免费试用，看顾客反应再决定",
+  "先免费试用，再决定是否继续",
 ];
 
 const NOT_FIT_FOR_ITEMS = [
   "买假评价",
-  "自动帮顾客乱写评价",
-  "不经过顾客同意就提交评价",
+  "自动刷 Google Review",
+  "不经过顾客直接提交评价",
   "一天内突然大量增加不真实评价",
-  "完全不想参与设置和确认流程",
+  "完全不参与设置和确认流程",
+];
+
+const PRICE_INCLUDES = [
+  "专属 Review QR 页面",
+  "Google / Facebook 评价入口",
+  "AI 协助顾客整理评价文字",
+  "QR 立牌设计指导",
+  "基础设置协助",
 ];
 
 const FAQ_ITEMS = [
   {
-    q: "这个系统会不会像买 review？",
-    a: "不会。这个系统不是买 review，也不是假 review。顾客是根据真实体验自己提交评价，系统只是让顾客更容易完成这个动作。",
+    q: "这个系统会不会拿来做假 Review？",
+    a: "不会。系统不会帮你写假评价，也不会帮你刷评价。顾客必须根据自己的真实体验确认内容，并自己提交到 Google 或 Facebook。",
   },
   {
     q: "顾客会不会觉得很麻烦？",
-    a: "不会。顾客只需要扫描 QR，跟着页面步骤走，系统会协助整理评价文字。比叫顾客自己打开 Google、慢慢想怎么写简单很多。",
+    a: "不会。流程设计成扫码、选择平台、整理文字、复制提交。重点是让顾客少想一点、少找一点，更容易完成评价。",
   },
   {
     q: "可以同时收集 Google 和 Facebook 评价吗？",
@@ -107,23 +122,23 @@ const FAQ_ITEMS = [
   },
   {
     q: "顾客不会写评价怎么办？",
-    a: "系统可以协助顾客整理评价文字。顾客不用从零开始想，只需要根据真实体验选择和调整内容，再自己复制提交。",
-  },
-  {
-    q: "适合什么类型的店？",
-    a: "特别适合美容、美甲、美睫、洗脸、纹眉、理发、按摩、护理类商家。只要你的顾客满意离开，但平时很少主动留下评价，就适合使用。",
+    a: "顾客只需要输入简单体验，系统会协助整理成比较自然的评价文字。顾客确认后，再自己复制并提交。",
   },
   {
     q: "需要安装 App 或登录账号吗？",
-    a: "不需要。顾客用手机扫码就可以进入页面。商家也不需要复杂操作，我们会协助完成基础设置。",
+    a: "不需要安装 App。顾客只需要用手机扫码打开页面，根据步骤操作。",
+  },
+  {
+    q: "适合什么类型的店？",
+    a: "适合美容店、facial、美甲、美睫、纹眉、spa、养生馆、美发等需要本地顾客信任的行业。",
   },
   {
     q: "免费试用后一定要继续吗？",
-    a: "不需要。先免费试用 1 个月，真实看看顾客会不会使用、评价有没有增加。觉得有帮助，之后才决定要不要继续。",
+    a: "不用。第一个月可以免费试用，觉得有帮助才继续。不满意可以不继续。",
   },
   {
     q: "试用后继续使用多少钱？",
-    a: "Early Bird 优惠价是 RM199 / 年，只限首 50 位商家。之后价格会做调整。",
+    a: "Early Bird 优惠价是 RM199 / 年，只限首50位商家。之后价格可能会调整。",
   },
 ];
 
@@ -165,21 +180,13 @@ function IconX({ className = "" }: { className?: string }) {
   );
 }
 
-function IconStar() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z" />
-    </svg>
-  );
-}
-
 function IconQr() {
   return (
-    <svg width="56" height="56" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <rect x="3" y="3" width="7" height="7" stroke="currentColor" strokeWidth="2" />
-      <rect x="14" y="3" width="7" height="7" stroke="currentColor" strokeWidth="2" />
-      <rect x="3" y="14" width="7" height="7" stroke="currentColor" strokeWidth="2" />
-      <path d="M14 14h3v3h-3v-3zm4 0h3v7h-7v-3h4v-4z" stroke="currentColor" strokeWidth="2" />
+    <svg width="54" height="54" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2" />
+      <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2" />
+      <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2" />
+      <path d="M14 14h3v3h-3v-3Zm4 0h3v7h-7v-3h4v-4Z" stroke="currentColor" strokeWidth="2" />
     </svg>
   );
 }
@@ -252,7 +259,7 @@ export function ReviewQrLandingClient() {
         <div className="review-qr-nav-inner">
           <div className="review-qr-brand">
             <div className="review-qr-brand-mark" aria-hidden>
-              ★
+              R
             </div>
             <div>
               <div className="review-qr-brand-title">Review QR System</div>
@@ -265,53 +272,60 @@ export function ReviewQrLandingClient() {
 
       <section className="review-qr-hero">
         <div className="review-qr-hero-grid">
-          <div>
-            <span className="review-qr-pill">⭐ 美容店评价收集工具</span>
+          <div className="review-qr-hero-copy">
+            <span className="review-qr-pill">美容店老板的真实评价流程</span>
             <h1 className="review-qr-hero-title">
               你服务到顾客满意
               <br />
-              <span className="review-qr-hero-title-line2">不代表 Review 会留下</span>
+              <span>不代表 Review 会留下</span>
             </h1>
-            <p className="review-qr-lead">
-              很多美容店不是没有满意顾客，而是顾客离开后就忘了写评价。
+            <p className="review-qr-lead review-qr-lead--main">
+              很多美容店不是没有满意顾客，
+              <br />
+              而是顾客离开后，就忘了留下评价。
             </p>
             <p className="review-qr-lead">
-              Review QR System 让顾客扫码后，按步骤完成 Google / Facebook 评价。
+              Review QR System 让顾客扫码后，跟着简单步骤完成 Google / Facebook Review。
             </p>
             <div className="review-qr-cta-row">
               <CtaButton onOpen={openApply} />
               <DemoButton onOpen={openDemo} />
             </div>
           </div>
+
           <div className="review-qr-hero-visual" aria-hidden>
             <div className="review-qr-mock-qr">
+              <div className="review-qr-mock-kicker">COUNTER QR</div>
               <div className="review-qr-mock-qr-title">Review QR</div>
               <div className="review-qr-mock-qr-sub">
-                您的真实评价
+                扫一扫
                 <br />
-                是我们的进步动力
+                留下真实评价
               </div>
               <div className="review-qr-mock-qr-box">
                 <IconQr />
               </div>
-              <div style={{ marginTop: "0.5rem", fontSize: "0.6rem", fontWeight: 700 }}>
-                Google · Facebook
-              </div>
+              <div className="review-qr-mock-platforms">Google / Facebook</div>
             </div>
+
             <div className="review-qr-mock-phone">
-              <h3>Thank You!</h3>
-              <div className="review-qr-mock-stars">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <IconStar key={i} />
-                ))}
+              <div className="review-qr-phone-top" />
+              <div className="review-qr-phone-card">
+                <span>Step 1</span>
+                <strong>选择评价平台</strong>
               </div>
-              <p style={{ margin: "0.5rem 0 0", fontSize: "0.55rem", color: "#64748b" }}>
-                感谢您的评价
-              </p>
               <div className="review-qr-mock-btns">
                 <span>Google Review</span>
                 <span>Facebook 评价</span>
               </div>
+              <div className="review-qr-phone-card review-qr-phone-card--green">
+                <span>Step 2</span>
+                <strong>AI 协助整理文字</strong>
+              </div>
+              <div className="review-qr-copy-preview">
+                “服务很好，环境舒服，员工也很细心...”
+              </div>
+              <div className="review-qr-phone-submit">复制并去平台提交</div>
             </div>
           </div>
         </div>
@@ -319,7 +333,7 @@ export function ReviewQrLandingClient() {
 
       <section className="review-qr-section review-qr-section--light">
         <div className="review-qr-section-inner">
-          <SectionTag number="01">为什么满意顾客没有变成评价？</SectionTag>
+          <SectionTag number="01">为什么满意顾客没有变成 Review？</SectionTag>
           <p className="review-qr-copy">
             很多老板以为顾客满意就会自然写评价。
             <br />
@@ -334,40 +348,47 @@ export function ReviewQrLandingClient() {
             ))}
           </ul>
           <div className="review-qr-mini-cta">
-            <button
-              type="button"
-              className="review-qr-text-cta"
-              onClick={openDemo}
-            >
+            <button type="button" className="review-qr-text-cta" onClick={openDemo}>
               看看顾客体验流程 →
             </button>
           </div>
         </div>
       </section>
 
+      <section className="review-qr-section review-qr-section--trust">
+        <div className="review-qr-section-inner">
+          <SectionTag number="02">这不是刷评价，也不是假评价</SectionTag>
+          <p className="review-qr-copy">
+            系统不会代写假评价，也不会帮你刷 Google Review。AI 只是帮助顾客整理文字，
+            最后还是由顾客自己复制并提交到 Google / Facebook。
+          </p>
+          <div className="review-qr-trust-grid">
+            {TRUST_POINTS.map((item) => (
+              <article key={item.title} className="review-qr-trust-card">
+                <span className="review-qr-trust-mark">真实</span>
+                <h3>{item.title}</h3>
+                <p>{item.desc}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="review-qr-section review-qr-section--dark">
         <div className="review-qr-section-inner">
-          <SectionTag number="02">Review QR System 怎么帮你</SectionTag>
+          <SectionTag number="03">Review QR System 怎么帮你</SectionTag>
           <p className="review-qr-copy">
-            它不是买评价，也不是假评价。
+            它不是帮你刷评价。
             <br />
-            它只是把「提醒顾客写评价」这件事变得更简单、更自然。
+            它是把顾客留下评价的流程变简单，让员工更容易执行。
           </p>
           <ul className="review-qr-feature-list">
-            {SOLUTION_POINTS.map((item) => (
+            {SOLUTION_POINTS.map((item, index) => (
               <li key={item.title}>
-                <IconCheck />
+                <span className="review-qr-feature-num">{index + 1}</span>
                 <div>
                   <strong>{item.title}</strong>
-                  <div
-                    style={{
-                      marginTop: "0.25rem",
-                      fontSize: "0.9rem",
-                      color: "var(--rqr-muted)",
-                    }}
-                  >
-                    {item.desc}
-                  </div>
+                  <p>{item.desc}</p>
                 </div>
               </li>
             ))}
@@ -377,7 +398,7 @@ export function ReviewQrLandingClient() {
 
       <section className="review-qr-section review-qr-section--gradient">
         <div className="review-qr-section-inner">
-          <SectionTag number="03">顾客只需要 3 个步骤</SectionTag>
+          <SectionTag number="04">顾客只需要 3 个步骤</SectionTag>
           <div className="review-qr-steps">
             {HOW_IT_WORKS.map((item) => (
               <article key={item.step} className="review-qr-step">
@@ -392,7 +413,7 @@ export function ReviewQrLandingClient() {
 
       <section className="review-qr-section review-qr-section--light">
         <div className="review-qr-section-inner">
-          <SectionTag number="04">为什么对美容店老板有帮助</SectionTag>
+          <SectionTag number="05">为什么对美容店老板有帮助</SectionTag>
           <ul className="review-qr-why-list">
             {WHY_HELPS.map((item) => (
               <li key={item}>
@@ -404,7 +425,7 @@ export function ReviewQrLandingClient() {
         </div>
       </section>
 
-      <section className="review-qr-section review-qr-section--gradient">
+      <section className="review-qr-section review-qr-section--fit">
         <div className="review-qr-section-inner">
           <h2 className="review-qr-fit-title">适合什么老板？</h2>
           <div className="review-qr-fit-grid">
@@ -434,9 +455,9 @@ export function ReviewQrLandingClient() {
         </div>
       </section>
 
-      <section className="review-qr-section review-qr-section--dark">
+      <section className="review-qr-section review-qr-section--offer">
         <div className="review-qr-section-inner">
-          <SectionTag number="05">先免费试用 1 个月</SectionTag>
+          <SectionTag number="06">先免费试用 1 个月</SectionTag>
           <p className="review-qr-copy review-qr-offer-lead">
             先让顾客真实使用看看。
             <br />
@@ -446,35 +467,31 @@ export function ReviewQrLandingClient() {
             <CtaButton onOpen={openApply} />
           </div>
 
-          <div className="review-qr-price-wrap">
-            <div className="review-qr-price-card">
-              <h3 className="review-qr-price-heading">Early Bird 优惠价</h3>
-              <div className="review-qr-price-amount-inline">
-                <div className="review-qr-price-main">RM199 / 年</div>
-                <p className="review-qr-price-limit">只限首50位商家</p>
-              </div>
-              <p className="review-qr-price-intro">
-                适合想持续增加 Google / Facebook 评价的美容店。
-              </p>
-              <ul className="review-qr-price-list">
-                {PRICE_INCLUDES.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-              <p className="review-qr-price-trial">
-                第一个月免费试用，不满意可以不继续。
-              </p>
-              <p className="review-qr-price-note">
-                Early Bird 价格只开放首50位商家，之后价格会做调整。
-              </p>
-            </div>
+          <div className="review-qr-price-card">
+            <div className="review-qr-price-label">Early Bird 优惠价</div>
+            <div className="review-qr-price-main">RM199 / 年</div>
+            <p className="review-qr-price-limit">只限首50位商家</p>
+            <p className="review-qr-price-intro">
+              适合想持续增加 Google / Facebook 评价的美容店。
+            </p>
+            <ul className="review-qr-price-list">
+              {PRICE_INCLUDES.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+            <p className="review-qr-price-trial">
+              第一个月免费试用，不满意可以不继续。
+            </p>
+            <p className="review-qr-price-note">
+              Early Bird 价格只开放首50商家，之后价格会做调整。
+            </p>
           </div>
         </div>
       </section>
 
       <section className="review-qr-section">
         <div className="review-qr-section-inner">
-          <SectionTag number="06">常见问题</SectionTag>
+          <SectionTag number="07">常见问题</SectionTag>
           <div className="review-qr-faq">
             {FAQ_ITEMS.map((item) => (
               <details key={item.q} className="review-qr-faq-item">
@@ -500,16 +517,18 @@ export function ReviewQrLandingClient() {
       </section>
 
       <section className="review-qr-final">
-        <h2>让满意顾客更容易留下真实评价</h2>
+        <h2>让满意顾客更容易留下真实 Review</h2>
         <p>
-          先试 1 个月，看看顾客愿不愿意使用。
+          先试 1 个月，看看顾客是否愿意使用。
           <br />
           如果觉得有帮助，再决定是否继续。
         </p>
         <CtaButton onOpen={openApply} />
       </section>
 
-      <p className="review-qr-footer-note">Review QR System · 美容行业评价收集方案</p>
+      <p className="review-qr-footer-note">
+        Review QR System · 美容行业真实评价收集方案
+      </p>
     </main>
   );
 }
