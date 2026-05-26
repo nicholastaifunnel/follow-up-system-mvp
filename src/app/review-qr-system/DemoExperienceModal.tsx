@@ -62,16 +62,9 @@ export function DemoExperienceModal({
 
         <div className="review-qr-demo">
           <h2 id="review-qr-demo-title">先体验顾客评价流程</h2>
-          <p className="review-qr-demo-sub">
-            Demo 会在新页面打开。
-            <br />
-            你可以像真实顾客一样测试：
-            <br />
-            选择平台、生成评价、复制内容，再回到这个页面继续了解免费试用。
-          </p>
-
+          <p className="review-qr-demo-sub">Demo 会在新页面打开。</p>
           <p className="review-qr-demo-hint">
-            测试完成后，回到这个页面继续了解免费试用。
+            你可以像真实顾客一样测试选择平台、生成评价、复制内容；测试完成后，回到这个页面继续了解免费试用。
           </p>
 
           <div className="review-qr-demo-actions">

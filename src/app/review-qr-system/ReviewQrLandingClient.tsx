@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useState, type ReactNode } from "react";
 import { ApplyTrialModal } from "./ApplyTrialModal";
 import { DemoExperienceModal } from "./DemoExperienceModal";
@@ -90,18 +91,18 @@ const WHY_HELPS = [
 ];
 
 const FIT_FOR_ITEMS = [
-  "认真服务顾客，想累积真实评价",
-  "想增加 Google / Facebook 评价",
-  "员工开口请顾客评价会尴尬",
-  "用简单方式长期收集评价",
-  "美容店、美甲、美睫、纹眉、spa、养生馆",
+  "认真服务，想持续增加真实评价",
+  "有 Google / Facebook 页面",
+  "愿意让员工在付款后提醒顾客",
+  "想把评价流程做得更简单",
+  "先免费试用，看顾客反应再决定",
 ];
 
 const NOT_FIT_FOR_ITEMS = [
-  "买假评价",
+  "想买假评价",
   "想自动刷评价",
-  "不想让顾客自己提交评价",
-  "完全不想参与后续跟进",
+  "不想让顾客自己提交",
+  "完全不想员工参与提醒",
   "只想一次设置后完全不用理",
 ];
 
@@ -144,7 +145,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "试用后继续使用多少钱？",
-    a: "Early Bird 优惠价是 RM199 / 年，只限首50位商家。之后价格可能会调整。",
+    a: "Early Bird 优惠价是 RM199 / year，只限首50位商家。之后价格可能会调整。",
   },
 ];
 
@@ -188,7 +189,7 @@ function IconX({ className = "" }: { className?: string }) {
 
 function IconQr() {
   return (
-    <svg width="54" height="54" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" aria-hidden>
       <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2" />
       <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2" />
       <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2" />
@@ -197,10 +198,39 @@ function IconQr() {
   );
 }
 
-function SectionTag({ children }: { children: ReactNode }) {
+function SectionHead({
+  label,
+  children,
+}: {
+  label?: string;
+  children: ReactNode;
+}) {
   return (
-    <div className="review-qr-tag">
+    <header className="review-qr-head">
+      {label ? <span className="review-qr-eyebrow">{label}</span> : null}
       <h2>{children}</h2>
+    </header>
+  );
+}
+
+function ReviewQrImageSlot({
+  variant,
+  label,
+  className = "",
+  children,
+}: {
+  variant: "hero" | "scene" | "flow";
+  label: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className={`review-qr-image-slot review-qr-image-slot--${variant} ${className}`.trim()}
+      aria-hidden
+    >
+      <span className="review-qr-image-slot-label">{label}</span>
+      {children}
     </div>
   );
 }
@@ -263,10 +293,17 @@ export function ReviewQrLandingClient() {
       <nav className="review-qr-nav">
         <div className="review-qr-nav-inner">
           <div className="review-qr-brand">
-            <div className="review-qr-brand-mark" aria-hidden>
-              R
+            <div className="review-qr-brand-logo-wrap">
+              <Image
+                src="/images/nbr-logo.png"
+                alt="NBR"
+                width={40}
+                height={40}
+                className="review-qr-brand-logo"
+                priority
+              />
             </div>
-            <div>
+            <div className="review-qr-brand-text">
               <div className="review-qr-brand-title">Review QR System</div>
               <div className="review-qr-brand-sub">美容店评价收集工具</div>
             </div>
@@ -290,18 +327,24 @@ export function ReviewQrLandingClient() {
               而是顾客离开后，就忘了留下评价。
             </p>
             <p className="review-qr-lead">
-              Review QR System 让顾客扫码后，跟着简单步骤完成 Google / Facebook Review。
+              Review QR System 让顾客扫码后，
+              <br />
+              跟着简单步骤完成 Google / Facebook Review。
             </p>
             <div className="review-qr-cta-row">
               <CtaButton onOpen={openApply} />
               <DemoButton onOpen={openDemo} />
             </div>
-            <div className="review-qr-hero-proof">
+            <p className="review-qr-hero-proof">
               1 个月免费试用｜不满意可以不继续
-            </div>
+            </p>
           </div>
 
-          <div className="review-qr-hero-visual" aria-hidden>
+          <ReviewQrImageSlot
+            variant="hero"
+            label="美容店柜台 Review QR"
+            className="review-qr-hero-visual"
+          >
             <div className="review-qr-mock-qr">
               <div className="review-qr-mock-kicker">COUNTER QR</div>
               <div className="review-qr-mock-qr-title">Review QR</div>
@@ -326,7 +369,7 @@ export function ReviewQrLandingClient() {
                 <span>Google Review</span>
                 <span>Facebook 评价</span>
               </div>
-              <div className="review-qr-phone-card review-qr-phone-card--green">
+              <div className="review-qr-phone-card review-qr-phone-card--accent">
                 <span>Step 2</span>
                 <strong>AI 协助整理文字</strong>
               </div>
@@ -335,31 +378,59 @@ export function ReviewQrLandingClient() {
               </div>
               <div className="review-qr-phone-submit">复制并去平台提交</div>
             </div>
-          </div>
+          </ReviewQrImageSlot>
         </div>
       </section>
 
       <section className="review-qr-scene-section">
-        <div className="review-qr-section-inner">
+        <div className="review-qr-section-inner review-qr-scene-layout">
+          <div className="review-qr-scene-content">
           <div className="review-qr-scene-head">
             <span>真实门店场景</span>
-            <h2>很多顾客其实愿意给好评</h2>
+            <h2>
+              很多顾客其实愿意
+              <br className="review-qr-br-mobile" />
+              给好评
+            </h2>
             <p>只是当下没人提醒</p>
           </div>
           <div className="review-qr-scene-grid">
-            {REAL_SCENES.map((item, index) => (
+            {REAL_SCENES.map((item) => (
               <article key={item} className="review-qr-scene-card">
-                <span>{index + 1}</span>
+                <span aria-hidden>✦</span>
                 <p>{item}</p>
               </article>
             ))}
           </div>
+          </div>
+          <ReviewQrImageSlot
+            variant="scene"
+            label="真实门店场景"
+            className="review-qr-counter-visual"
+          >
+            <div className="review-qr-counter-card">
+              <div className="review-qr-counter-topline">COUNTER SETUP</div>
+              <div className="review-qr-counter-stand">
+                <div className="review-qr-counter-qr">
+                  <IconQr />
+                </div>
+                <div>
+                  <strong>Review QR</strong>
+                  <span>QR stand on counter</span>
+                </div>
+              </div>
+              <div className="review-qr-counter-phone">
+                <span>Customer flow</span>
+                <strong>Scan → choose platform → copy review</strong>
+              </div>
+            </div>
+          </ReviewQrImageSlot>
         </div>
       </section>
 
-      <section className="review-qr-section review-qr-section--light">
+      <section className="review-qr-section review-qr-section--alt">
         <div className="review-qr-section-inner">
-          <SectionTag>为什么满意顾客没有变成 Review？</SectionTag>
+          <SectionHead>为什么满意顾客没有变成 Review？</SectionHead>
           <p className="review-qr-copy">
             很多老板以为顾客满意就会自然写评价。
             <br />
@@ -381,9 +452,9 @@ export function ReviewQrLandingClient() {
         </div>
       </section>
 
-      <section className="review-qr-section review-qr-section--trust">
+      <section className="review-qr-section">
         <div className="review-qr-section-inner">
-          <SectionTag>这不是刷评价，也不是假评价</SectionTag>
+          <SectionHead label="真实评价">这不是刷评价，也不是假评价</SectionHead>
           <p className="review-qr-copy">
             系统不会代写假评价，也不会帮你刷 Google Review。AI 只是帮助顾客整理文字，
             最后还是由顾客自己复制并提交到 Google / Facebook。
@@ -400,13 +471,14 @@ export function ReviewQrLandingClient() {
         </div>
       </section>
 
-      <section className="review-qr-section review-qr-section--dark">
+      <section className="review-qr-section review-qr-section--alt">
         <div className="review-qr-section-inner">
-          <SectionTag>Review QR System 怎么帮你</SectionTag>
+          <SectionHead label="系统怎么帮你">Review QR System 怎么帮你</SectionHead>
           <p className="review-qr-copy">
             它不是帮你刷评价。
             <br />
-            它是把顾客留下评价的流程变简单，让员工更容易执行。
+            它是把顾客留下评价的流程变简单，
+            <span className="review-qr-copy-keep">让员工更容易执行</span>。
           </p>
           <ul className="review-qr-feature-list">
             {SOLUTION_POINTS.map((item, index) => (
@@ -422,9 +494,25 @@ export function ReviewQrLandingClient() {
         </div>
       </section>
 
-      <section className="review-qr-section review-qr-section--gradient">
+      <section className="review-qr-section">
         <div className="review-qr-section-inner">
-          <SectionTag>顾客只需要 3 个步骤</SectionTag>
+          <SectionHead label="顾客流程">顾客只需要 3 个步骤</SectionHead>
+          <ReviewQrImageSlot
+            variant="flow"
+            label="QR 立牌与手机流程"
+            className="review-qr-flow-showcase"
+          >
+            <div className="review-qr-flow-stand">
+              <span>QR stand</span>
+              <IconQr />
+            </div>
+            <div className="review-qr-flow-device">
+              <div className="review-qr-flow-screen-line" />
+              <div className="review-qr-flow-choice">Google Review</div>
+              <div className="review-qr-flow-choice">Facebook</div>
+              <div className="review-qr-flow-submit">Copy & submit</div>
+            </div>
+          </ReviewQrImageSlot>
           <div className="review-qr-steps">
             {HOW_IT_WORKS.map((item) => (
               <article key={item.step} className="review-qr-step">
@@ -437,9 +525,9 @@ export function ReviewQrLandingClient() {
         </div>
       </section>
 
-      <section className="review-qr-section review-qr-section--light">
+      <section className="review-qr-section review-qr-section--alt">
         <div className="review-qr-section-inner">
-          <SectionTag>为什么对美容店老板有帮助</SectionTag>
+          <SectionHead>为什么对美容店老板有帮助</SectionHead>
           <ul className="review-qr-why-list">
             {WHY_HELPS.map((item) => (
               <li key={item}>
@@ -451,16 +539,16 @@ export function ReviewQrLandingClient() {
         </div>
       </section>
 
-      <section className="review-qr-section review-qr-section--fit">
+      <section className="review-qr-section">
         <div className="review-qr-section-inner">
-          <h2 className="review-qr-fit-title">适合什么老板？</h2>
+          <SectionHead label="适合什么老板">适合什么老板？</SectionHead>
           <div className="review-qr-fit-grid">
             <div className="review-qr-fit-card review-qr-fit-card--yes">
               <h3 className="review-qr-fit-card-title">适合你，如果你想要：</h3>
               <ul className="review-qr-fit-list">
                 {FIT_FOR_ITEMS.map((item) => (
                   <li key={item}>
-                    <IconCheck className="review-qr-icon--yes" />
+                    <IconCheck />
                     <span>{item}</span>
                   </li>
                 ))}
@@ -481,16 +569,18 @@ export function ReviewQrLandingClient() {
         </div>
       </section>
 
-      <section className="review-qr-section review-qr-section--offer">
-        <div className="review-qr-section-inner">
-          <SectionTag>先免费试用 1 个月</SectionTag>
-          <p className="review-qr-copy review-qr-offer-lead">
-            先让顾客真实使用看看。
-            <br />
-            觉得有帮助，之后才决定要不要继续。
-          </p>
-          <div className="review-qr-offer-cta">
-            <CtaButton onOpen={openApply} />
+      <section className="review-qr-section review-qr-section--alt">
+        <div className="review-qr-section-inner review-qr-offer-layout">
+          <div className="review-qr-offer-copy">
+            <SectionHead label="免费试用">先免费试用 1 个月</SectionHead>
+            <p className="review-qr-copy review-qr-offer-lead">
+              先让顾客真实使用看看。
+              <br />
+              觉得有帮助，之后才决定要不要继续。
+            </p>
+            <div className="review-qr-offer-cta">
+              <CtaButton onOpen={openApply} />
+            </div>
           </div>
 
           <div className="review-qr-price-card">
@@ -517,14 +607,14 @@ export function ReviewQrLandingClient() {
 
       <section className="review-qr-section">
         <div className="review-qr-section-inner">
-          <SectionTag>常见问题</SectionTag>
+          <SectionHead label="老板常问的问题">老板最常问的问题</SectionHead>
           <div className="review-qr-faq">
             {FAQ_ITEMS.map((item) => (
               <details key={item.q} className="review-qr-faq-item">
                 <summary>
                   <span className="review-qr-faq-q">{item.q}</span>
                   <span className="review-qr-faq-chevron" aria-hidden>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                       <path
                         d="M6 9l6 6 6-6"
                         stroke="currentColor"
@@ -544,7 +634,9 @@ export function ReviewQrLandingClient() {
 
       <section className="review-qr-final">
         <h2>
-          让满意顾客更容易留下真实 <span>Review</span>
+          让满意顾客更容易留下
+          <br />
+          <span className="review-qr-final-accent">真实 Review</span>
         </h2>
         <p>
           先试 1 个月，看看顾客是否愿意使用。
