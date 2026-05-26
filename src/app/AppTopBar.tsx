@@ -7,7 +7,7 @@ import { ThemeToggle } from "./ThemeToggle";
 /** Hide staff chrome on public landing-page apply flows. */
 export function AppTopBar() {
   const pathname = usePathname();
-  if (pathname?.startsWith("/apply/")) {
+  if (pathname?.startsWith("/apply/") || pathname === "/review-qr-system") {
     return null;
   }
 

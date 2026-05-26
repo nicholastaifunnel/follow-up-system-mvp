@@ -5,9 +5,11 @@ import { submitApplyFormAction } from "./actions";
 
 type Props = {
   slug: string;
+  /** Hide post-submit WhatsApp footnote (e.g. landing modal). */
+  showFootnote?: boolean;
 };
 
-export function ApplyForm({ slug }: Props) {
+export function ApplyForm({ slug, showFootnote = true }: Props) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -56,12 +58,14 @@ export function ApplyForm({ slug }: Props) {
       <button type="submit" className="public-apply-button" disabled={pending}>
         {pending ? "提交中…" : "提交免费试用申请"}
       </button>
-      <p className="public-apply-footnote">
-        提交后，请点击 WhatsApp 按钮联系我们完成确认。
-        <span className="public-apply-footnote-en">
-          After submitting, tap WhatsApp to confirm your setup.
-        </span>
-      </p>
+      {showFootnote ? (
+        <p className="public-apply-footnote">
+          提交后，请点击 WhatsApp 按钮联系我们完成确认。
+          <span className="public-apply-footnote-en">
+            After submitting, tap WhatsApp to confirm your setup.
+          </span>
+        </p>
+      ) : null}
     </form>
   );
 }
