@@ -483,7 +483,7 @@ export function ReviewQrLandingClient() {
           <ul className="review-qr-feature-list">
             {SOLUTION_POINTS.map((item, index) => (
               <li key={item.title}>
-                <span className="review-qr-feature-num">{index + 1}</span>
+                <span className="review-qr-feature-num">STEP {index + 1}</span>
                 <div>
                   <strong>{item.title}</strong>
                   <p>{item.desc}</p>
