@@ -8687,3 +8687,10 @@ html[data-theme="dark"] .review-row-limit-btn--active {
     letter-spacing: 0.08em;
   }
 }
+
+/* Review QR mobile scene spacing: keep the intro close to the first benefit card. */
+@media (max-width: 767px) {
+  .review-qr-scene-section .review-qr-scene-grid {
+    margin-top: 0;
+  }
+}
