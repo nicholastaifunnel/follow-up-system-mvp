@@ -8205,3 +8205,402 @@ html[data-theme="dark"] .review-row-limit-btn--active {
     min-height: 125px;
   }
 }
+
+/* Review QR mobile spacing pass: reduce page height without changing content. */
+@media (max-width: 767px) {
+  .review-qr-page {
+    --rqr-section-space: 4.65rem;
+    overflow-x: hidden;
+  }
+
+  .review-qr-scene-section,
+  .review-qr-section {
+    padding-top: var(--rqr-section-space);
+    padding-bottom: var(--rqr-section-space);
+  }
+
+  .review-qr-hero {
+    padding-top: 1.55rem;
+    padding-bottom: 4rem;
+  }
+
+  .review-qr-hero-grid {
+    gap: 1.45rem;
+  }
+
+  .review-qr-hero-title {
+    font-size: clamp(2.55rem, 11.4vw, 3.15rem);
+    line-height: 0.98;
+    max-width: 9.6em;
+  }
+
+  .review-qr-hero-copy .review-qr-copy {
+    font-size: clamp(1.02rem, 4.25vw, 1.13rem);
+    line-height: 1.56;
+  }
+
+  .review-qr-hero .review-qr-cta-row {
+    gap: 0.7rem;
+    margin-top: 1.15rem;
+  }
+
+  .review-qr-hero .review-qr-cta-row .review-qr-cta,
+  .review-qr-hero .review-qr-cta-row .review-qr-cta-secondary {
+    min-height: 3.15rem;
+    height: 3.15rem;
+    font-size: 0.92rem;
+  }
+
+  .review-qr-hero-proof {
+    margin-top: 0.7rem;
+    padding: 0.46rem 0.72rem;
+    font-size: 0.9rem;
+    line-height: 1.25;
+  }
+
+  .review-qr-hero-visual {
+    min-height: 18.5rem;
+    max-height: 20.5rem;
+    margin-top: 0.35rem;
+    padding: 1rem;
+  }
+
+  .review-qr-mock-qr {
+    top: 2.25rem;
+    min-height: 8.75rem;
+    padding: 0.68rem;
+  }
+
+  .review-qr-mock-phone {
+    bottom: 1rem;
+    padding: 0.68rem;
+  }
+
+  .review-qr-counter-visual {
+    min-height: 17.25rem;
+    max-height: 18.75rem;
+    padding: 1rem;
+  }
+
+  .review-qr-counter-card {
+    min-height: 12.5rem;
+  }
+
+  .review-qr-flow-showcase {
+    min-height: 0;
+    max-height: 18.5rem;
+    margin: 1rem 0 1.15rem;
+    padding: 0.95rem;
+  }
+
+  .review-qr-flow-stand {
+    min-height: 8.5rem;
+    padding: 0.7rem;
+  }
+
+  .review-qr-flow-device {
+    padding: 0.7rem;
+    max-width: 15rem;
+  }
+
+  .review-qr-head {
+    gap: 0.7rem;
+  }
+
+  .review-qr-head h2,
+  .review-qr-scene-head h2 {
+    font-size: clamp(2.15rem, 9.2vw, 2.85rem);
+    line-height: 1.02;
+  }
+
+  .review-qr-scene-section {
+    padding-bottom: 4.35rem;
+  }
+
+  .review-qr-scene-layout,
+  .review-qr-offer-layout {
+    gap: 1.55rem;
+  }
+
+  .review-qr-scene-grid {
+    gap: 0.72rem;
+  }
+
+  .review-qr-scene-card {
+    min-height: 3.15rem;
+    padding: 0.62rem 0.76rem;
+    gap: 0.62rem;
+  }
+
+  .review-qr-scene-card > span {
+    flex-basis: 1.62rem;
+    width: 1.62rem;
+    height: 1.62rem;
+    font-size: 0.75rem;
+  }
+
+  .review-qr-problem-list,
+  .review-qr-trust-grid,
+  .review-qr-feature-list,
+  .review-qr-steps,
+  .review-qr-why-list,
+  .review-qr-fit-grid {
+    gap: 0.85rem;
+  }
+
+  .review-qr-problem-list li,
+  .review-qr-feature-list li,
+  .review-qr-why-list li,
+  .review-qr-trust-card,
+  .review-qr-fit-card,
+  .review-qr-step {
+    padding: 0.88rem;
+  }
+
+  .review-qr-feature-list li {
+    gap: 0.78rem;
+  }
+
+  .review-qr-feature-list li > span,
+  .review-qr-why-list li > span {
+    width: 1.8rem;
+    height: 1.8rem;
+    flex-basis: 1.8rem;
+    font-size: 0.86rem;
+  }
+
+  .review-qr-feature-list h3,
+  .review-qr-step h3 {
+    font-size: 1rem;
+  }
+
+  .review-qr-feature-list p,
+  .review-qr-step p,
+  .review-qr-trust-card p {
+    font-size: 0.92rem;
+    line-height: 1.55;
+  }
+
+  .review-qr-why-list li {
+    min-height: 0;
+    padding: 0.86rem 0.92rem;
+    font-size: clamp(1.02rem, 4.1vw, 1.1rem);
+  }
+
+  .review-qr-fit-card {
+    padding: 1rem;
+  }
+
+  .review-qr-fit-list {
+    gap: 0.58rem;
+  }
+
+  .review-qr-offer-section {
+    padding-top: 4.45rem;
+    padding-bottom: 4.65rem;
+  }
+
+  .review-qr-offer-layout {
+    gap: 1.9rem;
+  }
+
+  .review-qr-offer-copy .review-qr-head h2 {
+    font-size: clamp(2.75rem, 10.7vw, 3.45rem);
+    line-height: 1;
+  }
+
+  .review-qr-offer-copy .review-qr-copy {
+    font-size: 1rem;
+    line-height: 1.64;
+  }
+
+  .review-qr-offer-cta {
+    margin-top: 1.2rem;
+  }
+
+  .review-qr-offer-cta .review-qr-cta {
+    min-height: 3.2rem;
+    height: 3.2rem;
+  }
+
+  .review-qr-price-card {
+    padding: 1.18rem;
+    border-radius: 1.25rem;
+  }
+
+  .review-qr-price-main {
+    font-size: clamp(2.55rem, 12vw, 3.35rem);
+    line-height: 0.95;
+    margin: 0.65rem 0 0.82rem;
+  }
+
+  .review-qr-price-intro,
+  .review-qr-price-trial,
+  .review-qr-price-note {
+    font-size: 0.94rem;
+    line-height: 1.52;
+  }
+
+  .review-qr-price-list {
+    gap: 0.46rem;
+    margin-top: 0.75rem;
+  }
+
+  .review-qr-price-list li {
+    font-size: 0.92rem;
+    line-height: 1.42;
+  }
+
+  .review-qr-price-trial {
+    margin-top: 0.95rem;
+    padding: 0.72rem 0.82rem;
+  }
+
+  .review-qr-faq-section,
+  .review-qr-section:has(.review-qr-faq) {
+    padding-top: 4.25rem;
+    padding-bottom: 4.65rem;
+  }
+
+  .review-qr-faq {
+    gap: 0.5rem;
+  }
+
+  .review-qr-faq summary {
+    min-height: 2.85rem;
+    padding: 0.68rem 0.78rem;
+  }
+
+  .review-qr-faq-q {
+    font-size: clamp(1rem, 4vw, 1.06rem);
+    line-height: 1.32;
+  }
+
+  .review-qr-faq-chevron {
+    width: 1.85rem;
+    height: 1.85rem;
+  }
+
+  .review-qr-faq p {
+    padding: 0 0.78rem 0.78rem;
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  .review-qr-final {
+    padding-top: 4.25rem;
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+  }
+
+  .review-qr-final h2 {
+    font-size: clamp(2rem, 8.6vw, 2.65rem);
+    line-height: 1.05;
+  }
+}
+
+@media (max-width: 430px) {
+  .review-qr-page {
+    --rqr-section-space: 4.35rem;
+  }
+
+  .review-qr-hero {
+    padding-top: 1.25rem;
+    padding-bottom: 3.75rem;
+  }
+
+  .review-qr-hero-title {
+    font-size: clamp(2.42rem, 11vw, 2.88rem);
+  }
+
+  .review-qr-hero-visual {
+    min-height: 17.5rem;
+    max-height: 19rem;
+  }
+
+  .review-qr-counter-visual {
+    min-height: 16.5rem;
+    max-height: 18rem;
+  }
+
+  .review-qr-flow-showcase {
+    max-height: 17.5rem;
+  }
+
+  .review-qr-flow-stand {
+    min-height: 7.5rem;
+  }
+
+  .review-qr-flow-device {
+    max-width: 13.75rem;
+  }
+}
+
+/* Review QR icon polish: clearer scene checks, smaller step badges, red not-fit marks. */
+.review-qr-scene-card > span {
+  display: grid;
+  place-items: center;
+  flex: 0 0 2.35rem;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 999px;
+  background:
+    linear-gradient(135deg, rgba(245, 200, 76, 0.26), rgba(212, 175, 55, 0.14)),
+    rgba(245, 200, 76, 0.08);
+  border: 1px solid rgba(245, 200, 76, 0.24);
+  color: #ffe08a;
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.review-qr-scene-card {
+  align-items: center;
+}
+
+.review-qr-feature-num {
+  flex: 0 0 2.05rem;
+  width: 2.05rem;
+  height: 2.05rem;
+  border-radius: 0.85rem;
+  background: linear-gradient(135deg, #ffe08a 0%, #d4af37 100%);
+  color: #07111f;
+  font-size: 0.9rem;
+  font-weight: 900;
+  box-shadow: 0 8px 18px rgba(212, 175, 55, 0.14);
+}
+
+.review-qr-feature-list li {
+  align-items: center;
+}
+
+.review-qr-fit-card--no .review-qr-icon--no,
+.review-qr-fit-card--no .review-qr-icon {
+  color: #f87171;
+}
+
+@media (max-width: 767px) {
+  .review-qr-scene-card {
+    gap: 0.78rem;
+  }
+
+  .review-qr-scene-card > span {
+    flex-basis: 2.75rem;
+    width: 2.75rem;
+    height: 2.75rem;
+    font-size: 1.12rem;
+  }
+
+  .review-qr-feature-num,
+  .review-qr-feature-list li > span.review-qr-feature-num {
+    flex-basis: 2.35rem;
+    width: 2.35rem;
+    height: 2.35rem;
+    border-radius: 0.9rem;
+    font-size: 0.94rem;
+  }
+
+  .review-qr-feature-list li {
+    align-items: center;
+    gap: 0.85rem;
+  }
+}

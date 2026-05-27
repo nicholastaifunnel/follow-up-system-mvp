@@ -397,7 +397,7 @@ export function ReviewQrLandingClient() {
           <div className="review-qr-scene-grid">
             {REAL_SCENES.map((item) => (
               <article key={item} className="review-qr-scene-card">
-                <span aria-hidden>✦</span>
+                <span aria-hidden>✓</span>
                 <p>{item}</p>
               </article>
             ))}
