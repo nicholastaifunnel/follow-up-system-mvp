@@ -5132,6 +5132,21 @@ html[data-theme="dark"] .review-row-limit-btn--active {
   text-transform: uppercase;
 }
 
+.review-qr-slot-image {
+  z-index: 1;
+  border-radius: inherit;
+  filter: saturate(1.04) contrast(1.02);
+}
+
+.review-qr-slot-image--cover {
+  object-fit: cover;
+}
+
+.review-qr-slot-image--contain {
+  object-fit: contain;
+  padding: 0.75rem;
+}
+
 .review-qr-image-slot--hero::before {
   background:
     radial-gradient(ellipse at 28% 80%, rgba(168, 121, 22, 0.18), transparent 34%),

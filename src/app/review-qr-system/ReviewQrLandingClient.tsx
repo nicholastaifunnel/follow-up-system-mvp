@@ -216,21 +216,43 @@ function SectionHead({
 function ReviewQrImageSlot({
   variant,
   label,
+  imageAlt,
+  imageFit = "cover",
+  imagePriority = false,
+  imageSrc,
   className = "",
   children,
 }: {
   variant: "hero" | "scene" | "flow";
   label: string;
+  imageAlt?: string;
+  imageFit?: "contain" | "cover";
+  imagePriority?: boolean;
+  imageSrc?: string;
   className?: string;
   children: ReactNode;
 }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const shouldShowImage = imageSrc && !imageFailed;
+
   return (
     <div
       className={`review-qr-image-slot review-qr-image-slot--${variant} ${className}`.trim()}
-      aria-hidden
     >
       <span className="review-qr-image-slot-label">{label}</span>
-      {children}
+      {shouldShowImage ? (
+        <Image
+          src={imageSrc ?? ""}
+          alt={imageAlt ?? label}
+          fill
+          sizes="(max-width: 900px) calc(100vw - 32px), 48vw"
+          className={`review-qr-slot-image review-qr-slot-image--${imageFit}`}
+          priority={imagePriority}
+          onError={() => setImageFailed(true)}
+        />
+      ) : (
+        children
+      )}
     </div>
   );
 }
@@ -343,6 +365,9 @@ export function ReviewQrLandingClient() {
           <ReviewQrImageSlot
             variant="hero"
             label="美容店柜台 Review QR"
+            imageSrc="/images/review-qr/review-qr-hero-counter.webp.png"
+            imageAlt="美容店柜台上的 Review QR 立牌和手机评价流程"
+            imagePriority
             className="review-qr-hero-visual"
           >
             <div className="review-qr-mock-qr">
@@ -406,6 +431,8 @@ export function ReviewQrLandingClient() {
           <ReviewQrImageSlot
             variant="scene"
             label="真实门店场景"
+            imageSrc="/images/review-qr/review-qr-customer-after-service.webp.png"
+            imageAlt="顾客做完服务后在美容店柜台扫描 Review QR"
             className="review-qr-counter-visual"
           >
             <div className="review-qr-counter-card">
@@ -500,6 +527,8 @@ export function ReviewQrLandingClient() {
           <ReviewQrImageSlot
             variant="flow"
             label="QR 立牌与手机流程"
+            imageSrc="/images/review-qr/review-qr-three-step-flow.webp.png"
+            imageAlt="Review QR 三步骤流程：扫码、选择平台、复制提交评价"
             className="review-qr-flow-showcase"
           >
             <div className="review-qr-flow-stand">
