@@ -43,15 +43,15 @@ const TRUST_POINTS = [
 
 const SOLUTION_POINTS = [
   {
-    title: "顾客扫码",
+    title: "顾客付款后扫码",
     desc: "顾客扫码进入专属评价页面。",
   },
   {
-    title: "选择平台",
+    title: "系统引导顾客评价",
     desc: "选择 Google Review 或 Facebook 评价。",
   },
   {
-    title: "AI 协助整理文字",
+    title: "AI 帮顾客整理文字",
     desc: "顾客输入简单体验，系统协助整理成自然的评价文字。",
   },
   {
@@ -59,7 +59,7 @@ const SOLUTION_POINTS = [
     desc: "顾客确认内容后，自己复制并提交到平台。",
   },
   {
-    title: "老板更容易持续累积评价",
+    title: "老板更容易累积 Review",
     desc: "老板更容易持续收集真实评价。",
   },
 ];
