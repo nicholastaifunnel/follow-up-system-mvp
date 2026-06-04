@@ -448,33 +448,24 @@ export function classifyLeadRow(
     };
   }
 
-  const keepMatch = findMatchingKeyword(searchText, settings.keepKeywords);
-
-  if (keepMatch && hasWhatsApp) {
+  if (!hasPhone && !hasWeb && !hasSocial) {
     return {
-      status: "Keep - Queue Ready",
-      reason: `Keep - matched keyword: ${keepMatch}; has WhatsApp-ready phone`,
-    };
-  }
-
-  if (keepMatch && (hasWeb || hasSocial) && !hasWhatsApp) {
-    return {
-      status: "Keep - No Phone but Has Web/Social",
-      reason: `Keep - matched keyword: ${keepMatch}; no phone but has website/social`,
+      status: "Exclude - No Contact Info",
+      reason: "Exclude - no phone, no website, no social link",
     };
   }
 
   if (hasWhatsApp) {
     return {
-      status: "Review",
-      reason: "Review - has phone but no target keyword match",
+      status: "Keep - Queue Ready",
+      reason: "Keep - has WhatsApp-ready phone and no exclude keyword match",
     };
   }
 
   if (hasWeb || hasSocial) {
     return {
-      status: "Review",
-      reason: "Review - has website/social but no target keyword match",
+      status: "Keep - No Phone but Has Web/Social",
+      reason: "Keep - has website/social and no exclude keyword match",
     };
   }
 
@@ -486,8 +477,8 @@ export function classifyLeadRow(
   }
 
   return {
-    status: "Exclude - No Contact Info",
-    reason: "Exclude - no phone, no website, no social link",
+    status: "Review",
+    reason: "Review - needs manual check",
   };
 }
 

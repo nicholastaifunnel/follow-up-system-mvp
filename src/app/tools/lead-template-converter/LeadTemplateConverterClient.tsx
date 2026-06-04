@@ -38,6 +38,49 @@ const PREVIEW_COLUMNS: StandardLeadTemplateColumn[] = [
 
 type PreviewTabId = "all" | "keep" | "review" | "exclude";
 
+const BEAUTY_SPA_EXCLUDE_KEYWORDS = [
+  "ENT",
+  "ear nose throat",
+  "otolaryngologist",
+  "clinic",
+  "klinik",
+  "medical clinic",
+  "specialist",
+  "doctor",
+  "dr.",
+  "hospital",
+  "health consultant",
+  "hearing",
+  "hearing aid",
+  "hearing test",
+  "audiology",
+  "audiologist",
+  "pharmacy",
+  "guardian",
+  "watsons",
+  "big pharmacy",
+  "caring pharmacy",
+  "dental",
+  "dentist",
+  "orthodontist",
+  "physiotherapy",
+  "physio",
+  "chiropractic",
+  "chiropractor",
+  "veterinary",
+  "vet",
+  "animal clinic",
+  "optical",
+  "optometrist",
+  "eye specialist",
+  "foot reflexology",
+  "thai massage",
+  "traditional massage",
+  "tuina",
+  "urutan",
+  "massage centre",
+].join("\n");
+
 function fmt(v: string): string {
   return v && v.trim() ? v : "—";
 }
@@ -62,7 +105,6 @@ export function LeadTemplateConverterClient() {
   const [sourceKeyword, setSourceKeyword] = useState("");
   const [areaOverride, setAreaOverride] = useState("");
   const [campaignName, setCampaignName] = useState("");
-  const [keepKeywordsText, setKeepKeywordsText] = useState("");
   const [excludeKeywordsText, setExcludeKeywordsText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ConvertLeadTemplateResult | null>(null);
@@ -103,7 +145,6 @@ export function LeadTemplateConverterClient() {
           sourceFileName: file.name,
           areaOverride: areaOverride.trim() || undefined,
           campaignNameOverride: campaignName.trim() || undefined,
-          keepKeywordsText,
           excludeKeywordsText,
         });
         setResult(converted);
@@ -204,8 +245,8 @@ export function LeadTemplateConverterClient() {
       <section className="lead-template-converter-section">
         <h2 className="lead-template-converter-heading">Batch Settings</h2>
         <p className="lead-template-converter-hint">
-          Only rows matching Keep Keywords can enter Keep. Rows with contact info but no Keep match
-          will go to Review.
+          Exclude irrelevant businesses first. Remaining rows enter Keep or Review based on contact
+          quality.
         </p>
         <div className="lead-template-converter-grid">
           <label className="lead-template-converter-field">
@@ -261,19 +302,17 @@ export function LeadTemplateConverterClient() {
             />
           </label>
           <label className="lead-template-converter-field lead-template-converter-field-full">
-            Keep Keywords
-            <textarea
-              value={keepKeywordsText}
-              rows={5}
-              placeholder={"采耳\n耳疗\near cleaning\near spa"}
-              onChange={(e) => {
-                setKeepKeywordsText(e.target.value);
+            Exclude Keywords
+            <button
+              type="button"
+              className="import-preview-btn"
+              onClick={() => {
+                setExcludeKeywordsText(BEAUTY_SPA_EXCLUDE_KEYWORDS);
                 clearPreview();
               }}
-            />
-          </label>
-          <label className="lead-template-converter-field lead-template-converter-field-full">
-            Exclude Keywords
+            >
+              Use Beauty/Spa Exclude Keywords
+            </button>
             <textarea
               value={excludeKeywordsText}
               rows={6}
