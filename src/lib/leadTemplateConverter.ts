@@ -18,8 +18,22 @@ export const STANDARD_LEAD_TEMPLATE_COLUMNS = [
   "Source",
   "Source Keyword",
   "Source File Name",
+  "Campaign Name",
+  "Filter Status",
+  "Filter Reason",
   "Notes",
 ] as const;
+
+export const FILTER_STATUSES = [
+  "Keep - Queue Ready",
+  "Keep - No Phone but Has Web/Social",
+  "Review",
+  "Exclude - Irrelevant",
+  "Exclude - No Contact Info",
+  "Duplicate",
+] as const;
+
+export type FilterStatus = (typeof FILTER_STATUSES)[number];
 
 export type StandardLeadTemplateColumn = (typeof STANDARD_LEAD_TEMPLATE_COLUMNS)[number];
 export type StandardLeadTemplateRow = Record<StandardLeadTemplateColumn, string>;
@@ -54,6 +68,14 @@ export type ConvertLeadTemplateOptions = {
   sourceKeyword: string;
   sourceFileName: string;
   areaOverride?: string;
+  campaignNameOverride?: string;
+  keepKeywordsText?: string;
+  excludeKeywordsText?: string;
+};
+
+export type LeadCleanerFilterSettings = {
+  keepKeywords: string[];
+  excludeKeywords: string[];
 };
 
 export type ConvertLeadTemplateSummary = {
@@ -61,8 +83,14 @@ export type ConvertLeadTemplateSummary = {
   convertedRows: number;
   missingBusinessName: number;
   missingPhone: number;
-  websiteCount: number;
-  socialLinkCount: number;
+  missingWebsite: number;
+  missingSocialLink: number;
+  keepQueueReady: number;
+  keepNoPhoneButHasWebSocial: number;
+  review: number;
+  excludeIrrelevant: number;
+  excludeNoContactInfo: number;
+  duplicate: number;
   mobileWhatsAppCount: number;
   landlineOrNotWhatsAppCount: number;
 };
@@ -291,19 +319,345 @@ function buildNotes(status: string): string {
   return s;
 }
 
+export function parseKeywordLines(text: string): string[] {
+  const lines = text.split(/\r?\n/);
+  const keywords: string[] = [];
+  const seen = new Set<string>();
+  for (const line of lines) {
+    const kw = line.trim().toLowerCase();
+    if (!kw || seen.has(kw)) continue;
+    seen.add(kw);
+    keywords.push(kw);
+  }
+  return keywords;
+}
+
+function normalizeMatchText(value: string): string {
+  return value.toLowerCase().trim().replace(/\s+/g, " ");
+}
+
+/** Lowercase; non-alphanumeric (except CJK) → spaces for English token/phrase matching. */
+function normalizeTextForKeywordMatch(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[\u4e00-\u9fff]/g, (ch) => ` ${ch} `)
+    .replace(/[^a-z0-9\u4e00-\u9fff]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function containsChinese(text: string): boolean {
+  return /[\u4e00-\u9fff]/.test(text);
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** English single-token keyword with word boundaries (ENT ≠ century). */
+function matchesEnglishWordKeyword(normalizedText: string, keyword: string): boolean {
+  const kw = keyword.trim().toLowerCase();
+  if (!kw || /\s/.test(kw)) return false;
+  const escaped = escapeRegExp(kw);
+  const pattern = new RegExp(`(?:^|\\s)${escaped}(?:\\s|$)`, "i");
+  return pattern.test(` ${normalizedText} `);
+}
+
+/** English multi-word phrase with token boundaries between words. */
+function matchesEnglishPhraseKeyword(normalizedText: string, keyword: string): boolean {
+  const kw = keyword.trim().toLowerCase().replace(/\s+/g, " ");
+  if (!kw || !/\s/.test(kw)) return false;
+  const escaped = escapeRegExp(kw).replace(/\s+/g, "\\s+");
+  const pattern = new RegExp(`(?:^|\\s)${escaped}(?:\\s|$)`, "i");
+  return pattern.test(` ${normalizedText} `);
+}
+
+/** Match keyword against combined lead text (Chinese includes; English word/phrase boundaries). */
+export function matchesLeadKeyword(searchText: string, keyword: string): boolean {
+  const kw = keyword.trim();
+  if (!kw) return false;
+
+  if (containsChinese(kw)) {
+    return searchText.toLowerCase().includes(kw.toLowerCase());
+  }
+
+  const normalized = normalizeTextForKeywordMatch(searchText);
+  if (/\s/.test(kw)) {
+    return matchesEnglishPhraseKeyword(normalized, kw);
+  }
+  return matchesEnglishWordKeyword(normalized, kw);
+}
+
+function findMatchingKeyword(searchText: string, keywords: string[]): string | null {
+  for (const kw of keywords) {
+    if (matchesLeadKeyword(searchText, kw)) return kw;
+  }
+  return null;
+}
+
+function buildSearchText(row: StandardLeadTemplateRow): string {
+  return [
+    row["Business Name"],
+    row.Category,
+    row.Address,
+    row.Notes,
+  ]
+    .join(" ")
+    .trim();
+}
+
+export function resolveCampaignName(
+  sourceKeyword: string,
+  area: string,
+  override?: string,
+): string {
+  const trimmed = override?.trim();
+  if (trimmed) return trimmed;
+  const kw = sourceKeyword.trim();
+  const ar = area.trim();
+  if (kw && ar) return `${kw} - ${ar}`;
+  return kw || ar;
+}
+
+export function classifyLeadRow(
+  row: StandardLeadTemplateRow,
+  settings: LeadCleanerFilterSettings,
+  duplicateReason: string | null,
+): { status: FilterStatus; reason: string } {
+  if (duplicateReason) {
+    return { status: "Duplicate", reason: duplicateReason };
+  }
+
+  const phone = row.Phone.trim();
+  const whatsapp = row["WhatsApp Phone"].trim();
+  const website = row.Website.trim();
+  const social = row["Social Link"].trim();
+  const hasPhone = Boolean(phone);
+  const hasWhatsApp = Boolean(whatsapp);
+  const hasWeb = Boolean(website);
+  const hasSocial = Boolean(social);
+  const searchText = buildSearchText(row);
+
+  if (!hasPhone && !hasWeb && !hasSocial) {
+    return {
+      status: "Exclude - No Contact Info",
+      reason: "Exclude - no phone, no website, no social link",
+    };
+  }
+
+  const excludeMatch = findMatchingKeyword(searchText, settings.excludeKeywords);
+  if (excludeMatch) {
+    return {
+      status: "Exclude - Irrelevant",
+      reason: `Exclude - matched exclude keyword: ${excludeMatch}`,
+    };
+  }
+
+  const keepMatch = findMatchingKeyword(searchText, settings.keepKeywords);
+  const keepKeywordsEmpty = settings.keepKeywords.length === 0;
+
+  if (hasWhatsApp) {
+    if (keepKeywordsEmpty) {
+      return {
+        status: "Keep - Queue Ready",
+        reason: "Keep - has WhatsApp-ready phone",
+      };
+    }
+    if (keepMatch) {
+      return {
+        status: "Keep - Queue Ready",
+        reason: `Keep - matched keyword: ${keepMatch}; has WhatsApp-ready phone`,
+      };
+    }
+    return {
+      status: "Review",
+      reason: "Review - has phone but no target keyword match",
+    };
+  }
+
+  if (hasWeb || hasSocial) {
+    if (keepKeywordsEmpty) {
+      return {
+        status: "Keep - No Phone but Has Web/Social",
+        reason: "Keep - no phone but has website/social",
+      };
+    }
+    if (keepMatch) {
+      return {
+        status: "Keep - No Phone but Has Web/Social",
+        reason: `Keep - matched keyword: ${keepMatch}; no phone but has website/social`,
+      };
+    }
+    return {
+      status: "Review",
+      reason: "Review - has website/social but no target keyword match",
+    };
+  }
+
+  if (hasPhone && !hasWhatsApp) {
+    return {
+      status: "Review",
+      reason: "Review - landline only, no WhatsApp-ready mobile",
+    };
+  }
+
+  return {
+    status: "Review",
+    reason: "Review - needs manual check",
+  };
+}
+
+/** Same-upload duplicate detection; first row keeps auto classification. */
+export function detectIntraCsvDuplicates(rows: StandardLeadTemplateRow[]): Map<number, string> {
+  const duplicateIndices = new Map<number, string>();
+
+  const markByKey = (
+    getKey: (row: StandardLeadTemplateRow) => string,
+    reason: string,
+  ) => {
+    const seen = new Map<string, number>();
+    for (let i = 0; i < rows.length; i++) {
+      if (duplicateIndices.has(i)) continue;
+      const key = getKey(rows[i]);
+      if (!key) continue;
+      const first = seen.get(key);
+      if (first === undefined) {
+        seen.set(key, i);
+      } else {
+        duplicateIndices.set(i, reason);
+      }
+    }
+  };
+
+  markByKey((row) => row["Place ID"].trim().toLowerCase(), "Duplicate - same place_id");
+  markByKey((row) => row.CID.trim().toLowerCase(), "Duplicate - same cid");
+  markByKey((row) => {
+    const wa = row["WhatsApp Phone"].trim();
+    if (wa) return wa;
+    return normalizePhoneDigits(row.Phone);
+  }, "Duplicate - same phone");
+  markByKey((row) => {
+    const name = normalizeMatchText(row["Business Name"]);
+    const addr = normalizeMatchText(row.Address);
+    if (!name || !addr) return "";
+    return `${name}|${addr}`;
+  }, "Duplicate - same business name + address");
+
+  return duplicateIndices;
+}
+
+export function applyFilterAndDedupe(
+  rows: StandardLeadTemplateRow[],
+  settings: LeadCleanerFilterSettings,
+): void {
+  const duplicateMap = detectIntraCsvDuplicates(rows);
+  for (let i = 0; i < rows.length; i++) {
+    const dupReason = duplicateMap.get(i) ?? null;
+    const { status, reason } = classifyLeadRow(rows[i], settings, dupReason);
+    rows[i]["Filter Status"] = status;
+    rows[i]["Filter Reason"] = reason;
+  }
+}
+
+export function isKeepFilterStatus(status: string): boolean {
+  return status === "Keep - Queue Ready" || status === "Keep - No Phone but Has Web/Social";
+}
+
+export function isReviewFilterStatus(status: string): boolean {
+  return status === "Review";
+}
+
+export function isExcludeOrDuplicateFilterStatus(status: string): boolean {
+  return (
+    status === "Exclude - Irrelevant" ||
+    status === "Exclude - No Contact Info" ||
+    status === "Duplicate"
+  );
+}
+
+export function filterKeepOnlyRows(rows: StandardLeadTemplateRow[]): StandardLeadTemplateRow[] {
+  return rows.filter((row) => isKeepFilterStatus(row["Filter Status"]));
+}
+
+function buildCleaningSummary(rows: StandardLeadTemplateRow[]): ConvertLeadTemplateSummary {
+  let missingBusinessName = 0;
+  let missingPhone = 0;
+  let missingWebsite = 0;
+  let missingSocialLink = 0;
+  let keepQueueReady = 0;
+  let keepNoPhoneButHasWebSocial = 0;
+  let review = 0;
+  let excludeIrrelevant = 0;
+  let excludeNoContactInfo = 0;
+  let duplicate = 0;
+  let mobileWhatsAppCount = 0;
+  let landlineOrNotWhatsAppCount = 0;
+
+  for (const row of rows) {
+    if (!row["Business Name"].trim()) missingBusinessName += 1;
+    if (!row.Phone.trim()) missingPhone += 1;
+    if (!row.Website.trim()) missingWebsite += 1;
+    if (!row["Social Link"].trim()) missingSocialLink += 1;
+    if (row["WhatsApp Phone"].trim()) mobileWhatsAppCount += 1;
+    else if (row.Phone.trim()) landlineOrNotWhatsAppCount += 1;
+
+    switch (row["Filter Status"]) {
+      case "Keep - Queue Ready":
+        keepQueueReady += 1;
+        break;
+      case "Keep - No Phone but Has Web/Social":
+        keepNoPhoneButHasWebSocial += 1;
+        break;
+      case "Review":
+        review += 1;
+        break;
+      case "Exclude - Irrelevant":
+        excludeIrrelevant += 1;
+        break;
+      case "Exclude - No Contact Info":
+        excludeNoContactInfo += 1;
+        break;
+      case "Duplicate":
+        duplicate += 1;
+        break;
+      default:
+        break;
+    }
+  }
+
+  return {
+    totalRows: rows.length,
+    convertedRows: rows.length,
+    missingBusinessName,
+    missingPhone,
+    missingWebsite,
+    missingSocialLink,
+    keepQueueReady,
+    keepNoPhoneButHasWebSocial,
+    review,
+    excludeIrrelevant,
+    excludeNoContactInfo,
+    duplicate,
+    mobileWhatsAppCount,
+    landlineOrNotWhatsAppCount,
+  };
+}
+
 export function convertGosomRowsToStandardRows(
   gosomRows: GosomRow[],
   options: ConvertLeadTemplateOptions,
 ): ConvertLeadTemplateResult {
   const area = (options.areaOverride ?? "").trim();
+  const campaignName = resolveCampaignName(
+    options.sourceKeyword,
+    area,
+    options.campaignNameOverride,
+  );
+  const filterSettings: LeadCleanerFilterSettings = {
+    keepKeywords: parseKeywordLines(options.keepKeywordsText ?? ""),
+    excludeKeywords: parseKeywordLines(options.excludeKeywordsText ?? ""),
+  };
   const rows: StandardLeadTemplateRow[] = [];
-
-  let missingBusinessName = 0;
-  let missingPhone = 0;
-  let websiteCount = 0;
-  let socialLinkCount = 0;
-  let mobileWhatsAppCount = 0;
-  let landlineOrNotWhatsAppCount = 0;
 
   for (const g of gosomRows) {
     const phone = g.phone.trim();
@@ -316,13 +670,6 @@ export function convertGosomRowsToStandardRows(
     const socialLinkOut = fixMojibake(socialLink);
     const googleMapsLink = fixMojibake(g.link);
     const notes = fixMojibake(buildNotes(g.status));
-
-    if (!businessName) missingBusinessName += 1;
-    if (!phone) missingPhone += 1;
-    if (websiteOut) websiteCount += 1;
-    if (socialLinkOut) socialLinkCount += 1;
-    if (whatsappPhone) mobileWhatsAppCount += 1;
-    else if (phone) landlineOrNotWhatsAppCount += 1;
 
     rows.push({
       "Business Name": businessName,
@@ -341,22 +688,18 @@ export function convertGosomRowsToStandardRows(
       Source: options.source.trim() || "gosom_google_maps_scraper",
       "Source Keyword": options.sourceKeyword.trim(),
       "Source File Name": options.sourceFileName.trim(),
+      "Campaign Name": campaignName,
+      "Filter Status": "",
+      "Filter Reason": "",
       Notes: notes,
     });
   }
 
+  applyFilterAndDedupe(rows, filterSettings);
+
   return {
     rows,
-    summary: {
-      totalRows: gosomRows.length,
-      convertedRows: rows.length,
-      missingBusinessName,
-      missingPhone,
-      websiteCount,
-      socialLinkCount,
-      mobileWhatsAppCount,
-      landlineOrNotWhatsAppCount,
-    },
+    summary: buildCleaningSummary(rows),
   };
 }
 
@@ -393,6 +736,9 @@ const EXCEL_FORCE_TEXT_COLUMNS = new Set<StandardLeadTemplateColumn>([
   "Source",
   "Source Keyword",
   "Source File Name",
+  "Campaign Name",
+  "Filter Status",
+  "Filter Reason",
   "Notes",
 ]);
 
@@ -452,6 +798,14 @@ export function slugifySourceKeyword(keyword: string): string {
 export function buildDownloadBaseName(sourceKeyword: string): string {
   const date = new Date().toISOString().slice(0, 10);
   return `converted-gosom-${slugifySourceKeyword(sourceKeyword)}-${date}`;
+}
+
+export function buildCleanedDownloadBaseName(
+  scope: "keep" | "all",
+  sourceKeyword: string,
+): string {
+  const date = new Date().toISOString().slice(0, 10);
+  return `cleaned-${scope}-gosom-${slugifySourceKeyword(sourceKeyword)}-${date}`;
 }
 
 export function downloadBlob(filename: string, blob: Blob): void {

@@ -8734,8 +8734,18 @@ html[data-theme="dark"] .review-row-limit-btn--active {
 
 .lead-template-converter-field input[type="file"],
 .lead-template-converter-field input[type="text"],
-.lead-template-converter-field select {
+.lead-template-converter-field select,
+.lead-template-converter-field textarea {
   max-width: 100%;
+}
+
+.lead-template-converter-field textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.lead-template-converter-field-full {
+  grid-column: 1 / -1;
 }
 
 .lead-template-converter-grid {
@@ -8786,6 +8796,43 @@ html[data-theme="dark"] .review-row-limit-btn--active {
   margin-bottom: 0.5rem;
 }
 
+.lead-template-converter-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.lead-template-converter-tab {
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.lead-template-converter-tab-active {
+  border-color: rgba(120, 180, 255, 0.45);
+  background: rgba(120, 180, 255, 0.12);
+}
+
+.lead-template-converter-download-group-label {
+  font-size: 0.875rem;
+  color: var(--muted, #9ca3af);
+  margin: 0.75rem 0 0.35rem;
+}
+
+.lead-template-converter-download-group-label:first-of-type {
+  margin-top: 0;
+}
+
+.lead-template-converter-download-hint {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+
 .lead-template-converter-table-wrap {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -8793,7 +8840,7 @@ html[data-theme="dark"] .review-row-limit-btn--active {
 }
 
 .lead-template-converter-table {
-  min-width: 960px;
+  min-width: 1100px;
   font-size: 0.8rem;
 }
 

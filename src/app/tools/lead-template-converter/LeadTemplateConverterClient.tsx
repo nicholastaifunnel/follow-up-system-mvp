@@ -1,24 +1,58 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
-  buildDownloadBaseName,
+  buildCleanedDownloadBaseName,
   buildStandardTemplateCsv,
   buildStandardTemplateExcelBuffer,
   convertGosomRowsToStandardRows,
   downloadBlob,
+  filterKeepOnlyRows,
+  isExcludeOrDuplicateFilterStatus,
+  isKeepFilterStatus,
+  isReviewFilterStatus,
   LEAD_TEMPLATE_SOURCE_OPTIONS,
   parseGosomCsvBuffer,
-  STANDARD_LEAD_TEMPLATE_COLUMNS,
   type ConvertLeadTemplateResult,
+  type StandardLeadTemplateColumn,
   type StandardLeadTemplateRow,
 } from "@/lib/leadTemplateConverter";
 
 const PREVIEW_LIMIT = 20;
 
+const PREVIEW_COLUMNS: StandardLeadTemplateColumn[] = [
+  "Filter Status",
+  "Filter Reason",
+  "Business Name",
+  "Phone",
+  "WhatsApp Phone",
+  "Category",
+  "Area",
+  "Website",
+  "Social Link",
+  "Rating",
+  "Review Count",
+  "Google Maps Link",
+];
+
+type PreviewTabId = "all" | "keep" | "review" | "exclude";
+
 function fmt(v: string): string {
   return v && v.trim() ? v : "—";
+}
+
+function filterRowsByTab(rows: StandardLeadTemplateRow[], tab: PreviewTabId): StandardLeadTemplateRow[] {
+  switch (tab) {
+    case "keep":
+      return rows.filter((row) => isKeepFilterStatus(row["Filter Status"]));
+    case "review":
+      return rows.filter((row) => isReviewFilterStatus(row["Filter Status"]));
+    case "exclude":
+      return rows.filter((row) => isExcludeOrDuplicateFilterStatus(row["Filter Status"]));
+    default:
+      return rows;
+  }
 }
 
 export function LeadTemplateConverterClient() {
@@ -27,13 +61,18 @@ export function LeadTemplateConverterClient() {
   const [source, setSource] = useState("gosom_google_maps_scraper");
   const [sourceKeyword, setSourceKeyword] = useState("");
   const [areaOverride, setAreaOverride] = useState("");
+  const [campaignName, setCampaignName] = useState("");
+  const [keepKeywordsText, setKeepKeywordsText] = useState("");
+  const [excludeKeywordsText, setExcludeKeywordsText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ConvertLeadTemplateResult | null>(null);
   const [pending, setPending] = useState(false);
+  const [activeTab, setActiveTab] = useState<PreviewTabId>("all");
 
-  function onConvert() {
+  function onCleanAndPreview() {
     setError(null);
     setResult(null);
+    setActiveTab("all");
 
     if (!file) {
       setError("Please upload a CSV file first.");
@@ -58,6 +97,9 @@ export function LeadTemplateConverterClient() {
           sourceKeyword: sourceKeyword.trim(),
           sourceFileName: file.name,
           areaOverride: areaOverride.trim() || undefined,
+          campaignNameOverride: campaignName.trim() || undefined,
+          keepKeywordsText,
+          excludeKeywordsText,
         });
         setResult(converted);
       })
@@ -69,17 +111,13 @@ export function LeadTemplateConverterClient() {
       });
   }
 
-  function onDownloadCsv() {
-    if (!result) return;
-    const base = buildDownloadBaseName(sourceKeyword);
-    const csv = buildStandardTemplateCsv(result.rows);
-    downloadBlob(`${base}.csv`, new Blob([csv], { type: "text/csv;charset=utf-8" }));
-  }
-
-  function onDownloadExcel() {
-    if (!result) return;
-    const base = buildDownloadBaseName(sourceKeyword);
-    const buffer = buildStandardTemplateExcelBuffer(result.rows);
+  function downloadRows(rows: StandardLeadTemplateRow[], base: string, format: "csv" | "xlsx") {
+    if (format === "csv") {
+      const csv = buildStandardTemplateCsv(rows);
+      downloadBlob(`${base}.csv`, new Blob([csv], { type: "text/csv;charset=utf-8" }));
+      return;
+    }
+    const buffer = buildStandardTemplateExcelBuffer(rows);
     downloadBlob(
       `${base}.xlsx`,
       new Blob([buffer], {
@@ -88,8 +126,37 @@ export function LeadTemplateConverterClient() {
     );
   }
 
-  const previewRows: StandardLeadTemplateRow[] =
-    result?.rows.slice(0, PREVIEW_LIMIT) ?? [];
+  function onDownloadKeep(format: "csv" | "xlsx") {
+    if (!result) return;
+    const base = buildCleanedDownloadBaseName("keep", sourceKeyword);
+    downloadRows(filterKeepOnlyRows(result.rows), base, format);
+  }
+
+  function onDownloadAll(format: "csv" | "xlsx") {
+    if (!result) return;
+    const base = buildCleanedDownloadBaseName("all", sourceKeyword);
+    downloadRows(result.rows, base, format);
+  }
+
+  const tabCounts = useMemo(() => {
+    if (!result) {
+      return { all: 0, keep: 0, review: 0, exclude: 0 };
+    }
+    const rows = result.rows;
+    return {
+      all: rows.length,
+      keep: rows.filter((r) => isKeepFilterStatus(r["Filter Status"])).length,
+      review: rows.filter((r) => isReviewFilterStatus(r["Filter Status"])).length,
+      exclude: rows.filter((r) => isExcludeOrDuplicateFilterStatus(r["Filter Status"])).length,
+    };
+  }, [result]);
+
+  const tabRows = useMemo(() => {
+    if (!result) return [];
+    return filterRowsByTab(result.rows, activeTab);
+  }, [result, activeTab]);
+
+  const previewRows = tabRows.slice(0, PREVIEW_LIMIT);
 
   return (
     <div className="page lead-template-converter-page">
@@ -103,9 +170,9 @@ export function LeadTemplateConverterClient() {
         </Link>
       </p>
 
-      <h1>Lead Template Converter</h1>
+      <h1>Lead Cleaner &amp; Template Converter</h1>
       <p className="sub">
-        Convert gosom / external scraper CSV into the standard Follow-up System lead
+        Clean scraper CSV, filter low-quality leads, and export a standard Follow-up System
         template.
       </p>
 
@@ -131,14 +198,11 @@ export function LeadTemplateConverterClient() {
       </section>
 
       <section className="lead-template-converter-section">
-        <h2 className="lead-template-converter-heading">Source Settings</h2>
+        <h2 className="lead-template-converter-heading">Batch Settings</h2>
         <div className="lead-template-converter-grid">
           <label className="lead-template-converter-field">
             Source
-            <select
-              value={source}
-              onChange={(e) => setSource(e.target.value)}
-            >
+            <select value={source} onChange={(e) => setSource(e.target.value)}>
               {LEAD_TEMPLATE_SOURCE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
@@ -151,7 +215,7 @@ export function LeadTemplateConverterClient() {
             <input
               type="text"
               value={sourceKeyword}
-              placeholder="e.g. beauty salon johor bahru"
+              placeholder="e.g. spa"
               onChange={(e) => setSourceKeyword(e.target.value)}
             />
           </label>
@@ -160,8 +224,35 @@ export function LeadTemplateConverterClient() {
             <input
               type="text"
               value={areaOverride}
-              placeholder="e.g. johor bahru"
+              placeholder="e.g. Johor Bahru"
               onChange={(e) => setAreaOverride(e.target.value)}
+            />
+          </label>
+          <label className="lead-template-converter-field lead-template-converter-field-full">
+            Campaign Name (optional)
+            <input
+              type="text"
+              value={campaignName}
+              placeholder="e.g. 2026-06 Johor Bahru Ear Cleaning"
+              onChange={(e) => setCampaignName(e.target.value)}
+            />
+          </label>
+          <label className="lead-template-converter-field lead-template-converter-field-full">
+            Keep Keywords
+            <textarea
+              value={keepKeywordsText}
+              rows={5}
+              placeholder={"采耳\n耳疗\near cleaning\near spa"}
+              onChange={(e) => setKeepKeywordsText(e.target.value)}
+            />
+          </label>
+          <label className="lead-template-converter-field lead-template-converter-field-full">
+            Exclude Keywords
+            <textarea
+              value={excludeKeywordsText}
+              rows={6}
+              placeholder={"ENT\nclinic\nklinik\npharmacy\nhearing aid"}
+              onChange={(e) => setExcludeKeywordsText(e.target.value)}
             />
           </label>
         </div>
@@ -169,9 +260,9 @@ export function LeadTemplateConverterClient() {
           type="button"
           className="import-preview-btn lead-template-converter-convert-btn"
           disabled={pending}
-          onClick={onConvert}
+          onClick={onCleanAndPreview}
         >
-          {pending ? "Converting…" : "Convert Preview"}
+          {pending ? "Cleaning…" : "Clean & Preview"}
         </button>
       </section>
 
@@ -184,55 +275,119 @@ export function LeadTemplateConverterClient() {
       {result ? (
         <>
           <section className="lead-template-converter-section">
-            <h2 className="lead-template-converter-heading">Conversion Summary</h2>
+            <h2 className="lead-template-converter-heading">Cleaning Summary</h2>
             <div className="lead-template-converter-summary">
               <div className="lead-template-converter-stat">
-                <span className="lead-template-converter-stat-label">Total rows</span>
+                <span className="lead-template-converter-stat-label">Total Rows</span>
                 <span>{result.summary.totalRows}</span>
               </div>
               <div className="lead-template-converter-stat">
-                <span className="lead-template-converter-stat-label">Converted rows</span>
-                <span>{result.summary.convertedRows}</span>
-              </div>
-              <div className="lead-template-converter-stat">
-                <span className="lead-template-converter-stat-label">Missing business name</span>
-                <span>{result.summary.missingBusinessName}</span>
-              </div>
-              <div className="lead-template-converter-stat">
-                <span className="lead-template-converter-stat-label">Missing phone</span>
-                <span>{result.summary.missingPhone}</span>
-              </div>
-              <div className="lead-template-converter-stat">
-                <span className="lead-template-converter-stat-label">Website count</span>
-                <span>{result.summary.websiteCount}</span>
-              </div>
-              <div className="lead-template-converter-stat">
-                <span className="lead-template-converter-stat-label">Social link count</span>
-                <span>{result.summary.socialLinkCount}</span>
-              </div>
-              <div className="lead-template-converter-stat">
-                <span className="lead-template-converter-stat-label">Mobile WhatsApp count</span>
-                <span>{result.summary.mobileWhatsAppCount}</span>
+                <span className="lead-template-converter-stat-label">Keep - Queue Ready</span>
+                <span>{result.summary.keepQueueReady}</span>
               </div>
               <div className="lead-template-converter-stat">
                 <span className="lead-template-converter-stat-label">
-                  Landline / not WhatsApp
+                  Keep - No Phone but Has Web/Social
                 </span>
-                <span>{result.summary.landlineOrNotWhatsAppCount}</span>
+                <span>{result.summary.keepNoPhoneButHasWebSocial}</span>
+              </div>
+              <div className="lead-template-converter-stat">
+                <span className="lead-template-converter-stat-label">Review</span>
+                <span>{result.summary.review}</span>
+              </div>
+              <div className="lead-template-converter-stat">
+                <span className="lead-template-converter-stat-label">Exclude - Irrelevant</span>
+                <span>{result.summary.excludeIrrelevant}</span>
+              </div>
+              <div className="lead-template-converter-stat">
+                <span className="lead-template-converter-stat-label">
+                  Exclude - No Contact Info
+                </span>
+                <span>{result.summary.excludeNoContactInfo}</span>
+              </div>
+              <div className="lead-template-converter-stat">
+                <span className="lead-template-converter-stat-label">Duplicates</span>
+                <span>{result.summary.duplicate}</span>
+              </div>
+              <div className="lead-template-converter-stat">
+                <span className="lead-template-converter-stat-label">Missing Phone</span>
+                <span>{result.summary.missingPhone}</span>
+              </div>
+              <div className="lead-template-converter-stat">
+                <span className="lead-template-converter-stat-label">Missing Website</span>
+                <span>{result.summary.missingWebsite}</span>
+              </div>
+              <div className="lead-template-converter-stat">
+                <span className="lead-template-converter-stat-label">Missing Social Link</span>
+                <span>{result.summary.missingSocialLink}</span>
               </div>
             </div>
           </section>
 
           <section className="lead-template-converter-section">
             <h2 className="lead-template-converter-heading">Preview Converted Rows</h2>
+            <div className="lead-template-converter-tabs" role="tablist">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === "all"}
+                className={
+                  activeTab === "all"
+                    ? "lead-template-converter-tab lead-template-converter-tab-active"
+                    : "lead-template-converter-tab"
+                }
+                onClick={() => setActiveTab("all")}
+              >
+                All ({tabCounts.all})
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === "keep"}
+                className={
+                  activeTab === "keep"
+                    ? "lead-template-converter-tab lead-template-converter-tab-active"
+                    : "lead-template-converter-tab"
+                }
+                onClick={() => setActiveTab("keep")}
+              >
+                Keep ({tabCounts.keep})
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === "review"}
+                className={
+                  activeTab === "review"
+                    ? "lead-template-converter-tab lead-template-converter-tab-active"
+                    : "lead-template-converter-tab"
+                }
+                onClick={() => setActiveTab("review")}
+              >
+                Review ({tabCounts.review})
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === "exclude"}
+                className={
+                  activeTab === "exclude"
+                    ? "lead-template-converter-tab lead-template-converter-tab-active"
+                    : "lead-template-converter-tab"
+                }
+                onClick={() => setActiveTab("exclude")}
+              >
+                Exclude / Duplicate ({tabCounts.exclude})
+              </button>
+            </div>
             <p className="sub lead-template-converter-preview-note">
-              Showing up to {PREVIEW_LIMIT} of {result.rows.length} rows.
+              Showing up to {PREVIEW_LIMIT} of {tabRows.length} rows in this tab.
             </p>
             <div className="table-wrap lead-template-converter-table-wrap">
               <table className="queue lead-template-converter-table">
                 <thead>
                   <tr>
-                    {STANDARD_LEAD_TEMPLATE_COLUMNS.map((col) => (
+                    {PREVIEW_COLUMNS.map((col) => (
                       <th key={col}>{col}</th>
                     ))}
                   </tr>
@@ -240,7 +395,7 @@ export function LeadTemplateConverterClient() {
                 <tbody>
                   {previewRows.map((row, i) => (
                     <tr key={i}>
-                      {STANDARD_LEAD_TEMPLATE_COLUMNS.map((col) => (
+                      {PREVIEW_COLUMNS.map((col) => (
                         <td key={col} className="lead-template-converter-td-clip">
                           {fmt(row[col])}
                         </td>
@@ -253,26 +408,44 @@ export function LeadTemplateConverterClient() {
           </section>
 
           <section className="lead-template-converter-section">
-            <h2 className="lead-template-converter-heading">Download Standard Template</h2>
+            <h2 className="lead-template-converter-heading">Download Cleaned Template</h2>
+            <p className="lead-template-converter-download-group-label">Keep Only</p>
             <div className="lead-template-converter-downloads">
               <button
                 type="button"
                 className="import-preview-btn"
-                onClick={onDownloadCsv}
+                onClick={() => onDownloadKeep("csv")}
               >
-                Download Standard CSV
+                Download Keep Only CSV
               </button>
               <button
                 type="button"
                 className="import-confirm-btn"
-                onClick={onDownloadExcel}
+                onClick={() => onDownloadKeep("xlsx")}
               >
-                Download Standard Excel
+                Download Keep Only Excel
               </button>
             </div>
-            <p className="sub" style={{ marginTop: "0.5rem", fontSize: "0.85rem" }}>
-              For editing in Excel, use Standard Excel. CSV is for system import.
-              Opening CSV in Excel may still auto-format long numbers.
+            <p className="lead-template-converter-download-group-label">All Cleaned Rows</p>
+            <div className="lead-template-converter-downloads">
+              <button
+                type="button"
+                className="import-preview-btn"
+                onClick={() => onDownloadAll("csv")}
+              >
+                Download All Cleaned CSV
+              </button>
+              <button
+                type="button"
+                className="import-confirm-btn"
+                onClick={() => onDownloadAll("xlsx")}
+              >
+                Download All Cleaned Excel
+              </button>
+            </div>
+            <p className="sub lead-template-converter-download-hint">
+              Use Excel download for checking/editing phone numbers and CID. CSV is for system
+              import. Opening CSV in Excel may still auto-format long numbers.
             </p>
           </section>
         </>
