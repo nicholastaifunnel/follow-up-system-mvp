@@ -49,6 +49,7 @@ Deploy to Vercel, then check:
 - `/queues`
 - `/import`
 - `/leads/[id]`
+- `/tools/lead-template-converter` — Lead Cleaner client-side CSV tool. See [docs/lead-cleaner.md](./lead-cleaner.md).
 
 ## Notes
 
