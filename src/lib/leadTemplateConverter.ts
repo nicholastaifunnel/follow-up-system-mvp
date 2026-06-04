@@ -400,6 +400,8 @@ function buildSearchText(row: StandardLeadTemplateRow): string {
     row["Business Name"],
     row.Category,
     row.Address,
+    row.Website,
+    row["Social Link"],
     row.Notes,
   ]
     .join(" ")
@@ -438,13 +440,6 @@ export function classifyLeadRow(
   const hasSocial = Boolean(social);
   const searchText = buildSearchText(row);
 
-  if (!hasPhone && !hasWeb && !hasSocial) {
-    return {
-      status: "Exclude - No Contact Info",
-      reason: "Exclude - no phone, no website, no social link",
-    };
-  }
-
   const excludeMatch = findMatchingKeyword(searchText, settings.excludeKeywords);
   if (excludeMatch) {
     return {
@@ -454,21 +449,22 @@ export function classifyLeadRow(
   }
 
   const keepMatch = findMatchingKeyword(searchText, settings.keepKeywords);
-  const keepKeywordsEmpty = settings.keepKeywords.length === 0;
+
+  if (keepMatch && hasWhatsApp) {
+    return {
+      status: "Keep - Queue Ready",
+      reason: `Keep - matched keyword: ${keepMatch}; has WhatsApp-ready phone`,
+    };
+  }
+
+  if (keepMatch && (hasWeb || hasSocial) && !hasWhatsApp) {
+    return {
+      status: "Keep - No Phone but Has Web/Social",
+      reason: `Keep - matched keyword: ${keepMatch}; no phone but has website/social`,
+    };
+  }
 
   if (hasWhatsApp) {
-    if (keepKeywordsEmpty) {
-      return {
-        status: "Keep - Queue Ready",
-        reason: "Keep - has WhatsApp-ready phone",
-      };
-    }
-    if (keepMatch) {
-      return {
-        status: "Keep - Queue Ready",
-        reason: `Keep - matched keyword: ${keepMatch}; has WhatsApp-ready phone`,
-      };
-    }
     return {
       status: "Review",
       reason: "Review - has phone but no target keyword match",
@@ -476,25 +472,13 @@ export function classifyLeadRow(
   }
 
   if (hasWeb || hasSocial) {
-    if (keepKeywordsEmpty) {
-      return {
-        status: "Keep - No Phone but Has Web/Social",
-        reason: "Keep - no phone but has website/social",
-      };
-    }
-    if (keepMatch) {
-      return {
-        status: "Keep - No Phone but Has Web/Social",
-        reason: `Keep - matched keyword: ${keepMatch}; no phone but has website/social`,
-      };
-    }
     return {
       status: "Review",
       reason: "Review - has website/social but no target keyword match",
     };
   }
 
-  if (hasPhone && !hasWhatsApp) {
+  if (hasPhone) {
     return {
       status: "Review",
       reason: "Review - landline only, no WhatsApp-ready mobile",
@@ -502,8 +486,8 @@ export function classifyLeadRow(
   }
 
   return {
-    status: "Review",
-    reason: "Review - needs manual check",
+    status: "Exclude - No Contact Info",
+    reason: "Exclude - no phone, no website, no social link",
   };
 }
 

@@ -199,6 +199,10 @@ export function LeadTemplateConverterClient() {
 
       <section className="lead-template-converter-section">
         <h2 className="lead-template-converter-heading">Batch Settings</h2>
+        <p className="lead-template-converter-hint">
+          Only rows matching Keep Keywords can enter Keep. Rows with contact info but no Keep match
+          will go to Review.
+        </p>
         <div className="lead-template-converter-grid">
           <label className="lead-template-converter-field">
             Source
