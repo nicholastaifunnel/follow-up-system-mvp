@@ -69,6 +69,11 @@ export function LeadTemplateConverterClient() {
   const [pending, setPending] = useState(false);
   const [activeTab, setActiveTab] = useState<PreviewTabId>("all");
 
+  function clearPreview() {
+    setResult(null);
+    setError(null);
+  }
+
   function onCleanAndPreview() {
     setError(null);
     setResult(null);
@@ -187,8 +192,7 @@ export function LeadTemplateConverterClient() {
             accept=".csv,text/csv"
             onChange={(e) => {
               setFile(e.target.files?.[0] ?? null);
-              setResult(null);
-              setError(null);
+              clearPreview();
             }}
           />
           {file ? (
@@ -206,7 +210,13 @@ export function LeadTemplateConverterClient() {
         <div className="lead-template-converter-grid">
           <label className="lead-template-converter-field">
             Source
-            <select value={source} onChange={(e) => setSource(e.target.value)}>
+            <select
+              value={source}
+              onChange={(e) => {
+                setSource(e.target.value);
+                clearPreview();
+              }}
+            >
               {LEAD_TEMPLATE_SOURCE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
@@ -220,7 +230,10 @@ export function LeadTemplateConverterClient() {
               type="text"
               value={sourceKeyword}
               placeholder="e.g. spa"
-              onChange={(e) => setSourceKeyword(e.target.value)}
+              onChange={(e) => {
+                setSourceKeyword(e.target.value);
+                clearPreview();
+              }}
             />
           </label>
           <label className="lead-template-converter-field">
@@ -229,7 +242,10 @@ export function LeadTemplateConverterClient() {
               type="text"
               value={areaOverride}
               placeholder="e.g. Johor Bahru"
-              onChange={(e) => setAreaOverride(e.target.value)}
+              onChange={(e) => {
+                setAreaOverride(e.target.value);
+                clearPreview();
+              }}
             />
           </label>
           <label className="lead-template-converter-field lead-template-converter-field-full">
@@ -238,7 +254,10 @@ export function LeadTemplateConverterClient() {
               type="text"
               value={campaignName}
               placeholder="e.g. 2026-06 Johor Bahru Ear Cleaning"
-              onChange={(e) => setCampaignName(e.target.value)}
+              onChange={(e) => {
+                setCampaignName(e.target.value);
+                clearPreview();
+              }}
             />
           </label>
           <label className="lead-template-converter-field lead-template-converter-field-full">
@@ -247,7 +266,10 @@ export function LeadTemplateConverterClient() {
               value={keepKeywordsText}
               rows={5}
               placeholder={"采耳\n耳疗\near cleaning\near spa"}
-              onChange={(e) => setKeepKeywordsText(e.target.value)}
+              onChange={(e) => {
+                setKeepKeywordsText(e.target.value);
+                clearPreview();
+              }}
             />
           </label>
           <label className="lead-template-converter-field lead-template-converter-field-full">
@@ -256,7 +278,10 @@ export function LeadTemplateConverterClient() {
               value={excludeKeywordsText}
               rows={6}
               placeholder={"ENT\nclinic\nklinik\npharmacy\nhearing aid"}
-              onChange={(e) => setExcludeKeywordsText(e.target.value)}
+              onChange={(e) => {
+                setExcludeKeywordsText(e.target.value);
+                clearPreview();
+              }}
             />
           </label>
         </div>
