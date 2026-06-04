@@ -78,6 +78,89 @@ function cellString(value: unknown): string {
   return String(value).trim();
 }
 
+/** Detect common UTF-8-as-Latin-1 mojibake fragments. */
+const MOJIBAKE_PATTERN = /(?:Â|Ã|â€|æ|è|é|å|ä|ç|¯|ï¿½)/;
+
+function looksLikeMojibake(value: string): boolean {
+  return MOJIBAKE_PATTERN.test(value);
+}
+
+function textQualityScore(value: string): number {
+  let score = 0;
+  if (looksLikeMojibake(value)) score -= 10;
+  if (/[\u4e00-\u9fff]/.test(value)) score += 5;
+  if (/°/.test(value) && !/Â°/.test(value)) score += 1;
+  if (/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(value)) score -= 5;
+  return score;
+}
+
+function decodeMojibakeBytes(value: string): string | null {
+  const bytes = new Uint8Array(value.length);
+  for (let i = 0; i < value.length; i++) {
+    const code = value.charCodeAt(i);
+    if (code > 0xff) return null;
+    bytes[i] = code;
+  }
+  return new TextDecoder("utf-8", { fatal: false }).decode(bytes).trim();
+}
+
+function decodeMojibakeLegacyEscape(value: string): string | null {
+  try {
+    return decodeURIComponent(escape(value)).trim();
+  } catch {
+    return null;
+  }
+}
+
+/** Repair UTF-8 text that was mis-decoded as Latin-1 / Windows-1252. */
+export function fixMojibake(value: unknown): string {
+  let text = cellString(value);
+  if (!text) return "";
+
+  if (!looksLikeMojibake(text)) {
+    return normalizeDegreeSymbol(text);
+  }
+
+  if (/Â°/.test(text)) {
+    const quick = text.replace(/Â°/g, "°");
+    if (!looksLikeMojibake(quick)) {
+      return normalizeDegreeSymbol(quick);
+    }
+    text = quick;
+  }
+
+  const candidates = [text];
+  const fromBytes = decodeMojibakeBytes(text);
+  if (fromBytes) candidates.push(fromBytes);
+  const fromEscape = decodeMojibakeLegacyEscape(text);
+  if (fromEscape) candidates.push(fromEscape);
+
+  let best = text;
+  let bestScore = textQualityScore(text);
+  for (const candidate of candidates) {
+    const score = textQualityScore(candidate);
+    if (score > bestScore) {
+      best = candidate;
+      bestScore = score;
+    }
+  }
+
+  return normalizeDegreeSymbol(best);
+}
+
+/** e.g. 38°c → 38°C when degree symbol is already correct. */
+function normalizeDegreeSymbol(value: string): string {
+  return value.replace(/(\d)°c\b/gi, "$1°C");
+}
+
+function decodeUtf8CsvBuffer(buffer: ArrayBuffer): string {
+  let text = new TextDecoder("utf-8", { fatal: false }).decode(buffer);
+  if (text.charCodeAt(0) === 0xfeff) {
+    text = text.slice(1);
+  }
+  return text;
+}
+
 function rowToGosomRow(raw: Record<string, unknown>): GosomRow {
   return {
     title: cellString(raw.title),
@@ -95,7 +178,8 @@ function rowToGosomRow(raw: Record<string, unknown>): GosomRow {
 }
 
 export function parseGosomCsvBuffer(buffer: ArrayBuffer): GosomRow[] {
-  const workbook = XLSX.read(buffer, { type: "array", raw: false });
+  const csvText = decodeUtf8CsvBuffer(buffer);
+  const workbook = XLSX.read(csvText, { type: "string", raw: false });
   const sheetName = workbook.SheetNames[0];
   if (!sheetName) return [];
 
@@ -212,24 +296,31 @@ export function convertGosomRowsToStandardRows(
     const phone = g.phone.trim();
     const whatsappPhone = normalizeMalaysiaWhatsAppPhone(phone);
     const { website, socialLink } = splitWebsiteAndSocialLink(g.website);
+    const businessName = fixMojibake(g.title);
+    const category = fixMojibake(g.category);
+    const address = fixMojibake(g.address);
+    const websiteOut = fixMojibake(website);
+    const socialLinkOut = fixMojibake(socialLink);
+    const googleMapsLink = fixMojibake(g.link);
+    const notes = fixMojibake(buildNotes(g.status));
 
-    if (!g.title.trim()) missingBusinessName += 1;
+    if (!businessName) missingBusinessName += 1;
     if (!phone) missingPhone += 1;
-    if (website) websiteCount += 1;
-    if (socialLink) socialLinkCount += 1;
+    if (websiteOut) websiteCount += 1;
+    if (socialLinkOut) socialLinkCount += 1;
     if (whatsappPhone) mobileWhatsAppCount += 1;
     else if (phone) landlineOrNotWhatsAppCount += 1;
 
     rows.push({
-      "Business Name": g.title.trim(),
+      "Business Name": businessName,
       Phone: phone,
       "WhatsApp Phone": whatsappPhone,
       Area: area,
-      Category: g.category.trim(),
-      Address: g.address.trim(),
-      Website: website,
-      "Social Link": socialLink,
-      "Google Maps Link": g.link.trim(),
+      Category: category,
+      Address: address,
+      Website: websiteOut,
+      "Social Link": socialLinkOut,
+      "Google Maps Link": googleMapsLink,
       "Place ID": g.place_id.trim(),
       CID: g.cid.trim(),
       Rating: g.review_rating ? formatRating(g.review_rating) : "",
@@ -237,7 +328,7 @@ export function convertGosomRowsToStandardRows(
       Source: options.source.trim() || "gosom_google_maps_scraper",
       "Source Keyword": options.sourceKeyword.trim(),
       "Source File Name": options.sourceFileName.trim(),
-      Notes: buildNotes(g.status),
+      Notes: notes,
     });
   }
 
