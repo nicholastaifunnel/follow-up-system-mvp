@@ -78,6 +78,19 @@ function cellString(value: unknown): string {
   return String(value).trim();
 }
 
+/** Keep long numeric IDs as strings; avoid silent Number precision loss. */
+function digitSafeCellString(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) return "";
+    if (Number.isInteger(value)) {
+      return String(Math.trunc(value));
+    }
+    return String(value);
+  }
+  return String(value).trim();
+}
+
 /** Detect common UTF-8-as-Latin-1 mojibake fragments. */
 const MOJIBAKE_PATTERN = /(?:Â|Ã|â€|æ|è|é|å|ä|ç|¯|ï¿½)/;
 
@@ -171,8 +184,8 @@ function rowToGosomRow(raw: Record<string, unknown>): GosomRow {
     phone: cellString(raw.phone),
     review_count: cellString(raw.review_count),
     review_rating: cellString(raw.review_rating),
-    place_id: cellString(raw.place_id),
-    cid: cellString(raw.cid),
+    place_id: digitSafeCellString(raw.place_id),
+    cid: digitSafeCellString(raw.cid),
     status: cellString(raw.status),
   };
 }
@@ -321,8 +334,8 @@ export function convertGosomRowsToStandardRows(
       Website: websiteOut,
       "Social Link": socialLinkOut,
       "Google Maps Link": googleMapsLink,
-      "Place ID": g.place_id.trim(),
-      CID: g.cid.trim(),
+      "Place ID": digitSafeCellString(g.place_id),
+      CID: digitSafeCellString(g.cid),
       Rating: g.review_rating ? formatRating(g.review_rating) : "",
       "Review Count": g.review_count ? formatReviewCount(g.review_count) : "",
       Source: options.source.trim() || "gosom_google_maps_scraper",
@@ -364,10 +377,62 @@ export function buildStandardTemplateCsv(rows: StandardLeadTemplateRow[]): strin
   return `\uFEFF${lines.join("\r\n")}`;
 }
 
+/** Excel columns forced to Text (@) so long phones / CID are not shown as scientific notation. */
+const EXCEL_FORCE_TEXT_COLUMNS = new Set<StandardLeadTemplateColumn>([
+  "Business Name",
+  "Phone",
+  "WhatsApp Phone",
+  "Area",
+  "Category",
+  "Address",
+  "Website",
+  "Social Link",
+  "Google Maps Link",
+  "Place ID",
+  "CID",
+  "Source",
+  "Source Keyword",
+  "Source File Name",
+  "Notes",
+]);
+
+function setWorksheetCellAsText(sheet: XLSX.WorkSheet, addr: string, value: string): void {
+  const text = value ?? "";
+  sheet[addr] = { t: "s", v: text, w: text, z: "@" };
+}
+
+function forceWorksheetTextCells(sheet: XLSX.WorkSheet): void {
+  const ref = sheet["!ref"];
+  if (!ref) return;
+
+  const range = XLSX.utils.decode_range(ref);
+  const headerRowIndex = range.s.r;
+  const columnByIndex = new Map<number, StandardLeadTemplateColumn>();
+
+  for (let col = range.s.c; col <= range.e.c; col++) {
+    const addr = XLSX.utils.encode_cell({ r: headerRowIndex, c: col });
+    const header = cellString(sheet[addr]?.v);
+    if ((STANDARD_LEAD_TEMPLATE_COLUMNS as readonly string[]).includes(header)) {
+      columnByIndex.set(col, header as StandardLeadTemplateColumn);
+    }
+  }
+
+  for (let row = headerRowIndex + 1; row <= range.e.r; row++) {
+    for (const [col, field] of columnByIndex) {
+      if (!EXCEL_FORCE_TEXT_COLUMNS.has(field)) continue;
+      const addr = XLSX.utils.encode_cell({ r: row, c: col });
+      const existing = sheet[addr];
+      const text = cellString(existing?.v ?? existing?.w ?? "");
+      setWorksheetCellAsText(sheet, addr, text);
+    }
+  }
+}
+
 export function buildStandardTemplateExcelBuffer(rows: StandardLeadTemplateRow[]): ArrayBuffer {
   const sheet = XLSX.utils.json_to_sheet(rows, {
     header: [...STANDARD_LEAD_TEMPLATE_COLUMNS],
   });
+  forceWorksheetTextCells(sheet);
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, sheet, "Leads");
   return XLSX.write(workbook, { bookType: "xlsx", type: "array" }) as ArrayBuffer;

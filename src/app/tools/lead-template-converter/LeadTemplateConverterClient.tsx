@@ -270,6 +270,10 @@ export function LeadTemplateConverterClient() {
                 Download Standard Excel
               </button>
             </div>
+            <p className="sub" style={{ marginTop: "0.5rem", fontSize: "0.85rem" }}>
+              For editing in Excel, use Standard Excel. CSV is for system import.
+              Opening CSV in Excel may still auto-format long numbers.
+            </p>
           </section>
         </>
       ) : null}
