@@ -74,6 +74,12 @@ export default function ImportExcelPage() {
       <p className="sub">
         Upload an Excel file to preview leads before importing.
       </p>
+      <p className="sub import-gosom-link">
+        Gosom CSV?{" "}
+        <Link className="top-link" href="/tools/lead-template-converter">
+          Convert to standard template first →
+        </Link>
+      </p>
 
       <form
         ref={formRef}

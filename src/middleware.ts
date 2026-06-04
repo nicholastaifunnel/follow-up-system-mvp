@@ -39,5 +39,6 @@ export const config = {
     "/ad-apply-links/:path*",
     "/ad-leads/:path*",
     "/ad-leads/export",
+    "/tools/:path*",
   ],
 };

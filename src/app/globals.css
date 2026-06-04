@@ -8709,3 +8709,114 @@ html[data-theme="dark"] .review-row-limit-btn--active {
     margin-top: 0;
   }
 }
+
+/* Lead Template Converter (scoped) */
+.lead-template-converter-page .lead-template-converter-section {
+  margin-top: 1.5rem;
+}
+
+.lead-template-converter-heading {
+  font-size: 1.05rem;
+  margin: 0 0 0.75rem;
+}
+
+.lead-template-converter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.lead-template-converter-field label {
+  font-size: 0.875rem;
+  color: var(--muted, #9ca3af);
+}
+
+.lead-template-converter-field input[type="file"],
+.lead-template-converter-field input[type="text"],
+.lead-template-converter-field select {
+  max-width: 100%;
+}
+
+.lead-template-converter-grid {
+  display: grid;
+  gap: 0.75rem 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+}
+
+.lead-template-converter-hint {
+  font-size: 0.85rem;
+  color: var(--muted, #9ca3af);
+  margin: 0;
+}
+
+.lead-template-converter-convert-btn {
+  margin-top: 0.5rem;
+}
+
+.lead-template-converter-error {
+  margin-top: 1rem;
+}
+
+.lead-template-converter-summary {
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
+}
+
+.lead-template-converter-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.lead-template-converter-stat-label {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--muted, #9ca3af);
+}
+
+.lead-template-converter-preview-note {
+  margin-bottom: 0.5rem;
+}
+
+.lead-template-converter-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+.lead-template-converter-table {
+  min-width: 960px;
+  font-size: 0.8rem;
+}
+
+.lead-template-converter-td-clip {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lead-template-converter-downloads {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.import-gosom-link {
+  margin-top: -0.25rem;
+}
+
+@media (max-width: 640px) {
+  .lead-template-converter-downloads .import-preview-btn,
+  .lead-template-converter-downloads .import-confirm-btn {
+    width: 100%;
+  }
+}
