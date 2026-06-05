@@ -1179,13 +1179,61 @@ table.queue.queue-work-table th {
 }
 
 .top-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.5rem;
+  align-items: center;
   margin: 0 0 1rem;
+  max-width: 100%;
   font-size: 0.875rem;
 }
 
+.top-links .top-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--border-input);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  line-height: 1.2;
+  margin-bottom: 0;
+}
+
+.top-links .top-link:hover {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--primary-hover);
+  text-decoration: none;
+}
+
+.top-links .top-link:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  background: var(--primary-soft);
+  border-color: var(--primary);
+}
+
 .top-links-sep {
-  color: var(--top-sep);
-  margin: 0 0.35rem;
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .top-links {
+    gap: 0.4rem 0.45rem;
+  }
+
+  .top-links .top-link {
+    min-height: 30px;
+    padding: 0.3rem 0.65rem;
+    font-size: 0.8125rem;
+  }
 }
 
 .import-form {
