@@ -39,6 +39,7 @@ export type ParsedLeadRow = {
   address: string;
   phone: string;
   internationalPhone: string;
+  whatsappPhone: string;
   website: string;
   hasWebsiteRaw: string;
   socialPlatform: string;
@@ -143,6 +144,23 @@ function getCell(
   const v = row[idx];
   if (v === undefined || v === null) return "";
   return String(v).trim();
+}
+
+/** First non-empty cell among alternate header names (Lead Cleaner aliases). */
+function getCellByNames(
+  row: unknown[],
+  headerIndex: Map<string, number>,
+  names: string[],
+): string {
+  for (const name of names) {
+    const idx = headerIndex.get(name.toLowerCase());
+    if (idx === undefined) continue;
+    const v = row[idx];
+    if (v === undefined || v === null) continue;
+    const s = String(v).trim();
+    if (s) return s;
+  }
+  return "";
 }
 
 function truthyHasWebsite(raw: string): boolean {
@@ -300,11 +318,14 @@ function parseRow(
   const address = getCell(row, headerIndex, "Address");
   const phone = getCell(row, headerIndex, "Phone");
   const internationalPhone = getCell(row, headerIndex, "International Phone");
+  const whatsappPhone = getCellByNames(row, headerIndex, ["WhatsApp Phone"]);
   const website = getCell(row, headerIndex, "Website");
   const hasWebsiteRaw = getCell(row, headerIndex, "Has Website");
   const socialPlatform = getCell(row, headerIndex, "Social Platform");
   const socialLink = getCell(row, headerIndex, "Social Link");
-  const googleRating = getCell(row, headerIndex, "Google Rating");
+  const googleRating =
+    getCell(row, headerIndex, "Google Rating") ||
+    getCellByNames(row, headerIndex, ["Rating"]);
   const reviewCount = getCell(row, headerIndex, "Review Count");
   const googleMapsLink = getCell(row, headerIndex, "Google Maps Link");
   const placeId = getCell(row, headerIndex, "Place ID");
@@ -313,7 +334,9 @@ function parseRow(
   const suitableLead = getCell(row, headerIndex, "Suitable Lead");
   const leadStatus = getCell(row, headerIndex, "Lead Status");
   const priority = getCell(row, headerIndex, "Priority");
-  const manualNotes = getCell(row, headerIndex, "Manual Notes");
+  const manualNotes =
+    getCell(row, headerIndex, "Manual Notes") ||
+    getCellByNames(row, headerIndex, ["Notes"]);
   const contacted = getCell(row, headerIndex, "Contacted");
   const response = getCell(row, headerIndex, "Response");
   const followUpDate = getCell(row, headerIndex, "Follow Up Date");
@@ -341,6 +364,7 @@ function parseRow(
     address,
     phone,
     internationalPhone,
+    whatsappPhone,
     website,
     hasWebsiteRaw,
     socialPlatform,

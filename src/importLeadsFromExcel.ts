@@ -201,6 +201,7 @@ function buildInsertData(
     address: p.address.trim() || undefined,
     phone: p.phone.trim() || undefined,
     internationalPhone: p.internationalPhone.trim() || undefined,
+    whatsappPhone: p.whatsappPhone.trim() || undefined,
     website: p.website.trim() || undefined,
     socialPlatform: p.socialPlatform.trim() || undefined,
     socialLink: p.socialLink.trim() || undefined,
@@ -266,6 +267,8 @@ function buildUpdateData(
   if (mPhone !== undefined) data.phone = mPhone;
   const mIntl = mergeOptional(existing.internationalPhone, p.internationalPhone);
   if (mIntl !== undefined) data.internationalPhone = mIntl;
+  const mWa = mergeOptional(existing.whatsappPhone, p.whatsappPhone);
+  if (mWa !== undefined) data.whatsappPhone = mWa;
   const mWeb = mergeOptional(existing.website, p.website);
   if (mWeb !== undefined) data.website = mWeb;
   const mSp = mergeOptional(existing.socialPlatform, p.socialPlatform);
