@@ -38,6 +38,7 @@ export const config = {
     "/system-health/:path*",
     "/ad-apply-links/:path*",
     "/ad-leads/:path*",
+    "/landing-pages/:path*",
     "/ad-leads/export",
     "/tools/:path*",
   ],

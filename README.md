@@ -52,6 +52,7 @@ External leads (Gosom / Google Maps / Excel)
 | `/skipped-leads` | Auth | Leads hidden from message queue |
 | `/system-health` | Auth | High-level counts and health summary |
 | `/ad-apply-links` | Auth | Manage apply-form slugs for ads |
+| `/landing-pages` | Auth | Directory for ad landing page links and connected apply forms |
 | `/ad-leads` | Auth | Leads from ad apply forms |
 | `/review-qr-system` | **Public** | Review QR marketing landing page |
 | `/apply/[slug]` | **Public** | Free trial application form |
@@ -126,6 +127,7 @@ Full details: [docs/lead-cleaner.md](docs/lead-cleaner.md)
 
 ## Review QR / Ad flow
 
+- **`/landing-pages`** — internal directory for finding and copying ad landing page URLs
 - **`/review-qr-system`** — public marketing page for Review QR (beauty / spa / salon)
 - **`/apply/[slug]`** — public free trial application (slug must exist in Ad Apply Links)
 - **`/apply/[slug]/thank-you`** — confirmation after submit (includes WhatsApp handoff text)

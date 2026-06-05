@@ -18,6 +18,10 @@ export default async function AdApplyLinksPage() {
           Back to Queues
         </Link>
         <span className="top-links-sep">·</span>
+        <Link className="top-link" href="/landing-pages">
+          Landing Pages
+        </Link>
+        <span className="top-links-sep">·</span>
         <Link className="top-link" href="/ad-leads">
           Ad Leads
         </Link>
