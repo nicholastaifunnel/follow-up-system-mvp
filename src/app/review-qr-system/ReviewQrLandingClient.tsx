@@ -524,24 +524,6 @@ export function ReviewQrLandingClient() {
       <section className="review-qr-section">
         <div className="review-qr-section-inner">
           <SectionHead label="顾客流程">顾客只需要 3 个步骤</SectionHead>
-          <ReviewQrImageSlot
-            variant="flow"
-            label="QR 立牌与手机流程"
-            imageSrc="/images/review-qr/review-qr-three-step-flow.webp.png"
-            imageAlt="Review QR 三步骤流程：扫码、选择平台、复制提交评价"
-            className="review-qr-flow-showcase"
-          >
-            <div className="review-qr-flow-stand">
-              <span>QR stand</span>
-              <IconQr />
-            </div>
-            <div className="review-qr-flow-device">
-              <div className="review-qr-flow-screen-line" />
-              <div className="review-qr-flow-choice">Google Review</div>
-              <div className="review-qr-flow-choice">Facebook</div>
-              <div className="review-qr-flow-submit">Copy & submit</div>
-            </div>
-          </ReviewQrImageSlot>
           <div className="review-qr-steps">
             {HOW_IT_WORKS.map((item) => (
               <article key={item.step} className="review-qr-step">
