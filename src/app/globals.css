@@ -1185,6 +1185,7 @@ table.queue.queue-work-table th {
   align-items: center;
   margin: 0 0 1rem;
   max-width: 100%;
+  padding-right: 11rem;
   font-size: 0.875rem;
 }
 
@@ -1227,6 +1228,7 @@ table.queue.queue-work-table th {
 @media (max-width: 480px) {
   .top-links {
     gap: 0.4rem 0.45rem;
+    padding-right: 0;
   }
 
   .top-links .top-link {
