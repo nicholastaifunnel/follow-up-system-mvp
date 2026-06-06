@@ -449,6 +449,7 @@ export async function markLeadAsSentAction(
     revalidatePath(`/leads/${leadId}`);
     revalidatePath(`/leads/${leadId}/reply-assistant`);
     revalidatePath("/queues");
+    revalidatePath("/agent-leads");
     return { ok: true };
   } catch (e) {
     const message =
@@ -579,6 +580,7 @@ export async function skipLeadForDetailAction(input: {
     revalidatePath(`/leads/${leadId}`);
     revalidatePath(`/leads/${leadId}/reply-assistant`);
     revalidatePath("/queues");
+    revalidatePath("/agent-leads");
     return { ok: true };
   } catch (e) {
     const message =

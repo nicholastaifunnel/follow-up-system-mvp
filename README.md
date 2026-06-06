@@ -54,6 +54,7 @@ External leads (Gosom / Google Maps / Excel)
 | `/ad-apply-links` | Auth | Manage apply-form slugs for ads |
 | `/landing-pages` | Auth | Directory for ad landing page links and connected apply forms |
 | `/ad-leads` | Auth | Leads from ad apply forms |
+| `/agent-leads` | Auth | One-lead-at-a-time view for OpenClaw / AI agent to process Ready + Prepared leads |
 | `/review-qr-system` | **Public** | Review QR marketing landing page |
 | `/apply/[slug]` | **Public** | Free trial application form |
 | `/apply/[slug]/thank-you` | **Public** | Thank-you page after apply submit |
@@ -120,6 +121,8 @@ Full details: [docs/lead-cleaner.md](docs/lead-cleaner.md)
 3. **Prepare First Message** — manual preparation on lead detail
 4. **Send** — open WhatsApp manually (`wa.me` link); mark sent when done
 5. **Follow-up** — use queue sections and lead detail for replies and follow-ups
+
+**`/agent-leads`** — shows one Ready + Prepared lead at a time for OpenClaw / AI agent sending. It does not control timing, daily limits, or automatic WhatsApp API sends; OpenClaw handles interval and daily volume externally. Mark as Sent uses the same logic as the lead detail page. Today's sent totals remain on `/queues` (Daily Activity).
 
 **Safety:** Prepare and send in small batches. Avoid mass-sending many first messages at once.
 
