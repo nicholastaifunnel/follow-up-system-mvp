@@ -87,6 +87,7 @@ export function AgentLeadCard({ lead }: Props) {
           </a>
         )}
         <MarkAsSentButton
+          key={lead.id}
           leadId={lead.id}
           canMarkSent
           reason=""
