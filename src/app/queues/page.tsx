@@ -43,6 +43,7 @@ import { QueueLimitSelector } from "./QueueLimitSelector";
 import { QueueSection } from "./QueueSection";
 import { QueuesFilterBar } from "./QueuesFilterBar";
 import { MarkFollowUpSentButton } from "./MarkFollowUpSentButton";
+import { RejectLeadReviewButton } from "./RejectLeadReviewButton";
 
 export const dynamic = "force-dynamic";
 
@@ -331,7 +332,13 @@ function PhoneSearchResultsTable({ leads }: { leads: PhoneSearchLeadRow[] }) {
   );
 }
 
-function LeadReviewInboxTable({ leads }: { leads: LeadReviewInboxRow[] }) {
+function LeadReviewInboxTable({
+  leads,
+  showReject = false,
+}: {
+  leads: LeadReviewInboxRow[];
+  showReject?: boolean;
+}) {
   return (
     <div className="table-wrap queue-work-table-wrap">
       <table className="queue queue-work-table lead-review-inbox-table">
@@ -374,8 +381,14 @@ function LeadReviewInboxTable({ leads }: { leads: LeadReviewInboxRow[] }) {
               </td>
               <td>{leadReviewStatusLabel(row.outreachReadiness)}</td>
               <td className="queue-td-clip">{fmtText(row.manualNotes)}</td>
-              <td>
+              <td className="lead-review-inbox-actions">
                 <Link href={`/leads/${row.id}`}>Review Lead</Link>
+                {showReject ? (
+                  <RejectLeadReviewButton
+                    leadId={row.id}
+                    manualNotes={row.manualNotes}
+                  />
+                ) : null}
               </td>
             </tr>
           ))}
@@ -412,7 +425,10 @@ function LeadReviewInboxSection({
             shownCount={inbox.needsReview.leads.length}
             defaultExpanded
           >
-            <LeadReviewInboxTable leads={inbox.needsReview.leads} />
+            <LeadReviewInboxTable
+              leads={inbox.needsReview.leads}
+              showReject
+            />
           </QueueSection>
         </div>
       ) : null}
