@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { AgentLeadRow } from "@/getAgentLead";
-import { OpenWhatsAppButton } from "@/app/leads/[id]/OpenWhatsAppButton";
+import { digitsForWaMe } from "@/lib/digitsForWaMe";
 import { MarkAsSentButton } from "@/app/leads/[id]/MarkAsSentButton";
 import { skipLeadForDetailAction } from "@/app/leads/[id]/actions";
 import { needManualForAgentAction } from "./actions";
@@ -25,6 +25,12 @@ export function AgentLeadCard({ lead }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [exitError, setExitError] = useState<string | null>(null);
+  const prepared = (lead.preparedMessage ?? "").trim();
+  const digits = digitsForWaMe(
+    lead.phone,
+    lead.internationalPhone,
+    lead.whatsappPhone,
+  );
 
   function onExitAction(
     action: () => Promise<{ ok: boolean; error?: string }>,
@@ -64,13 +70,22 @@ export function AgentLeadCard({ lead }: Props) {
       </div>
 
       <div className="ad-apply-form-link-actions agent-lead-actions">
-        <OpenWhatsAppButton
-          phone={lead.phone}
-          internationalPhone={lead.internationalPhone}
-          whatsappPhone={lead.whatsappPhone}
-          preparedMessage={lead.preparedMessage}
-          label="Open WhatsApp"
-        />
+        {!prepared ? (
+          <span className="open-whatsapp-hint">Prepare a draft first.</span>
+        ) : !digits ? (
+          <span className="open-whatsapp-hint">
+            No usable phone for WhatsApp.
+          </span>
+        ) : (
+          <a
+            href={`https://web.whatsapp.com/send?phone=${digits}&text=${encodeURIComponent(prepared)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="open-whatsapp-btn open-whatsapp-btn-primary"
+          >
+            Open WhatsApp Web
+          </a>
+        )}
         <MarkAsSentButton
           leadId={lead.id}
           canMarkSent
