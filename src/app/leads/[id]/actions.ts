@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { markWhatsAppFirstMessageSent } from "../../../markWhatsAppFirstMessageSent";
+import { digitsForWaMe } from "../../../lib/digitsForWaMe";
 import { prisma } from "../../../lib/prisma";
 import { prepareLeadMessage } from "../../../prepareLeadMessage";
 import {
@@ -397,6 +398,9 @@ export async function markLeadAsSentAction(
     select: {
       messageStatus: true,
       preparedMessage: true,
+      phone: true,
+      internationalPhone: true,
+      whatsappPhone: true,
       isArchived: true,
       archivedReason: true,
       skippedAt: true,
@@ -438,15 +442,31 @@ export async function markLeadAsSentAction(
     };
   }
 
-  if (!(snapshot.preparedMessage ?? "").trim()) {
+  const preparedMessage = (snapshot.preparedMessage ?? "").trim();
+  if (!preparedMessage) {
     return {
       ok: false,
       error: "Prepare a message with content before marking as sent.",
     };
   }
 
+  const digits = digitsForWaMe(
+    snapshot.phone,
+    snapshot.internationalPhone,
+    snapshot.whatsappPhone,
+  );
+  if (!digits) {
+    return {
+      ok: false,
+      error: "No usable WhatsApp phone for this lead.",
+    };
+  }
+
   try {
-    await markWhatsAppFirstMessageSent(prisma, { leadId });
+    await markWhatsAppFirstMessageSent(prisma, {
+      leadId,
+      lastOutboundMessage: preparedMessage,
+    });
     revalidatePath(`/leads/${leadId}`);
     revalidatePath(`/leads/${leadId}/reply-assistant`);
     revalidatePath("/queues");
