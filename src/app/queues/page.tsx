@@ -34,7 +34,10 @@ import {
   parseFirstOutreachBatchParam,
 } from "@/batchQueueParams";
 import { doNotContactReasonLabel } from "@/doNotContact";
-import { parseActivityDateParam } from "@/formatMalaysiaTime";
+import {
+  formatDateTimeMYT,
+  parseActivityDateParam,
+} from "@/formatMalaysiaTime";
 import { DailyActivitySection } from "./DailyActivitySection";
 import { BatchSafetySection } from "./BatchSafetySection";
 import { BatchSizeSelector } from "./BatchSizeSelector";
@@ -71,8 +74,7 @@ function fmtText(v: string | null | undefined): string {
 }
 
 function fmtDate(d: Date | null): string {
-  if (!d) return "—";
-  return d.toISOString().replace("T", " ").slice(0, 16);
+  return formatDateTimeMYT(d);
 }
 
 type QueueAngleProps = {

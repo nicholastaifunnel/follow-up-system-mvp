@@ -86,6 +86,37 @@ export function getMalaysiaTodayIsoDate(): string {
 }
 
 const ISO_DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
+const ISO_DATETIME_LOCAL_RE =
+  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/;
+
+function getMalaysiaDateTimeParts(date: Date): {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  second: number;
+} {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: MYT_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+
+  return {
+    year: Number(parts.find((p) => p.type === "year")?.value),
+    month: Number(parts.find((p) => p.type === "month")?.value),
+    day: Number(parts.find((p) => p.type === "day")?.value),
+    hour: Number(parts.find((p) => p.type === "hour")?.value),
+    minute: Number(parts.find((p) => p.type === "minute")?.value),
+    second: Number(parts.find((p) => p.type === "second")?.value),
+  };
+}
 
 function isValidIsoCalendarDate(iso: string): boolean {
   const m = ISO_DATE_RE.exec(iso);
@@ -99,6 +130,52 @@ function isValidIsoCalendarDate(iso: string): boolean {
   );
   const parts = getMalaysiaDateParts(probe);
   return parts.year === year && parts.month === month && parts.day === day;
+}
+
+export function parseMalaysiaDateTimeLocal(value: string): Date | null {
+  const m = ISO_DATETIME_LOCAL_RE.exec(value.trim());
+  if (!m) return null;
+
+  const year = Number(m[1]);
+  const month = Number(m[2]);
+  const day = Number(m[3]);
+  const hour = Number(m[4]);
+  const minute = Number(m[5]);
+  const second = m[6] === undefined ? 0 : Number(m[6]);
+
+  if (
+    month < 1 ||
+    month > 12 ||
+    day < 1 ||
+    day > 31 ||
+    hour < 0 ||
+    hour > 23 ||
+    minute < 0 ||
+    minute > 59 ||
+    second < 0 ||
+    second > 59
+  ) {
+    return null;
+  }
+
+  const parsed = new Date(
+    Date.UTC(year, month - 1, day, hour - 8, minute, second),
+  );
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  const roundTrip = getMalaysiaDateTimeParts(parsed);
+  if (
+    roundTrip.year !== year ||
+    roundTrip.month !== month ||
+    roundTrip.day !== day ||
+    roundTrip.hour !== hour ||
+    roundTrip.minute !== minute ||
+    roundTrip.second !== second
+  ) {
+    return null;
+  }
+
+  return parsed;
 }
 
 /** Parse `activityDate=YYYY-MM-DD`; invalid/missing → today MYT. */

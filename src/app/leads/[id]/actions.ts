@@ -42,6 +42,7 @@ import {
   canEnterFirstOutreach,
   isLeadReviewStatus,
 } from "../../../leadReviewStatus";
+import { parseMalaysiaDateTimeLocal } from "../../../formatMalaysiaTime";
 import {
   getDoNotContactAction,
   isDoNotContactActionKey,
@@ -522,10 +523,14 @@ export async function recordReplyOutcomeAction(
   };
 
   if (outcome === "follow-up-later" && nextFollowUpAtISO) {
-    const d = new Date(nextFollowUpAtISO);
-    if (!Number.isNaN(d.getTime())) {
-      payload.nextFollowUpAt = d;
+    const d = parseMalaysiaDateTimeLocal(nextFollowUpAtISO);
+    if (!d) {
+      return {
+        ok: false,
+        error: "Invalid follow-up date/time. Please choose a Malaysia time.",
+      };
     }
+    payload.nextFollowUpAt = d;
   }
 
   try {
